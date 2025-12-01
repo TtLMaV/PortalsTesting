@@ -8,10 +8,16 @@ const numCols = 3;
 const totalButtons = numRows * numCols;
 
 // The Secret Code (Button indices are 1-based, matching the button numbers)
-const SECRET_CODE = [2, 5, 8, 3, 9]; // Example: Button 2, 5, 8, then 3
+const SECRET_CODE = [1, 5, 9]; // Example: Button 2, 5, 8, then 3
 
 let currentSequence = [];
 let isLocked = false;
+
+// 
+const message = {
+  TaskName: "Keypad01",
+  TaskTargetState: "SetNotActiveToCompleted"
+};
 
 // --- Keypad Functions ---
 
@@ -33,6 +39,7 @@ function checkCode() {
     // Compare the entered sequence to the secret code
     if (sequenceStr === codeStr) {
         updateStatus("ACCESS GRANTED! Keypad Locked.", 'status-success');
+        PortalsSdk.sendMessageToUnity(JSON.stringify(message));
         isLocked = true;
         // Optionally, disable all buttons permanently here
     } else {
