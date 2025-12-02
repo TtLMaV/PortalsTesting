@@ -1,7 +1,7 @@
 body{
   padding: 25px;
   background-image: url("Elige.jpg");
-  background-color: rgba(255,255,255,0.6);
+  background-color: rgba(0,0,0,0.4);
   background-blend-mode: lighten;
 }
 
@@ -32,4 +32,5 @@ body{
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 
 }
+
 
