@@ -1,0 +1,33 @@
+body{
+  padding: 25px;
+  background-image: url("Elige.jpg");
+  background-color: rgba(255,255,255,0.6);
+  background-blend-mode: lighten;
+}
+
+.title {
+	color: #000000;
+	text-align:center;
+}
+
+.button-grid {
+  display: grid;
+  /* Creates 3 columns of equal width */
+  grid-template-columns: repeat(3, 1fr); 
+  /* Sets the gap between grid items */
+  gap: 10px; 
+  width: 300px; 
+  margin: 50px auto; /* Centers the grid on the page */
+  padding: 10px;
+  border: 1px solid #ccc;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.button-grid input {
+  gap: 10px; 
+  width: 100%;
+  padding: 10px;
+  border: 2px solid black;
+  border-radius: 8px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
