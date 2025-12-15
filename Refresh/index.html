@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alpha Fade to Black and Refresh</title>
+    <style>
+        /* Define the full viewport size and positioning */
+        html, body {
+            height: 100%;
+            margin: 0;
+            /* Ensure the body is layered over the HTML's default background */
+            background-color: transparent; 
+        }
+
+        /* 1. Initial State (Transparent Black) */
+        #fadingLayer {
+            position: fixed; /* Keep it fixed over all content */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            
+            /* Start: Black with 0% opacity (invisible) */
+            background-color: rgba(0, 0, 0, 0); 
+            
+            /* Define the 10-second smooth transition for the background-color property */
+            transition: background-color 10s ease-in-out; 
+            
+            z-index: 999; /* Ensure it stays above other page content */
+            pointer-events: none; /* Allows clicks to pass through the overlay */
+        }
+
+        /* 2. Target State (Opaque Black) */
+        .full-alpha {
+            /* End: Black with 100% opacity (fully visible) */
+            background-color: rgba(0, 0, 0, 1) !important; 
+        }
+
+        /* Content to show *under* the fade */
+        #content {
+            padding: 20px;
+            font-family: sans-serif;
+            font-size: 24px;
+            /* Give the underlying content a different background so you can see the fade */
+            background-color: #F0F0F0; 
+            min-height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="fadingLayer"></div> 
+	
+    <script>
+		const fadingLayer = document.getElementById('fadingLayer');
+        const DURATION_MS = 10000; // 10 seconds
+
+        // Start the Fade
+        setTimeout(() => {
+            fadingLayer.classList.add('full-alpha');
+            console.log("Alpha fade started.");
+        }, 10); 
+
+        // Set the Timer for the HOST Page Refresh
+        setTimeout(() => {
+            console.log("10 seconds elapsed. Refreshing HOST page...");
+            
+            // *** THIS IS THE CRUCIAL CHANGE ***
+            try {
+                // Attempt to refresh the parent window
+                parent.location.reload(); 
+            } catch (e) {
+                // This catch block handles a potential security error (CORS/Same-Origin Policy)
+                console.error("Could not refresh the host window due to browser security restrictions.", e);
+                alert("The host page could not be refreshed due to security policy. Please check console for details.");
+            }
+            
+        }, DURATION_MS);
+        
+    </script>
+</body>
+</html>
