@@ -3,7 +3,9 @@
 <head>
     <title>Alpha Fade to Refresh Prompt</title>
     <style>
-        /* Base structure styles */
+        
+		@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+		
         html, body {
             height: 100%;
             margin: 0;
@@ -40,7 +42,11 @@
             width: 80%;
             max-width: 800px;
             padding: 20px;
-            font-family: sans-serif;
+			
+			font-family: "Lato", sans-serif;
+			font-weight: 700;
+			font-style: normal;
+			
             font-size: 24px;
             text-align: center; 
             z-index: 1000; /* Ensure text is above the fading layer */
@@ -72,14 +78,16 @@
 <body>
     <div id="fadingLayer"></div> 
 
-    <div id="content">
-        <p id="messageText">Fading in progress...</p>
+	<div id="content">
+        <p id="messageText1">Congratulations You Win!</p>
+        <p id="messageText2">Refresh to Restart</p>
     </div>
 
     <script>
         const fadingLayer = document.getElementById('fadingLayer');
         const contentDiv = document.getElementById('content');
-        const messageText = document.getElementById('messageText');
+        const messageText1 = document.getElementById('messageText1');
+		const messageText2 = document.getElementById('messageText2');
         const DURATION_MS = 10000; // 10 seconds fade
 
         // --- Step 1: Start the Alpha Fade ---
@@ -90,13 +98,14 @@
 
         // --- Step 2: Show the Refresh Prompt after the Fade ---
         setTimeout(() => {
-            console.log("10 seconds elapsed. Displaying refresh prompt.");
-            
+		
             // 1. Change the text content
-            messageText.innerHTML = "Refresh to Restart";
+			messageText1.innerHTML = "Congratulations You Win!";
+            messageText2.innerHTML = "Refresh to Restart";
             
             // 2. Make the background text/button visible and white (it's currently black)
             contentDiv.style.color = "white"; 
+			messageText1.style.color = "#55ff55";
             contentDiv.style.opacity = 1; // Fade in the text/button
             
             // 3. Display the button
