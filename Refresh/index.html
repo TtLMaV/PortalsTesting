@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Alpha Fade to Black and Refresh</title>
+    <title>Alpha Fade to Refresh Prompt</title>
     <style>
-        /* Define the full viewport size and positioning */
+        /* Base structure styles */
         html, body {
             height: 100%;
             margin: 0;
-            /* Ensure the body is layered over the HTML's default background */
             background-color: transparent; 
+            /* Flexbox to center the content */
+            display: flex;
+            align-items: center; /* Vertical centering */
+            justify-content: center; /* Horizontal centering */
         }
-
-        /* 1. Initial State (Transparent Black) */
+        
+        /* 1. Fading Layer */
         #fadingLayer {
-            position: fixed; /* Keep it fixed over all content */
+            position: fixed; 
             top: 0;
             left: 0;
             width: 100%;
@@ -21,58 +24,84 @@
             
             /* Start: Black with 0% opacity (invisible) */
             background-color: rgba(0, 0, 0, 0); 
-            
-            /* Define the 10-second smooth transition for the background-color property */
             transition: background-color 10s ease-in-out; 
-            
-            z-index: 999; /* Ensure it stays above other page content */
-            pointer-events: none; /* Allows clicks to pass through the overlay */
+            z-index: 999; 
         }
 
-        /* 2. Target State (Opaque Black) */
+        /* 2. Target State */
         .full-alpha {
             /* End: Black with 100% opacity (fully visible) */
             background-color: rgba(0, 0, 0, 1) !important; 
         }
 
-        /* Content to show *under* the fade */
+        /* 3. Content Area (Centered) */
         #content {
+            /* This div contains the visible text/button */
+            width: 80%;
+            max-width: 800px;
             padding: 20px;
             font-family: sans-serif;
             font-size: 24px;
-            /* Give the underlying content a different background so you can see the fade */
-            background-color: #F0F0F0; 
-            min-height: 100%;
+            text-align: center; 
+            z-index: 1000; /* Ensure text is above the fading layer */
+            
+            /* Initially invisible text, we'll fade it in with JS */
+            opacity: 0;
+            transition: opacity 1s ease-in; 
         }
+
+        /* 4. Refresh Button Styling */
+        #refreshButton {
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: white;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        #refreshButton:hover {
+            background-color: #ddd;
+        }
+
     </style>
 </head>
 <body>
     <div id="fadingLayer"></div> 
-	
-    <script>
-		const fadingLayer = document.getElementById('fadingLayer');
-        const DURATION_MS = 10000; // 10 seconds
 
-        // Start the Fade
+    <div id="content">
+        <p id="messageText">Fading in progress...</p>
+    </div>
+
+    <script>
+        const fadingLayer = document.getElementById('fadingLayer');
+        const contentDiv = document.getElementById('content');
+        const messageText = document.getElementById('messageText');
+        const DURATION_MS = 10000; // 10 seconds fade
+
+        // --- Step 1: Start the Alpha Fade ---
         setTimeout(() => {
             fadingLayer.classList.add('full-alpha');
             console.log("Alpha fade started.");
         }, 10); 
 
-        // Set the Timer for the HOST Page Refresh
+        // --- Step 2: Show the Refresh Prompt after the Fade ---
         setTimeout(() => {
-            console.log("10 seconds elapsed. Refreshing HOST page...");
+            console.log("10 seconds elapsed. Displaying refresh prompt.");
             
-            // *** THIS IS THE CRUCIAL CHANGE ***
-            try {
-                // Attempt to refresh the parent window
-                parent.location.reload(); 
-            } catch (e) {
-                // This catch block handles a potential security error (CORS/Same-Origin Policy)
-                console.error("Could not refresh the host window due to browser security restrictions.", e);
-                alert("The host page could not be refreshed due to security policy. Please check console for details.");
-            }
+            // 1. Change the text content
+            messageText.innerHTML = "Refresh to Restart";
             
+            // 2. Make the background text/button visible and white (it's currently black)
+            contentDiv.style.color = "white"; 
+            contentDiv.style.opacity = 1; // Fade in the text/button
+            
+            // 3. Display the button
+            refreshButton.style.display = 'inline-block';
+
         }, DURATION_MS);
         
     </script>
