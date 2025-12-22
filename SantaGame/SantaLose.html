@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Santa Has Lost - Fade</title>
+    <title>Santa Lose - Fade</title>
     <style>
         
 		@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
@@ -44,7 +44,7 @@
             padding: 20px;
 			
 			font-family: "Lato", sans-serif;
-			font-weight: 700;
+			font-weight: 900;
 			font-style: normal;
 			
             font-size: 24px;
@@ -55,24 +55,6 @@
             opacity: 0;
             transition: opacity 1s ease-in; 
         }
-
-        /* 4. Refresh Button Styling */
-        #refreshButton {
-            padding: 15px 30px;
-            font-size: 20px;
-            cursor: pointer;
-            background-color: white;
-            color: black;
-            border: none;
-            border-radius: 5px;
-            margin-top: 20px;
-            transition: background-color 0.3s;
-        }
-
-        #refreshButton:hover {
-            background-color: #ddd;
-        }
-
     </style>
 </head>
 <body>
@@ -81,6 +63,7 @@
 	<div id="content">
         <p id="messageText1">Santa is Dead!</p>
         <p id="messageText2">Refresh to Restart</p>
+		<p id="messageText3">With special thanks to Hypnos for playing the role of Santa</p>
     </div>
 
     <script>
@@ -88,6 +71,7 @@
         const contentDiv = document.getElementById('content');
         const messageText1 = document.getElementById('messageText1');
 		const messageText2 = document.getElementById('messageText2');
+		const messageText3 = document.getElementById('messageText3');
         const DURATION_MS = 10000; // 10 seconds fade
 
         // --- Step 1: Start the Alpha Fade ---
@@ -100,13 +84,15 @@
         setTimeout(() => {
 		
             // 1. Change the text content
-			messageText1.innerHTML = "Santa is Dead!";
+			messageText1.innerHTML = "Santa Is Dead!";
             messageText2.innerHTML = "Refresh to Restart";
+			messageText3.innerHTML = "With special thanks to Hypnos for playing the role of Santa";
             
             // 2. Make the background text/button visible and white (it's currently black)
             contentDiv.style.color = "white"; 
 			messageText1.style.color = "#ff5555";
             contentDiv.style.opacity = 1; // Fade in the text/button
+			messageText3.style.fontSize = "16px";
             
             // 3. Display the button
             refreshButton.style.display = 'inline-block';
@@ -115,6 +101,4 @@
         
     </script>
 </body>
-
 </html>
-
