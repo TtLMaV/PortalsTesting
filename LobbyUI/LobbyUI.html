@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Selection Menu</title>
+	<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+    <style>
+	
+		@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+	
+	
+        /* Modern, clean styling for the layout */
+        body {
+            font-family: "Lato", sans-serif;
+			font-weight: 900;
+			font-style: normal;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: rgba(0, 0, 0, 0); 
+        }
+		
+        .selection-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+		
+        .team-box {
+            text-align: center;
+            width: 220px;
+        }
+		
+        h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+		
+        h4 {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+			white-space: pre-line;
+        }
+		
+        .vs {
+            font-weight: 900;
+            font-size: 1.8rem;
+            color: #e63946;
+            margin-top: 30px;
+			margin-left: 20px;
+        }
+		
+		button {
+			font-family: "Lato", sans-serif;
+			font-weight: 900;
+			font-style: normal;
+			gap: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+		}
+    </style>
+</head>
+<body>
+    <div class="selection-container">
+        <div class="team-box">
+            <h3>T</h3>
+            <h4 id="leftTeam"></h4>
+			<button onclick="JoinT()">Join Team</button> 
+        </div>
+        <div class="vs">VS</div>
+        <div class="team-box">
+            <h3>CT</h3>
+            <h4 id="rightTeam"></h4>
+			<button onclick="JoinCT()">Join Team</button> 
+        </div>
+    </div>
+    <script>
+		leftTeam = "";
+        rightTeam = "";
+		T1 = 0;
+		T2 = 0;
+		T3 = 0;
+		T4 = 0;
+		CT1 = 0;
+		CT2 = 0;
+		CT3 = 0;
+		CT4 = 0;
+		TSlot = 0;
+		CTSlot = 0;
+		
+		const JoinTMsg = {TaskName: "JoinT",TaskTargetState: "SetNotActiveToActive"};
+		const JoinCTMsg = {TaskName: "JoinT",TaskTargetState: "SetNotActiveToActive"};
+		
+		function JoinT() {
+			PortalsSdk.sendMessageToUnity(JSON.stringify(JoinTMsg));
+		}
+		
+		function JoinCT() {
+			PortalsSdk.sendMessageToUnity(JSON.stringify(JoinCTMsg));
+		}
+		
+		PortalsSdk.setMessageListener((message) => {
+			message = Sanitise(message);
+			let splitmessage = message.split(":")
+			
+			// Update Values To Match Sent Portals Info
+			leftTeam = "";
+			rightTeam = "";
+			T1 = splitmessage[0];
+			T2 = splitmessage[1];
+			T3 = splitmessage[2];
+			T4 = splitmessage[3];
+			CT1 = splitmessage[4];
+			CT2 = splitmessage[5];
+			CT3 = splitmessage[6];
+			CT4 = splitmessage[7];
+			TSlot = splitmessage[8];
+			CTSlot = splitmessage[9];
+			
+			// Dirty Check For Each Case
+			if(T1 == 1){if(TSlot == 1){leftTeam += "Me\n";} else {leftTeam += "Player\n";}}
+			if(T2 == 1){if(TSlot == 2){leftTeam += "Me\n";} else {leftTeam += "Player\n";}}
+			if(T3 == 1){if(TSlot == 3){leftTeam += "Me\n";} else {leftTeam += "Player\n";}}
+			if(T4 == 1){if(TSlot == 4){leftTeam += "Me\n";} else {leftTeam += "Player\n";}}
+			if(CT1 == 1){if(CTSlot == 1){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
+			if(CT2 == 1){if(CTSlot == 2){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
+			if(CT3 == 1){if(CTSlot == 3){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
+			if(CT4 == 1){if(CTSlot == 4){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
+			
+			updateSelection()
+        });
+		
+		function test() {
+			let test = "1:1:1:1:1:0:0:0:1:0"
+			let splitmessage = test.split(":")
+			
+			// Update Values To Match Sent Portals Info
+			leftTeam = "";
+			rightTeam = "";
+			T1 = splitmessage[0];
+			T2 = splitmessage[1];
+			T3 = splitmessage[2];
+			T4 = splitmessage[3];
+			CT1 = splitmessage[4];
+			CT2 = splitmessage[5];
+			CT3 = splitmessage[6];
+			CT4 = splitmessage[7];
+			TSlot = splitmessage[8];
+			CTSlot = splitmessage[9];
+			
+			// Dirty Check For Each Case
+			if(T1 == 1){if(TSlot == 1){leftTeam += "Me\n";} else {leftTeam += "Player\n";}}
+			if(T2 == 1){if(TSlot == 2){leftTeam += "Me\n";} else {leftTeam += "Player\n";}}
+			if(T3 == 1){if(TSlot == 3){leftTeam += "Me\n";} else {leftTeam += "Player\n";}}
+			if(T4 == 1){if(TSlot == 4){leftTeam += "Me\n";} else {leftTeam += "Player\n";}}
+			if(CT1 == 1){if(CTSlot == 1){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
+			if(CT2 == 1){if(CTSlot == 2){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
+			if(CT3 == 1){if(CTSlot == 3){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
+			if(CT4 == 1){if(CTSlot == 4){rightTeam += "Me\n";} else {rightTeam += "Player\sn";}}
+			
+			updateSelection()
+		}
+		
+		function Sanitise(str) {
+			return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/:/g, ";");
+		}
+		
+        function updateSelection() {
+            const leftSelect = document.getElementById('leftTeam');
+            const rightSelect = document.getElementById('rightTeam');
+			
+			leftSelect.innerHTML = leftTeam;
+			rightSelect.innerHTML = rightTeam;
+        }
+    </script>
+</body>
+</html>
