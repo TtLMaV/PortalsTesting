@@ -126,6 +126,10 @@
 		}
 		
 		PortalsSdk.setMessageListener((message) => {
+			ParseMessage(message)
+        });
+		
+		function ParseMessage(message) {
 			let splitmessage = message.split(":")
 			
 			// Update Values To Match Sent Portals Info
@@ -152,8 +156,9 @@
 			if(CT3 == 1){if(CTSlot == 3){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
 			if(CT4 == 1){if(CTSlot == 4){rightTeam += "Me\n";} else {rightTeam += "Player\n";}}
 			
+			// Update Players UI
 			updateSelection()
-        });
+		}
 		
         function updateSelection() {
             const leftSelect = document.getElementById('leftTeam');
@@ -165,6 +170,3 @@
     </script>
 </body>
 </html>
-
-
-
