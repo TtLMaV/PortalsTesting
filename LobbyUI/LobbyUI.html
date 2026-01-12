@@ -126,7 +126,6 @@
 		}
 		
 		PortalsSdk.setMessageListener((message) => {
-			message = Sanitise(message);
 			let splitmessage = message.split(":")
 			
 			// Update Values To Match Sent Portals Info
@@ -166,5 +165,6 @@
     </script>
 </body>
 </html>
+
 
 
