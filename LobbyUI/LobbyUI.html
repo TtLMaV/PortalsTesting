@@ -88,6 +88,8 @@
         </div>
     </div>
     <script>
+		
+		// Saved Vars to create message in update UI
 		leftTeam = "";
         rightTeam = "";
 		T1 = 0;
@@ -101,7 +103,7 @@
 		TSlot = 0;
 		CTSlot = 0;
 		
-		// Portals Tasks
+		// Portals Task messages
 		const JoinTMsg = {
 			TaskName: "JoinT",
 			TaskTargetState: "SetNotActiveToActive"
@@ -115,24 +117,35 @@
 			TaskTargetState: "SetNotActiveToActive"
 		};
 		
+		// Tell this players client to attempt joining T and Update all UI
 		function JoinT() {
 			PortalsSdk.sendMessageToUnity(JSON.stringify(JoinTMsg));
-			PortalsSdk.sendMessageToUnity(JSON.stringify(UpdateLobbyMsg));
+			setTimeout(UpdateLobby, 100);
 		}
 		
+		// Tell this players client to attempt joining CT and Update all UI
 		function JoinCT() {
 			PortalsSdk.sendMessageToUnity(JSON.stringify(JoinCTMsg));
+			setTimeout(UpdateLobby, 100);
+		}
+		
+		// Tell Every Players Lobby To Update itself
+		function UpdateLobby() {
 			PortalsSdk.sendMessageToUnity(JSON.stringify(UpdateLobbyMsg));
 		}
 		
+		// Recieve Messages From Portals Hook
 		PortalsSdk.setMessageListener((message) => {
 			ParseMessage(message)
         });
 		
+		// Decodes Messages Sent From Portals into usable Vars
 		function ParseMessage(message) {
+			
+			// Split Message Using the ':' to parse variables
 			let splitmessage = message.split(":")
 			
-			// Update Values To Match Sent Portals Info
+			// Sets Variables Using the values from array
 			leftTeam = "";
 			rightTeam = "";
 			T1 = splitmessage[0];
@@ -160,10 +173,14 @@
 			updateSelection()
 		}
 		
+		// Should Show New Values To All Players
         function updateSelection() {
+			
+			// Find T and CT side h4 text
             const leftSelect = document.getElementById('leftTeam');
             const rightSelect = document.getElementById('rightTeam');
 			
+			// Draws Saved Text to h4
 			leftSelect.innerHTML = leftTeam;
 			rightSelect.innerHTML = rightTeam;
         }
