@@ -105,13 +105,16 @@
 		
 		const JoinTMsg = {TaskName: "JoinT",TaskTargetState: "SetNotActiveToActive"};
 		const JoinCTMsg = {TaskName: "JoinT",TaskTargetState: "SetNotActiveToActive"};
+		const UpdateLobbyMsg = {TaskName: "LobbyUpdated",TaskTargetState: "SetNotActiveToActive"};
 		
 		function JoinT() {
 			PortalsSdk.sendMessageToUnity(JSON.stringify(JoinTMsg));
+			PortalsSdk.sendMessageToUnity(JSON.stringify(UpdateLobbyMsg));
 		}
 		
 		function JoinCT() {
 			PortalsSdk.sendMessageToUnity(JSON.stringify(JoinCTMsg));
+			PortalsSdk.sendMessageToUnity(JSON.stringify(UpdateLobbyMsg));
 		}
 		
 		PortalsSdk.setMessageListener((message) => {
