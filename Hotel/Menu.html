@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Time Clock Menu</title>
+<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+<style>
+:root{
+  /* Bakelite plastic */
+  --bak1:#2b211b;
+  --bak2:#1f1814;
+  --bak3:#140f0c;
+
+  /* LCD */
+  --lcdA:#bfefff;
+  --lcdB:#5fa9c8;
+  --lcdInk:#071821;
+  --lcdGlow:rgba(120,235,255,.35);
+
+  /* Paper cards */
+  --paper:#f3f3f3;
+  --paperEdge:rgba(0,0,0,.25);
+
+  --shadow:0 28px 70px rgba(0,0,0,.35);
+  --radius:22px;
+
+  /* Built-in digital font stack */
+  --digital: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+
+/* TRANSPARENT BACKGROUND */
+body{
+  background:transparent;
+  display:grid;
+  place-items:center;
+}
+
+/* ================= DEVICE BODY ================= */
+.device{
+  width:min(520px,92vw);
+  padding:18px;
+  border-radius:var(--radius);
+  background:
+    radial-gradient(260px 160px at 20% 10%, rgba(255,245,230,.18), transparent 70%),
+    linear-gradient(180deg, var(--bak1), var(--bak2) 55%, var(--bak3));
+  border:1px solid rgba(0,0,0,.6);
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+
+/* Bakelite grain */
+.device::after{
+  content:"";
+  position:absolute;inset:0;
+  pointer-events:none;
+  opacity:.22;
+  background:
+    radial-gradient(circle at 8px 8px, rgba(255,255,255,.08) 0.6px, transparent 1.2px) 0 0/18px 18px,
+    radial-gradient(circle at 12px 14px, rgba(0,0,0,.25) 0.6px, transparent 1.2px) 0 0/22px 22px;
+}
+
+/* Card slot */
+.slot{
+  height:14px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#000,#444);
+  box-shadow:inset 0 3px 6px rgba(0,0,0,.6);
+  margin-bottom:14px;
+}
+
+/* Top row */
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+  position:relative;
+  z-index:2;
+}
+
+.label{
+  font-family:var(--sans);
+  font-size:11px;
+  letter-spacing:1px;
+  color:rgba(255,240,230,.75);
+  text-transform:uppercase;
+}
+
+/* Close button */
+.close{
+  width:38px;height:38px;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,.6);
+  background:linear-gradient(180deg,#3a2d25,#16100c);
+  color:rgba(255,240,230,.9);
+  cursor:pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.1),
+    inset 0 -10px 18px rgba(0,0,0,.35);
+}
+.close:hover{filter:brightness(1.1)}
+.close:active{filter:brightness(.98)}
+
+/* ================= LCD ================= */
+.lcd{
+  background:
+    radial-gradient(220px 90px at 30% 0%, rgba(255,255,255,.55), transparent 60%),
+    linear-gradient(180deg,var(--lcdA),var(--lcdB));
+  border:1px solid rgba(0,0,0,.6);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+  position:relative;
+  box-shadow:
+    inset 0 -12px 20px rgba(0,0,0,.25),
+    0 12px 24px rgba(0,0,0,.25);
+  overflow:hidden;
+}
+
+/* Scanlines */
+.lcd::after{
+  content:"";
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    180deg,
+    rgba(0,0,0,.12) 0px,
+    rgba(0,0,0,.12) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity:.25;
+  pointer-events:none;
+}
+
+.lcd-top{
+  display:flex;
+  justify-content:space-between;
+  font-family:var(--sans);
+  font-size:11px;
+  color:rgba(0,0,0,.6);
+  margin-bottom:6px;
+  position:relative;
+  z-index:2;
+}
+
+.time{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  position:relative;
+  z-index:2;
+}
+
+/* faint "ghost segments" */
+.ghost{
+  position:absolute;
+  left:14px;
+  bottom:10px;
+  font-family:var(--digital);
+  font-size:52px;
+  letter-spacing:3px;
+  font-weight:800;
+  color:rgba(7,24,33,.12);
+  pointer-events:none;
+  user-select:none;
+  z-index:1;
+}
+
+/* DIGITAL TIME */
+.time-main{
+  font-family:var(--digital);
+  font-size:52px;
+  letter-spacing:3px;
+  font-weight:800;
+  color:var(--lcdInk);
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.3),
+    0 0 18px var(--lcdGlow);
+  filter: contrast(1.15) saturate(1.1);
+}
+
+.time-sec{
+  font-family:var(--digital);
+  font-size:18px;
+  letter-spacing:2px;
+  padding-bottom:6px;
+  color:rgba(0,0,0,.75);
+}
+
+/* ================= MODE CARDS ================= */
+.modes{
+  display:grid;
+  gap:10px;
+  position:relative;
+  z-index:2;
+}
+
+.mode{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  background:linear-gradient(180deg,#fff,var(--paper));
+  border:1px solid var(--paperEdge);
+  border-radius:14px;
+  cursor:pointer;
+  box-shadow:0 12px 20px rgba(0,0,0,.2);
+  transition: transform .10s ease, filter .10s ease, background .10s ease, border-color .10s ease;
+  user-select:none;
+}
+.mode:hover{transform:translateY(-1px)}
+.mode:active{filter:brightness(.99)}
+
+/* Punch holes */
+.holes{display:flex;gap:6px}
+.hole{
+  width:10px;height:10px;border-radius:50%;
+  background:#ccc;border:1px solid #999;
+}
+
+/* Text */
+.mode-text{flex:1}
+.mode-text strong{
+  font-family:var(--sans);
+  font-size:14px;
+  color:rgba(20,18,16,.92);
+}
+.mode-text span{
+  font-family:var(--sans);
+  font-size:12px;
+  opacity:.65;
+  color:rgba(20,18,16,.80);
+}
+.badge{
+  font-size:12px;
+  font-family:var(--digital);
+  color:rgba(20,18,16,.72);
+}
+
+/* ✅ SELECTED STATE: BROWN / BAKELITE */
+.mode.selected{
+  background: linear-gradient(180deg,#3a2b22,#221812);
+  border-color:#120c08;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.6),
+    0 10px 20px rgba(0,0,0,.25);
+}
+
+.mode.selected .mode-text strong,
+.mode.selected .mode-text span,
+.mode.selected .badge{
+  color: rgba(255,235,210,.92);
+  opacity: 1;
+}
+
+.mode.selected .hole{
+  background:#1a120d;
+  border-color:#000;
+}
+
+/* Footer */
+.footer{
+  margin-top:10px;
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  font-family:var(--sans);
+  color:rgba(255,240,230,.65);
+  position:relative;
+  z-index:2;
+}
+kbd{
+  background:#0003;
+  padding:2px 6px;
+  border-radius:6px;
+  border:1px solid #000;
+  color:rgba(255,240,230,.85);
+}
+</style>
+</head>
+
+<body>
+<div class="device" role="application" aria-label="Game menu">
+  <div class="slot" aria-hidden="true"></div>
+
+  <div class="top">
+    <div class="label">Electronic Time Recorder</div>
+    <button class="close" id="closeBtn" aria-label="Close menu" title="Close (Esc)">✕</button>
+  </div>
+
+  <div class="lcd" aria-label="Clock display">
+    <div class="lcd-top">
+      <div id="day">---</div>
+      <div id="ampm">--</div>
+    </div>
+
+    <div class="ghost" aria-hidden="true">88:88</div>
+
+    <div class="time">
+      <div class="time-main" id="timeMain">--:--</div>
+      <div class="time-sec" id="timeSec">--</div>
+    </div>
+  </div>
+
+  <div class="modes">
+    <div class="mode" id="endless" role="button" tabindex="0" aria-label="Endless mode">
+      <div class="holes" aria-hidden="true">
+        <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+      </div>
+      <div class="mode-text">
+        <strong>Endless Mode</strong>
+        <span>No time limit</span>
+      </div>
+      <div class="badge">∞</div>
+    </div>
+
+    <div class="mode" id="speedrun" role="button" tabindex="0" aria-label="Speedrun mode">
+      <div class="holes" aria-hidden="true">
+        <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+      </div>
+      <div class="mode-text">
+        <strong>Speedrun</strong>
+        <span>Beat the clock</span>
+      </div>
+      <div class="badge">⏱</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div><kbd>1</kbd> Endless <kbd>2</kbd> Speedrun <kbd>Esc</kbd> Close</div>
+    <div id="status">Ready</div>
+  </div>
+</div>
+
+<script>
+	// Vars for display time of day
+	const days=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+	const timeMain=document.getElementById("timeMain");
+	const timeSec=document.getElementById("timeSec");
+	const day=document.getElementById("day");
+	const ampm=document.getElementById("ampm");
+	const status=document.getElementById("status");
+	
+	
+	// Vars for Selecting Gamemode
+	const endlessBtn = document.getElementById("endless");
+	const speedBtn  = document.getElementById("speedrun");
+	selected=false;
+	
+	// Portals Task messages
+	const LoadEndless = {
+		TaskName: "LoadEndless",
+		TaskTargetState: "SetNotActiveToActive"
+	};
+	const LoadSpeedrun = {
+		TaskName: "LoadSpeedrun",
+		TaskTargetState: "SetNotActiveToActive"
+	};
+	
+	// Display Time of day updated every qrtr second
+	function pad(n){return String(n).padStart(2,"0");}
+	function tick(){
+		const d=new Date();
+		const h24=d.getHours();
+		const h12=(h24%12)||12;
+		day.textContent=days[d.getDay()];
+		ampm.textContent=h24>=12?"PM":"AM";
+		timeMain.textContent=`${pad(h12)}:${pad(d.getMinutes())}`;
+		timeSec.textContent=pad(d.getSeconds());
+	}
+	setInterval(tick,250); tick();
+	
+	/* Sends JS object (not a JSON file). */
+	function send(payload){ window.parent?.postMessage(payload,"*"); }
+	
+	//
+	function selectMode(mode){
+		if (!selected)
+		{
+			endlessBtn.classList.remove("selected");
+			speedBtn.classList.remove("selected");
+			
+			if(mode==="endless"){PortalsSdk.sendMessageToUnity(JSON.stringify(LoadEndless));}
+			if(mode==="speedrun"){PortalsSdk.sendMessageToUnity(JSON.stringify(LoadSpeedrun));}
+			
+			const btn = (mode==="endless") ? endlessBtn : speedBtn;
+			btn.classList.add("selected");
+			
+			status.textContent = (mode==="endless") ? "Endless" : "Speedrun";
+			send({type:"GAME_MODE_SELECTED", mode});
+			selected = true;
+		}
+	}
+	
+	// Select Mode Function runs on button click
+	endlessBtn.onclick = () => selectMode("endless");
+	speedBtn.onclick  = () => selectMode("speedrun");
+	
+	// Close iframe on close button
+	document.getElementById("closeBtn").onclick = () => PortalsSdk.closeIframe();
+	
+	/* Keyboard controls */
+	window.addEventListener("keydown",e=>{
+		if(e.key==="1") endlessBtn.click();
+		if(e.key==="2") speedBtn.click();
+		if(e.key==="Escape") send({type:"MENU_CLOSE"});
+	});
+	
+	/* Enter/Space activates focused mode card */
+	[endlessBtn, speedBtn].forEach(el=>{
+		el.addEventListener("keydown", (e)=>{
+			if(e.key==="Enter" || e.key===" "){
+			e.preventDefault();
+			el.click();
+			}
+		});
+	});
+</script>
+</body>
+</html>
