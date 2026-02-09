@@ -24,7 +24,7 @@
             
             /* Start: Black with 0% opacity (visible) */
             background-color: rgba(0, 0, 0, 1); 
-            transition: background-color 10s ease-in-out; 
+            transition: background-color 5s ease-in-out; 
             z-index: 999; 
         }
 
@@ -40,8 +40,8 @@
 
     <script>
         const fadingLayer = document.getElementById('fadingLayer');
-		const PrePauseDUR_MS = 5000; // 5 sec pre pause
-        const DURATION_MS = 10000; // 10 seconds fade
+		const PrePauseDUR_MS = 2200; // 5 sec pre pause
+        const DURATION_MS = 5000; // 10 seconds fade
 
         // --- Step 1: Start the Alpha Fade ---
         setTimeout(() => {
@@ -57,4 +57,5 @@
 </body>
 
 </html>
+
 
