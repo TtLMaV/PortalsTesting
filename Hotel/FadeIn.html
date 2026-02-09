@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Santa Win - Fade</title>
+	<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+    <style>
+        
+		@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+		
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: transparent; 
+            /* Flexbox to center the content */
+            display: flex;
+            align-items: center; /* Vertical centering */
+            justify-content: center; /* Horizontal centering */
+        }
+        
+        /* 1. Fading Layer */
+        #fadingLayer {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            
+            /* Start: Black with 0% opacity (visible) */
+            background-color: rgba(0, 0, 0, 1); 
+            transition: background-color 10s ease-in-out; 
+            z-index: 999; 
+        }
+
+        /* 2. Target State */
+        .full-alpha {
+            /* End: Black with 100% opacity (fully invisible) */
+            background-color: rgba(0, 0, 0, 0) !important; 
+        }
+    </style>
+</head>
+<body>
+    <div id="fadingLayer"></div>
+
+    <script>
+        const fadingLayer = document.getElementById('fadingLayer');
+        const DURATION_MS = 10000; // 10 seconds fade
+
+        // --- Step 1: Start the Alpha Fade ---
+        setTimeout(() => {
+            fadingLayer.classList.add('full-alpha');
+        }, 10);
+
+        // --- Step 2: Show the Refresh Prompt after the Fade ---
+        setTimeout(() => {
+			PortalsSdk.closeIframe();
+        }, DURATION_MS);
+        
+    </script>
+</body>
+</html>
