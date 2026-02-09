@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Return to Lobby</title>
+
+<style>
+:root{
+  /* LCD */
+  --lcdA:#bfefff;
+  --lcdB:#5fa9c8;
+  --lcdInk:#071821;
+  --lcdGlow:rgba(120,235,255,.35);
+
+  /* Built-in digital font stack */
+  --digital: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+
+body{
+  background:transparent;
+  display:grid;
+  place-items:center;
+  padding:20px;
+}
+
+.lobby-button{
+  width:min(400px,90vw);
+  padding:20px 40px;
+  background:
+    radial-gradient(220px 90px at 30% 0%, rgba(255,255,255,.55), transparent 60%),
+    linear-gradient(180deg,var(--lcdA),var(--lcdB));
+  border:1px solid rgba(0,0,0,.6);
+  border-radius:16px;
+  cursor:pointer;
+  box-shadow:
+    inset 0 -12px 20px rgba(0,0,0,.25),
+    0 12px 24px rgba(0,0,0,.25);
+  position:relative;
+  overflow:hidden;
+  transition:all .2s ease;
+  font-family:var(--digital);
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:3px;
+  color:var(--lcdInk);
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.3),
+    0 0 18px var(--lcdGlow);
+  filter: contrast(1.15) saturate(1.1);
+  text-align:center;
+  text-transform:uppercase;
+}
+
+.lobby-button:hover{
+  filter: contrast(1.2) saturate(1.2) brightness(1.05);
+  transform:translateY(-2px);
+  box-shadow:
+    inset 0 -12px 20px rgba(0,0,0,.25),
+    0 16px 32px rgba(0,0,0,.3);
+}
+
+.lobby-button:active{
+  filter: contrast(1.1) saturate(1.05) brightness(.98);
+  transform:translateY(0);
+  box-shadow:
+    inset 0 -12px 20px rgba(0,0,0,.25),
+    0 8px 16px rgba(0,0,0,.25);
+}
+
+/* LCD scanlines */
+.lobby-button::after{
+  content:"";
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    180deg,
+    rgba(0,0,0,.12) 0px,
+    rgba(0,0,0,.12) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity:.25;
+  pointer-events:none;
+}
+
+.lobby-button-text{
+  position:relative;
+  z-index:2;
+}
+</style>
+</head>
+
+<body>
+<button class="lobby-button" id="lobbyBtn">
+  <span class="lobby-button-text">Return to Lobby</span>
+</button>
+
+<script>
+function send(payload){ window.parent?.postMessage(payload,"*"); }
+
+document.getElementById("lobbyBtn").onclick = () => {
+  send({type:"RETURN_TO_LOBBY"});
+};
+</script>
+</body>
+</html>
