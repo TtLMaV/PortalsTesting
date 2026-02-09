@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Santa Win - Fade</title>
+    <title>Fade</title>
 	<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
     <style>
-        
-		@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
-		
         html, body {
             height: 100%;
             margin: 0;
@@ -43,12 +40,13 @@
 
     <script>
         const fadingLayer = document.getElementById('fadingLayer');
+		const PrePauseDUR_MS = 5000; // 5 sec pre pause
         const DURATION_MS = 10000; // 10 seconds fade
 
         // --- Step 1: Start the Alpha Fade ---
         setTimeout(() => {
             fadingLayer.classList.add('full-alpha');
-        }, 10);
+        }, PrePauseDUR_MS);
 
         // --- Step 2: Show the Refresh Prompt after the Fade ---
         setTimeout(() => {
@@ -57,4 +55,5 @@
         
     </script>
 </body>
+
 </html>
