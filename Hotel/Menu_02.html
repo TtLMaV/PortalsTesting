@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Time Clock Menu</title>
+<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+<style>
+:root{
+  /* Bakelite plastic */
+  --bak1:#2b211b;
+  --bak2:#1f1814;
+  --bak3:#140f0c;
+
+  /* LCD */
+  --lcdA:#bfefff;
+  --lcdB:#5fa9c8;
+  --lcdInk:#071821;
+  --lcdGlow:rgba(120,235,255,.35);
+
+  /* Paper cards */
+  --paper:#f3f3f3;
+  --paperEdge:rgba(0,0,0,.25);
+
+  --shadow:0 28px 70px rgba(0,0,0,.35);
+  --radius:22px;
+
+  /* Built-in digital font stack */
+  --digital: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+
+/* TRANSPARENT BACKGROUND */
+body{
+  background:transparent;
+  display:grid;
+  place-items:center;
+  padding:20px 0;
+}
+
+/* ================= DEVICE BODY ================= */
+.device{
+  width:min(520px,92vw);
+  padding:18px;
+  border-radius:var(--radius);
+  background:
+    radial-gradient(260px 160px at 20% 10%, rgba(255,245,230,.18), transparent 70%),
+    linear-gradient(180deg, var(--bak1), var(--bak2) 55%, var(--bak3));
+  border:1px solid rgba(0,0,0,.6);
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+
+/* Bakelite grain */
+.device::after{
+  content:"";
+  position:absolute;inset:0;
+  pointer-events:none;
+  opacity:.22;
+  background:
+    radial-gradient(circle at 8px 8px, rgba(255,255,255,.08) 0.6px, transparent 1.2px) 0 0/18px 18px,
+    radial-gradient(circle at 12px 14px, rgba(0,0,0,.25) 0.6px, transparent 1.2px) 0 0/22px 22px;
+}
+
+/* Card slot */
+.slot{
+  height:14px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#000,#444);
+  box-shadow:inset 0 3px 6px rgba(0,0,0,.6);
+  margin-bottom:14px;
+}
+
+/* Top row */
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+  position:relative;
+  z-index:2;
+}
+
+.label{
+  font-family:var(--sans);
+  font-size:11px;
+  letter-spacing:1px;
+  color:rgba(255,240,230,.75);
+  text-transform:uppercase;
+}
+
+/* Close button */
+.close{
+  width:38px;height:38px;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,.6);
+  background:linear-gradient(180deg,#3a2d25,#16100c);
+  color:rgba(255,240,230,.9);
+  cursor:pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.1),
+    inset 0 -10px 18px rgba(0,0,0,.35);
+}
+.close:hover{filter:brightness(1.1)}
+.close:active{filter:brightness(.98)}
+
+/* ================= LCD ================= */
+.lcd{
+  background:
+    radial-gradient(220px 90px at 30% 0%, rgba(255,255,255,.55), transparent 60%),
+    linear-gradient(180deg,var(--lcdA),var(--lcdB));
+  border:1px solid rgba(0,0,0,.6);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+  position:relative;
+  box-shadow:
+    inset 0 -12px 20px rgba(0,0,0,.25),
+    0 12px 24px rgba(0,0,0,.25);
+  overflow:hidden;
+}
+
+/* Scanlines */
+.lcd::after{
+  content:"";
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    180deg,
+    rgba(0,0,0,.12) 0px,
+    rgba(0,0,0,.12) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity:.25;
+  pointer-events:none;
+}
+
+.lcd-top{
+  display:flex;
+  justify-content:space-between;
+  font-family:var(--sans);
+  font-size:11px;
+  color:rgba(0,0,0,.6);
+  margin-bottom:6px;
+  position:relative;
+  z-index:2;
+}
+
+.time{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  position:relative;
+  z-index:2;
+}
+
+/* faint "ghost segments" */
+.ghost{
+  position:absolute;
+  left:14px;
+  bottom:10px;
+  font-family:var(--digital);
+  font-size:52px;
+  letter-spacing:3px;
+  font-weight:800;
+  color:rgba(7,24,33,.12);
+  pointer-events:none;
+  user-select:none;
+  z-index:1;
+}
+
+/* DIGITAL TIME */
+.time-main{
+  font-family:var(--digital);
+  font-size:52px;
+  letter-spacing:3px;
+  font-weight:800;
+  color:var(--lcdInk);
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.3),
+    0 0 18px var(--lcdGlow);
+  filter: contrast(1.15) saturate(1.1);
+}
+
+.time-sec{
+  font-family:var(--digital);
+  font-size:18px;
+  letter-spacing:2px;
+  padding-bottom:6px;
+  color:rgba(0,0,0,.75);
+}
+
+/* ================= MODE CARDS ================= */
+.modes{
+  display:grid;
+  gap:10px;
+  position:relative;
+  z-index:2;
+}
+
+.mode-wrapper{
+  position:relative;
+  margin-bottom:4px;
+}
+
+.mode{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  background:linear-gradient(180deg,#fff,var(--paper));
+  border:1px solid var(--paperEdge);
+  border-radius:14px;
+  cursor:pointer;
+  box-shadow:0 12px 20px rgba(0,0,0,.2);
+  transition: transform .10s ease, filter .10s ease, background .10s ease, border-color .10s ease;
+  user-select:none;
+  position:relative;
+  z-index:2;
+}
+.mode:hover{transform:translateY(-1px)}
+.mode:active{filter:brightness(.99)}
+
+/* Punch holes */
+.holes{display:flex;gap:6px}
+.hole{
+  width:10px;height:10px;border-radius:50%;
+  background:#ccc;border:1px solid #999;
+}
+
+/* Text */
+.mode-text{flex:1}
+.mode-text strong{
+  font-family:var(--sans);
+  font-size:14px;
+  color:rgba(20,18,16,.92);
+}
+.mode-text span{
+  font-family:var(--sans);
+  font-size:12px;
+  opacity:.65;
+  color:rgba(20,18,16,.80);
+}
+.badge{
+  font-size:12px;
+  font-family:var(--digital);
+  color:rgba(20,18,16,.72);
+}
+
+/* Arrow indicator */
+.arrow{
+  font-size:16px;
+  color:rgba(20,18,16,.5);
+  transition:transform .2s ease;
+}
+.mode.expanded .arrow{
+  transform:rotate(180deg);
+}
+
+/* ✅ SELECTED STATE: BROWN / BAKELITE */
+.mode.selected{
+  background: linear-gradient(180deg,#3a2b22,#221812);
+  border-color:#120c08;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.6),
+    0 10px 20px rgba(0,0,0,.25);
+}
+
+.mode.selected .mode-text strong,
+.mode.selected .mode-text span,
+.mode.selected .badge,
+.mode.selected .arrow{
+  color: rgba(255,235,210,.92);
+  opacity: 1;
+}
+
+.mode.selected .hole{
+  background:#1a120d;
+  border-color:#000;
+}
+
+/* ================= DROPDOWN DETAILS ================= */
+.mode-details{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .3s ease, opacity .3s ease, margin-top .3s ease;
+  opacity:0;
+  background:linear-gradient(180deg,#fafafa,#ececec);
+  border:1px solid var(--paperEdge);
+  border-top:none;
+  border-radius:0 0 14px 14px;
+  margin-top:-14px;
+  padding:0 16px;
+  position:relative;
+  z-index:1;
+}
+
+.mode-details.show{
+  max-height:200px;
+  opacity:1;
+  margin-top:0;
+  padding:16px;
+  padding-top:20px;
+}
+
+.mode-details p{
+  margin:0 0 10px 0;
+  font-family:var(--sans);
+  font-size:13px;
+  line-height:1.5;
+  color:rgba(20,18,16,.85);
+}
+
+.mode-details ul{
+  margin:0;
+  padding-left:20px;
+  font-family:var(--sans);
+  font-size:12px;
+  line-height:1.6;
+  color:rgba(20,18,16,.75);
+}
+
+.mode-details li{
+  margin-bottom:4px;
+}
+
+/* ================= SWIPE CARD SECTION ================= */
+.swipe-section{
+  margin-top:16px;
+  padding:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  position:relative;
+  z-index:2;
+}
+
+.swipe-label{
+  font-family:var(--sans);
+  font-size:11px;
+  letter-spacing:1px;
+  color:rgba(255,240,230,.65);
+  text-transform:uppercase;
+  margin-bottom:12px;
+  text-align:center;
+}
+
+.swipe-mode-buttons{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.swipe-mode-btn{
+  flex:1;
+  padding:10px;
+  background:linear-gradient(180deg,#2a2018,#1a120d);
+  border:1px solid rgba(0,0,0,.6);
+  border-radius:10px;
+  color:rgba(255,240,230,.7);
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .2s ease;
+  text-align:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.swipe-mode-btn:hover{
+  filter:brightness(1.15);
+  transform:translateY(-1px);
+}
+
+.swipe-mode-btn.active{
+  background:linear-gradient(180deg,#3a2b22,#2a1f18);
+  border-color:rgba(255,200,100,.3);
+  color:rgba(255,240,210,1);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.1),
+    0 0 12px rgba(255,200,100,.2);
+}
+
+.card-slot{
+  position:relative;
+  height:120px;
+  background:linear-gradient(180deg,#1a1410,#0d0906);
+  border:2px solid rgba(0,0,0,.8);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:inset 0 4px 12px rgba(0,0,0,.6);
+  transition:all .4s ease;
+}
+
+.card-slot.success{
+  background:linear-gradient(180deg,#1a3d1a,#0d220d);
+  border-color:rgba(50,200,50,.4);
+  box-shadow:
+    inset 0 4px 12px rgba(0,0,0,.6),
+    0 0 20px rgba(50,200,50,.3);
+}
+
+/* Slot opening indicator */
+.card-slot::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+  width:8px;
+  height:80px;
+  background:linear-gradient(270deg,transparent,rgba(255,240,230,.15));
+  border-radius:0 4px 4px 0;
+  transition:background .4s ease;
+}
+
+.card-slot.success::before{
+  background:linear-gradient(270deg,transparent,rgba(100,255,100,.3));
+}
+
+.card-slot::after{
+  content:"← SWIPE LEFT";
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-family:var(--sans);
+  font-size:11px;
+  letter-spacing:2px;
+  color:rgba(255,240,230,.25);
+  pointer-events:none;
+  transition:color .4s ease;
+}
+
+.card-slot.success::after{
+  content:"✓ CLOCKED IN";
+  color:rgba(100,255,100,.5);
+}
+
+.timecard{
+  position:absolute;
+  right:10px;
+  top:10px;
+  width:160px;
+  height:100px;
+  background:linear-gradient(180deg,#fff,#f5f5f5);
+  border:1px solid #bbb;
+  border-radius:8px;
+  cursor:grab;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+  transition:right .4s cubic-bezier(.4,0,.2,1);
+  user-select:none;
+  padding:8px;
+  font-family:var(--sans);
+}
+
+.timecard.swiping{
+  cursor:grabbing;
+  transition:none;
+}
+
+.timecard.swiped{
+  right:calc(100% + 20px);
+  transition:right .6s cubic-bezier(.4,0,.2,1);
+}
+
+.card-header{
+  font-size:9px;
+  font-weight:bold;
+  color:#333;
+  margin-bottom:4px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  margin-left:15px;
+}
+
+.card-time{
+  font-family:var(--digital);
+  font-size:18px;
+  color:#000;
+  margin-bottom:4px;
+  margin-left:15px;
+}
+
+.card-date{
+  font-size:10px;
+  color:#666;
+  margin-left:15px;
+}
+
+.card-punch-holes{
+  position:absolute;
+  top:8px;
+  left:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.card-punch-hole{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#ddd;
+  border:1px solid #aaa;
+}
+
+.swipe-instruction{
+  margin-top:10px;
+  text-align:center;
+  font-family:var(--sans);
+  font-size:11px;
+  color:rgba(255,240,230,.5);
+}
+
+/* Footer */
+.footer{
+  margin-top:10px;
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  font-family:var(--sans);
+  color:rgba(255,240,230,.65);
+  position:relative;
+  z-index:2;
+}
+
+kbd{
+  background:#0003;
+  padding:2px 6px;
+  border-radius:6px;
+  border:1px solid #000;
+  color:rgba(255,240,230,.85);
+}
+</style>
+</head>
+
+<body>
+<div class="device" role="application" aria-label="Game menu">
+  <div class="slot" aria-hidden="true"></div>
+
+  <div class="top">
+    <div class="label">Electronic Time Recorder</div>
+    <button class="close" id="closeBtn" aria-label="Close menu" title="Close (Esc)">✕</button>
+  </div>
+
+  <div class="lcd" aria-label="Clock display">
+    <div class="lcd-top">
+      <div id="day">---</div>
+      <div id="ampm">--</div>
+    </div>
+
+    <div class="ghost" aria-hidden="true">88:88</div>
+
+    <div class="time">
+      <div class="time-main" id="timeMain">--:--</div>
+      <div class="time-sec" id="timeSec">--</div>
+    </div>
+  </div>
+
+  <div class="modes">
+    <div class="mode-wrapper">
+      <div class="mode" id="endless" role="button" tabindex="0" aria-label="Endless mode">
+        <div class="holes" aria-hidden="true">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+        <div class="mode-text">
+          <strong>Endless Mode</strong>
+          <span>No time limit</span>
+        </div>
+        <div class="badge">∞</div>
+        <div class="arrow">▼</div>
+      </div>
+      <div class="mode-details" id="endlessDetails">
+        <p><strong>Play at your own pace</strong></p>
+        <ul>
+          <li>No timer pressure - take your time to strategize</li>
+          <li>Perfect for learning and experimentation</li>
+          <li>Focus on accuracy and completion</li>
+          <li>Ideal for relaxed gameplay sessions</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mode-wrapper">
+      <div class="mode" id="speedrun" role="button" tabindex="0" aria-label="Speedrun mode">
+        <div class="holes" aria-hidden="true">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+        <div class="mode-text">
+          <strong>Speedrun</strong>
+          <span>Beat the clock</span>
+        </div>
+        <div class="badge">⏱</div>
+        <div class="arrow">▼</div>
+      </div>
+      <div class="mode-details" id="speedrunDetails">
+        <p><strong>Race against time</strong></p>
+        <ul>
+          <li>Timer counts down - complete before time runs out</li>
+          <li>Bonus points for finishing early</li>
+          <li>High-intensity, fast-paced gameplay</li>
+          <li>Compete for best times and high scores</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="swipe-section">
+    <div class="swipe-label">Select Mode & Clock In</div>
+    <div class="swipe-mode-buttons">
+      <button class="swipe-mode-btn" id="swipeEndless">
+        <div>∞ Endless</div>
+      </button>
+      <button class="swipe-mode-btn" id="swipeSpeedrun">
+        <div>⏱ Speedrun</div>
+      </button>
+    </div>
+    <div class="card-slot" id="cardSlot">
+      <div class="timecard" id="timecard">
+        <div class="card-punch-holes">
+          <div class="card-punch-hole"></div>
+          <div class="card-punch-hole"></div>
+          <div class="card-punch-hole"></div>
+        </div>
+        <div class="card-header">Time Card</div>
+        <div class="card-time" id="cardTime">--:--</div>
+        <div class="card-date" id="cardDate">---</div>
+      </div>
+    </div>
+    <div class="swipe-instruction">Clock In</div>
+  </div>
+
+  <div class="footer">
+    <div><kbd>1</kbd> Endless <kbd>2</kbd> Speedrun <kbd>Esc</kbd> Close</div>
+    <div id="status">Ready</div>
+  </div>
+</div>
+
+<script>
+	const days=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+	const months=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+	const timeMain=document.getElementById("timeMain");
+	const timeSec=document.getElementById("timeSec");
+	const day=document.getElementById("day");
+	const ampm=document.getElementById("ampm");
+	const status=document.getElementById("status");
+	const cardTime=document.getElementById("cardTime");
+	const cardDate=document.getElementById("cardDate");
+	
+	const endlessBtn = document.getElementById("endless");
+	const speedBtn  = document.getElementById("speedrun");
+	const endlessDetails = document.getElementById("endlessDetails");
+	const speedrunDetails = document.getElementById("speedrunDetails");
+	selected = false;
+	started = false;
+	
+	function pad(n){return String(n).padStart(2,"0");}
+	function tick(){
+		const d = new Date();
+		const h24 = d.getHours();
+		const h12 = (h24%12)||12;
+		day.textContent = days[d.getDay()];
+		ampm.textContent = h24>=12?"PM":"AM";
+		timeMain.textContent = `${pad(h12)}:${pad(d.getMinutes())}`;
+		timeSec.textContent = pad(d.getSeconds());
+		
+		// Update card time
+		cardTime.textContent=`${pad(h12)}:${pad(d.getMinutes())}`;
+		cardDate.textContent=`${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+	}
+	setInterval(tick,250); tick();
+	
+	// Portals Task messages
+	const LoadEndless = {
+		TaskName: "LoadEndless",
+		TaskTargetState: "SetNotActiveToActive"
+	};
+	const LoadSpeedrun = {
+		TaskName: "LoadSpeedrun",
+		TaskTargetState: "SetNotActiveToActive"
+	};
+	
+	/* Sends JS object (not a JSON file). */
+	function send(payload){ window.parent?.postMessage(payload,"*"); }
+	
+	let selectedMode = null;
+	
+	function toggleDetails(mode){
+		const isEndless = mode === "endless";
+		const btn = isEndless ? endlessBtn : speedBtn;
+		const details = isEndless ? endlessDetails : speedrunDetails;
+		const otherDetails = isEndless ? speedrunDetails : endlessDetails;
+		const otherBtn = isEndless ? speedBtn : endlessBtn;
+		
+		// Close other dropdown
+		otherDetails.classList.remove("show");
+		otherBtn.classList.remove("expanded");
+		
+		// Toggle current dropdown
+		const isExpanded = details.classList.contains("show");
+		if(isExpanded)
+		{
+			details.classList.remove("show");
+			btn.classList.remove("expanded");
+		}
+		else
+		{
+			details.classList.add("show");
+			btn.classList.add("expanded");
+		}
+	}
+	
+	function selectMode(mode){
+		endlessBtn.classList.remove("selected");
+		speedBtn.classList.remove("selected");
+		
+		const btn = (mode==="endless") ? endlessBtn : speedBtn;
+		btn.classList.add("selected");
+		
+		selectedMode = mode;
+		status.textContent = (mode==="endless") ? "Endless Mode Selected" : "Speedrun Mode Selected";
+	}
+	
+	endlessBtn.onclick = (e) => {
+		toggleDetails("endless");
+		selectMode("endless");
+	};
+	
+	speedBtn.onclick = (e) => {
+		toggleDetails("speedrun");
+		selectMode("speedrun");
+	};
+	
+	document.getElementById("closeBtn").onclick = () =>  PortalsSdk.closeIframe();
+	
+	/* Keyboard controls */
+	window.addEventListener("keydown",e=>{
+		if(e.key==="1") endlessBtn.click();
+		if(e.key==="2") speedBtn.click();
+		if(e.key==="Escape") send({type:"MENU_CLOSE"});
+	});
+	
+	/* Enter/Space activates focused mode card */
+	[endlessBtn, speedBtn].forEach(el=>{
+		el.addEventListener("keydown", (e)=>{
+			if(e.key==="Enter" || e.key===" "){
+			e.preventDefault();
+			el.click();
+			}
+		});
+	});
+	
+	/* ================= SWIPE CARD FUNCTIONALITY ================= */
+	const timecard = document.getElementById("timecard");
+	const cardSlot = document.getElementById("cardSlot");
+	const swipeEndlessBtn = document.getElementById("swipeEndless");
+	const swipeSpeedrunBtn = document.getElementById("swipeSpeedrun");
+	
+	let isDragging = false;
+	let startX = 0;
+	let currentX = 0;
+	let swipeSelectedMode = null;
+	
+	// Create ding sound using Web Audio API
+	const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+	function playDing(){
+		const oscillator = audioContext.createOscillator();
+		const gainNode = audioContext.createGain();
+		
+		oscillator.connect(gainNode);
+		gainNode.connect(audioContext.destination);
+		
+		// Pleasant "ding" sound
+		oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+		oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
+		
+		gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+		gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+		
+		oscillator.start(audioContext.currentTime);
+		oscillator.stop(audioContext.currentTime + 0.3);
+	}
+	
+	// Mode selection in swipe section
+	swipeEndlessBtn.onclick = () => {
+		if(started) return;
+		swipeEndlessBtn.classList.add("active");
+		swipeSpeedrunBtn.classList.remove("active");
+		swipeSelectedMode = "endless";
+		status.textContent = "Endless Mode - Swipe to Start";
+		selected = true;
+	};
+	
+	swipeSpeedrunBtn.onclick = () => {
+		if(started) return;
+		swipeSpeedrunBtn.classList.add("active");
+		swipeEndlessBtn.classList.remove("active");
+		swipeSelectedMode = "speedrun";
+		status.textContent = "Speedrun Mode - Swipe to Start";
+		selected = true;
+	};
+	
+	timecard.addEventListener("mousedown", startDrag);
+	timecard.addEventListener("touchstart", startDrag, {passive:false});
+	
+	function startDrag(e){
+		if(!selected) return;
+		
+		if(timecard.classList.contains("swiped")) return;
+		
+		isDragging = true;
+		timecard.classList.add("swiping");
+		startX = e.type === "mousedown" ? e.clientX : e.touches[0].clientX;
+		currentX = startX;
+		
+		document.addEventListener("mousemove", drag);
+		document.addEventListener("touchmove", drag, {passive:false});
+		document.addEventListener("mouseup", endDrag);
+		document.addEventListener("touchend", endDrag);
+	}
+	
+	function drag(e){
+		if(!isDragging) return;
+		e.preventDefault();
+		
+		const clientX = e.type === "mousemove" ? e.clientX : e.touches[0].clientX;
+		const deltaX = clientX - startX;
+		
+		// Only allow leftward drag (negative delta increases right position)
+		if(deltaX < 0){
+			currentX = deltaX;
+			const newRight = 10 - deltaX; // Start at 10px, move further right as we drag left
+			timecard.style.right = `${newRight}px`;
+		}
+	}
+	
+	function endDrag(e){
+		if(!isDragging) return;
+		
+		document.removeEventListener("mousemove", drag);
+		document.removeEventListener("touchmove", drag);
+		document.removeEventListener("mouseup", endDrag);
+		document.removeEventListener("touchend", endDrag);
+		
+		isDragging = false;
+		timecard.classList.remove("swiping");
+		
+		// If dragged more than 100px left, complete the swipe
+		if(Math.abs(currentX) > 100){
+			timecard.classList.add("swiped");
+			timecard.style.right = "";
+			
+			// Green success state
+			cardSlot.classList.add("success");
+			
+			// Play ding sound
+			playDing();
+			started = true;
+			
+			status.textContent = "Clocked In!";
+			
+			// Send clock in message
+			setTimeout(()=>{
+				if(swipeSelectedMode){
+					if(swipeSelectedMode==="endless"){PortalsSdk.sendMessageToUnity(JSON.stringify(LoadEndless));}
+					if(swipeSelectedMode==="speedrun"){PortalsSdk.sendMessageToUnity(JSON.stringify(LoadSpeedrun));}
+					//alert(swipeSelectedMode);
+				}
+			}, 600);
+		}
+		else
+		{
+			// Snap back
+			timecard.style.right = "10px";
+		}
+	}
+</script>
+</body>
+</html>
