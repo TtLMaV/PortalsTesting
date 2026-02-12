@@ -1,68 +1,78 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mining HUD</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mining HUD</title>
 
-  <!-- Portals SDK (must be loaded before your script uses PortalsSdk) -->
-  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
 
-  <style>
-    html, body {
-      background: transparent !important;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      user-select: none;
-    }
-    .hud {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.7);
-      color: #fff;
-      font-size: 18px;
-      line-height: 1;
-    }
-    .label { opacity: 0.9; }
-    .value { font-weight: 700; }
-  </style>
+<style>
+html, body {
+    background: transparent !important;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+.hud {
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    font-size: 18px;
+}
+.value {
+    font-weight: bold;
+}
+</style>
 </head>
 <body>
-  <div class="hud">
-    <span class="label">⛏ Ore:</span>
-    <span id="oreValue" class="value">0</span>
-  </div>
 
-  <script>
-    function setOre(v) {
-      // Portals might send number or string; normalize nicely
-      const n = Number(v);
-      document.getElementById("oreValue").textContent = Number.isFinite(n) ? n.toFixed(0) : String(v);
+<div class="hud">
+    ⛏ Ore: <span id="oreValue" class="value">0</span>
+</div>
+
+<script>
+let ore = 0;
+
+// Load from localStorage
+function loadOre() {
+    const saved = localStorage.getItem("ore");
+    ore = saved ? parseInt(saved) : 0;
+    updateDisplay();
+}
+
+// Save to localStorage
+function saveOre() {
+    localStorage.setItem("ore", ore);
+}
+
+// Update UI
+function updateDisplay() {
+    document.getElementById("oreValue").textContent = ore;
+}
+
+// Listen for Portals messages
+PortalsSdk.setMessageListener(function(message) {
+
+    let data = message;
+
+    if (typeof message === "string") {
+        try { data = JSON.parse(message); } catch (e) { return; }
     }
 
-    // Listen for messages coming from Portals
-    PortalsSdk.setMessageListener(function(message) {
-      // Debug (optional): uncomment if needed
-      // console.log("Portals message:", message);
+    if (data.type === "mined") {
+        ore += Number(data.amount || 1);
+        saveOre();
+        updateDisplay();
+    }
+});
 
-      let data = message;
-      if (typeof message === "string") {
-        try { data = JSON.parse(message); } catch (e) { return; }
-      }
+// Initialize
+loadOre();
+</script>
 
-      // Expected message: {"type":"ore","value":123}
-      if (data && data.type === "ore") {
-        setOre(data.value);
-      }
-    });
-  </script>
 </body>
 </html>
-
 
 
