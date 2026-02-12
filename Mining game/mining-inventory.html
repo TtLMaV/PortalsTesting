@@ -181,17 +181,6 @@
         </div>
         <div class="ore-count" id="copperCount">0</div>
       </div>
-
-      <!-- Ready for expansion -->
-      <!-- 
-      <div class="ore-item">
-        <div class="ore-info">
-          <div class="ore-icon" style="background: linear-gradient(135deg, #708090 0%, #556677 100%);">⚫</div>
-          <div class="ore-name" style="color: #708090;">Iron Ore</div>
-        </div>
-        <div class="ore-count" id="ironCount">0</div>
-      </div>
-      -->
     </div>
 
     <div class="stats">
@@ -207,10 +196,8 @@
   <div class="notification" id="notification"></div>
 
   <script>
-    // Storage keys
     const STORAGE_KEY = 'portals_mining_inventory';
     
-    // Inventory data
     let inventory = {
       copper: 0,
       iron: 0,
@@ -218,7 +205,6 @@
       totalMined: 0
     };
 
-    // Load saved inventory on page load
     function loadInventory() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -234,19 +220,16 @@
       updateDisplay();
     }
 
-    // Save inventory to localStorage
     function saveInventory() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
       debugLog('Saved inventory: ' + JSON.stringify(inventory));
     }
 
-    // Update the display
     function updateDisplay() {
       document.getElementById('copperCount').textContent = inventory.copper;
       document.getElementById('totalMined').textContent = inventory.totalMined;
     }
 
-    // Add ore to inventory
     function addOre(oreType, amount = 1) {
       if (inventory.hasOwnProperty(oreType)) {
         inventory[oreType] += amount;
@@ -256,25 +239,9 @@
         showNotification(`+${amount} ${oreType.charAt(0).toUpperCase() + oreType.slice(1)} Ore`);
         updateLastAction(`Mined ${amount} ${oreType}`);
         debugLog(`Added ${amount} ${oreType}. New total: ${inventory[oreType]}`);
-        
-        // Send updated count back to Portals
-        sendToPortals(oreType, inventory[oreType]);
       }
     }
 
-    // Send data back to Portals
-    function sendToPortals(oreType, count) {
-      // Format: "copper_123" so Portals can read it
-      const message = `${oreType}_${count}`;
-      window.parent.postMessage({
-        taskName: 'update_inventory_display',
-        taskTargetState: 'SetNotActiveToActive',
-        customData: message
-      }, '*');
-      debugLog('Sent to Portals: ' + message);
-    }
-
-    // Show notification
     function showNotification(message) {
       const notif = document.getElementById('notification');
       notif.textContent = message;
@@ -284,20 +251,17 @@
       }, 2000);
     }
 
-    // Update last action
     function updateLastAction(action) {
       const timestamp = new Date().toLocaleTimeString();
       document.getElementById('lastAction').textContent = `${action} at ${timestamp}`;
     }
 
-    // Debug logging
     function debugLog(message) {
       const debugDiv = document.getElementById('debugLog');
       const timestamp = new Date().toLocaleTimeString();
       debugDiv.innerHTML = `[${timestamp}] ${message}<br>` + debugDiv.innerHTML;
     }
 
-    // Reset inventory (for testing)
     function resetInventory() {
       if (confirm('Are you sure you want to reset your inventory?')) {
         inventory = { copper: 0, iron: 0, gold: 0, totalMined: 0 };
@@ -308,29 +272,25 @@
       }
     }
 
-    // Listen for messages from Portals
     window.addEventListener('message', (event) => {
       const msg = event.data;
       debugLog('Received message: ' + JSON.stringify(msg));
 
       if (typeof msg === 'string') {
-        // Parse message format: "mine_copper" or "mine_iron_2"
         const parts = msg.split('_');
         
         if (parts[0] === 'mine') {
-          const oreType = parts[1]; // "copper", "iron", etc.
-          const amount = parts[2] ? parseInt(parts[2]) : 1; // default to 1
+          const oreType = parts[1];
+          const amount = parts[2] ? parseInt(parts[2]) : 1;
           addOre(oreType, amount);
         }
       }
     });
 
-    // Initialize on page load
     window.addEventListener('load', () => {
       loadInventory();
       debugLog('Inventory system initialized');
       
-      // Send ready signal to Portals
       window.parent.postMessage({
         taskName: 'inventory_ready',
         taskTargetState: 'SetNotActiveToCompleted'
