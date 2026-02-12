@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mining Inventory</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      border: 2px solid rgba(205, 127, 50, 0.3);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #CD7F32;
+    }
+
+    .inventory {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 15px;
+      padding: 25px;
+      border: 2px solid rgba(205, 127, 50, 0.5);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .ore-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      margin-bottom: 15px;
+      background: rgba(205, 127, 50, 0.15);
+      border-radius: 10px;
+      border-left: 4px solid #CD7F32;
+      transition: all 0.3s ease;
+    }
+
+    .ore-item:hover {
+      background: rgba(205, 127, 50, 0.25);
+      transform: translateX(5px);
+    }
+
+    .ore-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .ore-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #CD7F32 0%, #B87333 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 15px rgba(205, 127, 50, 0.4);
+    }
+
+    .ore-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #CD7F32;
+    }
+
+    .ore-count {
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 2px 10px rgba(205, 127, 50, 0.5);
+    }
+
+    .stats {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #CD7F32 0%, #B87333 100%);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .debug {
+      margin-top: 20px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 5px;
+      font-size: 12px;
+      color: #666;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .reset-btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 0, 0, 0.3);
+      border: 2px solid rgba(255, 0, 0, 0.5);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .reset-btn:hover {
+      background: rgba(255, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⛏️ Mining Inventory</h1>
+      <div class="stat-label">Total Ores Mined</div>
+      <div class="stat-value" id="totalMined">0</div>
+    </div>
+
+    <div class="inventory">
+      <div class="ore-item">
+        <div class="ore-info">
+          <div class="ore-icon">🟠</div>
+          <div class="ore-name">Copper Ore</div>
+        </div>
+        <div class="ore-count" id="copperCount">0</div>
+      </div>
+
+      <!-- Ready for expansion -->
+      <!-- 
+      <div class="ore-item">
+        <div class="ore-info">
+          <div class="ore-icon" style="background: linear-gradient(135deg, #708090 0%, #556677 100%);">⚫</div>
+          <div class="ore-name" style="color: #708090;">Iron Ore</div>
+        </div>
+        <div class="ore-count" id="ironCount">0</div>
+      </div>
+      -->
+    </div>
+
+    <div class="stats">
+      <div class="stat-label">Last Action</div>
+      <div id="lastAction" style="color: #999; font-size: 14px;">Waiting for mining...</div>
+    </div>
+
+    <button class="reset-btn" onclick="resetInventory()">Reset Inventory (Debug)</button>
+
+    <div class="debug" id="debugLog"></div>
+  </div>
+
+  <div class="notification" id="notification"></div>
+
+  <script>
+    // Storage keys
+    const STORAGE_KEY = 'portals_mining_inventory';
+    
+    // Inventory data
+    let inventory = {
+      copper: 0,
+      iron: 0,
+      gold: 0,
+      totalMined: 0
+    };
+
+    // Load saved inventory on page load
+    function loadInventory() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          inventory = JSON.parse(saved);
+          debugLog('Loaded saved inventory: ' + JSON.stringify(inventory));
+        } catch (e) {
+          debugLog('Error loading inventory: ' + e.message);
+        }
+      } else {
+        debugLog('No saved inventory found, starting fresh');
+      }
+      updateDisplay();
+    }
+
+    // Save inventory to localStorage
+    function saveInventory() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+      debugLog('Saved inventory: ' + JSON.stringify(inventory));
+    }
+
+    // Update the display
+    function updateDisplay() {
+      document.getElementById('copperCount').textContent = inventory.copper;
+      document.getElementById('totalMined').textContent = inventory.totalMined;
+    }
+
+    // Add ore to inventory
+    function addOre(oreType, amount = 1) {
+      if (inventory.hasOwnProperty(oreType)) {
+        inventory[oreType] += amount;
+        inventory.totalMined += amount;
+        saveInventory();
+        updateDisplay();
+        showNotification(`+${amount} ${oreType.charAt(0).toUpperCase() + oreType.slice(1)} Ore`);
+        updateLastAction(`Mined ${amount} ${oreType}`);
+        debugLog(`Added ${amount} ${oreType}. New total: ${inventory[oreType]}`);
+        
+        // Send updated count back to Portals
+        sendToPortals(oreType, inventory[oreType]);
+      }
+    }
+
+    // Send data back to Portals
+    function sendToPortals(oreType, count) {
+      // Format: "copper_123" so Portals can read it
+      const message = `${oreType}_${count}`;
+      window.parent.postMessage({
+        taskName: 'update_inventory_display',
+        taskTargetState: 'SetNotActiveToActive',
+        customData: message
+      }, '*');
+      debugLog('Sent to Portals: ' + message);
+    }
+
+    // Show notification
+    function showNotification(message) {
+      const notif = document.getElementById('notification');
+      notif.textContent = message;
+      notif.classList.add('show');
+      setTimeout(() => {
+        notif.classList.remove('show');
+      }, 2000);
+    }
+
+    // Update last action
+    function updateLastAction(action) {
+      const timestamp = new Date().toLocaleTimeString();
+      document.getElementById('lastAction').textContent = `${action} at ${timestamp}`;
+    }
+
+    // Debug logging
+    function debugLog(message) {
+      const debugDiv = document.getElementById('debugLog');
+      const timestamp = new Date().toLocaleTimeString();
+      debugDiv.innerHTML = `[${timestamp}] ${message}<br>` + debugDiv.innerHTML;
+    }
+
+    // Reset inventory (for testing)
+    function resetInventory() {
+      if (confirm('Are you sure you want to reset your inventory?')) {
+        inventory = { copper: 0, iron: 0, gold: 0, totalMined: 0 };
+        saveInventory();
+        updateDisplay();
+        showNotification('Inventory Reset');
+        debugLog('Inventory reset to zero');
+      }
+    }
+
+    // Listen for messages from Portals
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      debugLog('Received message: ' + JSON.stringify(msg));
+
+      if (typeof msg === 'string') {
+        // Parse message format: "mine_copper" or "mine_iron_2"
+        const parts = msg.split('_');
+        
+        if (parts[0] === 'mine') {
+          const oreType = parts[1]; // "copper", "iron", etc.
+          const amount = parts[2] ? parseInt(parts[2]) : 1; // default to 1
+          addOre(oreType, amount);
+        }
+      }
+    });
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      loadInventory();
+      debugLog('Inventory system initialized');
+      
+      // Send ready signal to Portals
+      window.parent.postMessage({
+        taskName: 'inventory_ready',
+        taskTargetState: 'SetNotActiveToCompleted'
+      }, '*');
+    });
+  </script>
+</body>
+</html>
