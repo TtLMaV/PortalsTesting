@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mining HUD</title>
+
+    <!-- Portals SDK -->
+    <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+
+    <style>
+        html, body {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .hud {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="hud">
+        ⛏ Ore: <span id="oreValue">0</span>
+    </div>
+
+    <script>
+        // Listen for messages from Portals
+        PortalsSdk.setMessageListener(function(message) {
+
+            let data = message;
+
+            if (typeof message === 'string') {
+                try {
+                    data = JSON.parse(message);
+                } catch (e) {
+                    return;
+                }
+            }
+
+            if (data.type === "updateOre") {
+                document.getElementById("oreValue").innerText = data.value;
+            }
+        });
+    </script>
+</body>
+</html>
