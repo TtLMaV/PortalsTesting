@@ -272,30 +272,45 @@
       }
     }
 
+    // Listen for messages from Portals - FIXED VERSION
     window.addEventListener('message', (event) => {
+      // Don't check origin - accept from any source (required for Portals)
       const msg = event.data;
-      debugLog('Received message: ' + JSON.stringify(msg));
+      debugLog('Received raw message: ' + JSON.stringify(msg));
 
+      // Handle string messages (format: "mine_copper")
       if (typeof msg === 'string') {
+        debugLog('Processing string message: ' + msg);
         const parts = msg.split('_');
         
         if (parts[0] === 'mine') {
           const oreType = parts[1];
           const amount = parts[2] ? parseInt(parts[2]) : 1;
+          debugLog('Mining ' + amount + ' ' + oreType);
           addOre(oreType, amount);
+        }
+      }
+      
+      // Handle object messages (if Portals sends them differently)
+      else if (typeof msg === 'object' && msg !== null) {
+        debugLog('Processing object message');
+        
+        // Check if it's a Portals task message
+        if (msg.type === 'portalsMessage' || msg.message) {
+          const actualMessage = msg.message || msg.data;
+          debugLog('Extracted message from object: ' + actualMessage);
+          
+          if (typeof actualMessage === 'string' && actualMessage.startsWith('mine_')) {
+            const parts = actualMessage.split('_');
+            const oreType = parts[1];
+            const amount = parts[2] ? parseInt(parts[2]) : 1;
+            addOre(oreType, amount);
+          }
         }
       }
     });
 
     window.addEventListener('load', () => {
       loadInventory();
-      debugLog('Inventory system initialized');
-      
-      window.parent.postMessage({
-        taskName: 'inventory_ready',
-        taskTargetState: 'SetNotActiveToCompleted'
-      }, '*');
-    });
-  </script>
-</body>
-</html>
+      debugLog('Inventory system initialized and ready');
+      debug
