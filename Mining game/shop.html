@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mine Shop</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1008;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #d4c5a0;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .shop-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #1e140c 0%, #2a1a0e 100%);
+    border: 2px solid #8b6914;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 18px;
+    background: rgba(40, 28, 14, 0.95);
+    border-bottom: 2px solid #6b5220;
+  }
+  .header-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f0d060;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 1px;
+  }
+  .header-coins {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .coin-icon {
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle at 40% 35%, #f0d060, #c9a227);
+    border-radius: 50%;
+    border: 2px solid #8b6914;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: #5a3e00;
+  }
+  .coin-amount {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f0d060;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+
+  /* Main content */
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Left panel - inventory */
+  .left-panel {
+    flex: 1;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-right: 2px solid #4a3518;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #a08050;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .ore-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .ore-slot {
+    aspect-ratio: 1;
+    background: rgba(50, 35, 18, 0.9);
+    border: 2px solid #5a4020;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    min-height: 70px;
+  }
+  .ore-slot:hover {
+    border-color: #c9a227;
+    background: rgba(70, 50, 25, 0.9);
+  }
+  .ore-slot.selected {
+    border-color: #f0d060;
+    box-shadow: 0 0 10px rgba(240,208,96,0.3), inset 0 0 8px rgba(240,208,96,0.1);
+  }
+  .ore-slot.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .ore-slot.locked:hover {
+    border-color: #5a4020;
+    background: rgba(50, 35, 18, 0.9);
+  }
+
+  .ore-icon-large {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 5px;
+    margin-bottom: 4px;
+  }
+
+  .ore-icon-large.copper { background: linear-gradient(135deg, #b87333, #da8a67); color: #3e1f00; }
+  .ore-icon-large.iron { background: linear-gradient(135deg, #8a8a8a, #b0b0b0); color: #2a2a2a; }
+  .ore-icon-large.gold { background: linear-gradient(135deg, #c9a227, #f0d060); color: #5a3e00; }
+  .ore-icon-large.diamond { background: linear-gradient(135deg, #4fc3f7, #b3e5fc); color: #0d47a1; }
+
+  .slot-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #8a7a60;
+  }
+  .slot-count.has-ore { color: #f0d060; }
+
+  .lock-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #6b5220;
+    border-radius: 6px;
+  }
+
+  /* Sell buttons */
+  .sell-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+  }
+
+  .sell-btn {
+    padding: 8px 12px;
+    border: 2px solid #5a4020;
+    border-radius: 5px;
+    background: rgba(60, 42, 20, 0.9);
+    color: #d4c5a0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.15s;
+  }
+  .sell-btn:hover:not(.disabled) {
+    border-color: #c9a227;
+    background: rgba(80, 58, 28, 0.9);
+    color: #f0d060;
+  }
+  .sell-btn.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .sell-btn .sell-value {
+    color: #f0d060;
+    font-weight: 700;
+  }
+  .sell-btn.disabled .sell-value {
+    color: inherit;
+  }
+
+  /* Right panel - details + upgrades */
+  .right-panel {
+    flex: 1;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  /* Item detail */
+  .detail-card {
+    background: rgba(40, 28, 14, 0.8);
+    border: 2px solid #4a3518;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .detail-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 800;
+    border-radius: 10px;
+    border: 3px solid rgba(255,255,255,0.1);
+  }
+  .detail-icon.copper { background: linear-gradient(135deg, #b87333, #da8a67); color: #3e1f00; }
+  .detail-icon.iron { background: linear-gradient(135deg, #8a8a8a, #b0b0b0); color: #2a2a2a; }
+  .detail-icon.gold { background: linear-gradient(135deg, #c9a227, #f0d060); color: #5a3e00; }
+  .detail-icon.diamond { background: linear-gradient(135deg, #4fc3f7, #b3e5fc); color: #0d47a1; }
+
+  .detail-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f0d060;
+  }
+
+  .detail-desc {
+    font-size: 12px;
+    color: #a08050;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .detail-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+  }
+  .detail-stats span { color: #d4c5a0; }
+  .detail-stats .val { color: #f0d060; font-weight: 700; }
+
+  /* Upgrades */
+  .upgrade-card {
+    background: rgba(40, 28, 14, 0.8);
+    border: 2px solid #4a3518;
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.15s;
+  }
+  .upgrade-card.available {
+    border-color: #6b5220;
+    cursor: pointer;
+  }
+  .upgrade-card.available:hover {
+    border-color: #c9a227;
+  }
+  .upgrade-card.owned {
+    border-color: #2a5a20;
+    opacity: 0.6;
+  }
+  .upgrade-card.locked {
+    opacity: 0.3;
+  }
+
+  .upgrade-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border-radius: 8px;
+    background: rgba(60, 42, 20, 0.9);
+    border: 2px solid #5a4020;
+    flex-shrink: 0;
+  }
+
+  .upgrade-info {
+    flex: 1;
+  }
+  .upgrade-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #d4c5a0;
+    margin-bottom: 2px;
+  }
+  .upgrade-desc {
+    font-size: 11px;
+    color: #8a7a60;
+  }
+
+  .upgrade-action {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .buy-btn {
+    padding: 6px 14px;
+    border: 2px solid #6b5220;
+    border-radius: 5px;
+    background: linear-gradient(180deg, #5a4020, #3e2a10);
+    color: #f0d060;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .buy-btn:hover:not(.cant-afford) {
+    border-color: #f0d060;
+    background: linear-gradient(180deg, #6b5220, #5a4020);
+  }
+  .buy-btn.cant-afford {
+    color: #8a7a60;
+    cursor: not-allowed;
+  }
+  .owned-badge {
+    font-size: 12px;
+    color: #4caf50;
+    font-weight: 700;
+  }
+
+  .upgrade-cost {
+    font-size: 12px;
+    color: #c9a227;
+    margin-top: 2px;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 18px;
+    background: rgba(40, 28, 14, 0.95);
+    border-top: 2px solid #6b5220;
+    font-size: 13px;
+  }
+  .footer-pick {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pick-label { color: #8a7a60; }
+  .pick-value { font-weight: 700; }
+  .pick-value.tier1 { color: #a0836d; }
+  .pick-value.tier2 { color: #b0b0b0; }
+  .pick-value.tier3 { color: #f0d060; }
+  .pick-value.tier4 { color: #4fc3f7; }
+
+  .footer-total {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .footer-total .label { color: #8a7a60; }
+  .footer-total .val { color: #f0d060; font-weight: 700; }
+
+  /* Notification toast */
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: rgba(30, 20, 10, 0.95);
+    border: 2px solid #c9a227;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #f0d060;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 100;
+    text-align: center;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .toast.error {
+    border-color: #8b2020;
+    color: #e57373;
+  }
+</style>
+</head>
+<body>
+
+<div class="shop-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">MINE SHOP</div>
+    <div class="header-coins">
+      <div class="coin-icon">$</div>
+      <div class="coin-amount" id="header-coins">0</div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <!-- Left: Inventory + Sell -->
+    <div class="left-panel">
+      <div class="section-title">Inventory</div>
+      <div class="ore-grid">
+        <div class="ore-slot" id="slot-copper" onclick="selectOre('copper')">
+          <div class="ore-icon-large copper">Cu</div>
+          <div class="slot-count" id="grid-copper">x0</div>
+        </div>
+        <div class="ore-slot" id="slot-iron" onclick="selectOre('iron')">
+          <div class="ore-icon-large iron">Fe</div>
+          <div class="slot-count" id="grid-iron">x0</div>
+        </div>
+        <div class="ore-slot" id="slot-gold" onclick="selectOre('gold')">
+          <div class="ore-icon-large gold">Au</div>
+          <div class="slot-count" id="grid-gold">x0</div>
+        </div>
+        <div class="ore-slot" id="slot-diamond" onclick="selectOre('diamond')">
+          <div class="ore-icon-large diamond">Dm</div>
+          <div class="slot-count" id="grid-diamond">x0</div>
+        </div>
+      </div>
+
+      <div class="sell-buttons">
+        <div class="sell-btn disabled" id="sell-copper" onclick="sell('copper')">
+          <span>Sell All Copper</span>
+          <span class="sell-value" id="sell-copper-val">0 coins</span>
+        </div>
+        <div class="sell-btn disabled" id="sell-iron" onclick="sell('iron')">
+          <span>Sell All Iron</span>
+          <span class="sell-value" id="sell-iron-val">0 coins</span>
+        </div>
+        <div class="sell-btn disabled" id="sell-gold" onclick="sell('gold')">
+          <span>Sell All Gold</span>
+          <span class="sell-value" id="sell-gold-val">0 coins</span>
+        </div>
+        <div class="sell-btn disabled" id="sell-diamond" onclick="sell('diamond')">
+          <span>Sell All Diamond</span>
+          <span class="sell-value" id="sell-diamond-val">0 coins</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Detail + Upgrades -->
+    <div class="right-panel">
+      <div class="section-title">Details</div>
+      <div class="detail-card" id="detail-card">
+        <div class="detail-icon copper" id="detail-icon">Cu</div>
+        <div class="detail-name" id="detail-name">Copper Ore</div>
+        <div class="detail-desc" id="detail-desc">Common ore found in the upper mines. A good start for any miner.</div>
+        <div class="detail-stats">
+          <span>Value: <span class="val" id="detail-value">1</span> coin</span>
+          <span>Owned: <span class="val" id="detail-owned">0</span></span>
+        </div>
+      </div>
+
+      <div class="section-title">Pickaxe Upgrades</div>
+      <div id="upgrades-container"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-pick">
+      <span class="pick-label">Pickaxe:</span>
+      <span class="pick-value tier1" id="footer-pick">Wooden Pickaxe</span>
+    </div>
+    <div class="footer-total">
+      <span class="label">Total Earned:</span>
+      <span class="val" id="footer-total">0</span>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+<script>
+(function() {
+  // State
+  var state = { copper: 0, iron: 0, gold: 0, diamond: 0, coins: 0, tier: 1 };
+  var selectedOre = 'copper';
+  var sellCooldown = false;
+
+  // Ore data
+  var ORES = {
+    copper: { name: 'Copper Ore', symbol: 'Cu', value: 1, tierReq: 1, desc: 'Common ore found in the upper mines. A good start for any miner.', task: 'SellCopper' },
+    iron: { name: 'Iron Ore', symbol: 'Fe', value: 3, tierReq: 2, desc: 'Sturdy iron ore from the mid-level chambers. Worth a fair price.', task: 'SellIron' },
+    gold: { name: 'Gold Ore', symbol: 'Au', value: 7, tierReq: 3, desc: 'Precious gold ore found deep in the mines. Highly valuable.', task: 'SellGold' },
+    diamond: { name: 'Diamond', symbol: 'Dm', value: 15, tierReq: 4, desc: 'Rare diamonds from the deepest chamber. Extremely valuable.', task: 'SellDiamond' }
+  };
+
+  var PICKS = [
+    { tier: 2, name: 'Iron Pickaxe', cost: 20, desc: 'Unlocks Iron Chamber', task: 'BuyPick2', icon: '&#9935;' },
+    { tier: 3, name: 'Gold Pickaxe', cost: 75, desc: 'Unlocks Gold Chamber', task: 'BuyPick3', icon: '&#9935;' },
+    { tier: 4, name: 'Diamond Pickaxe', cost: 200, desc: 'Unlocks Diamond Chamber', task: 'BuyPick4', icon: '&#9935;' }
+  ];
+
+  var PICK_NAMES = { 1: 'Wooden Pickaxe', 2: 'Iron Pickaxe', 3: 'Gold Pickaxe', 4: 'Diamond Pickaxe' };
+  var PICK_CLASSES = { 1: 'tier1', 2: 'tier2', 3: 'tier3', 4: 'tier4' };
+
+  // Helper to send task to Portals
+  function sendTask(taskName, targetState) {
+    try {
+      PortalsSdk.sendMessageToUnity(JSON.stringify({
+        TaskName: taskName,
+        TaskTargetState: targetState || 'SetNotActiveToActive'
+      }));
+    } catch(e) {
+      console.log('[Shop] sendTask error:', e);
+    }
+  }
+
+  // Show toast
+  function showToast(msg, isError) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(function() { el.className = 'toast'; }, 1500);
+  }
+
+  // Select ore in grid
+  window.selectOre = function(ore) {
+    selectedOre = ore;
+    render();
+  };
+
+  // Sell ore
+  window.sell = function(ore) {
+    if (sellCooldown) return;
+    var count = state[ore];
+    if (count <= 0) return;
+
+    sellCooldown = true;
+    setTimeout(function() { sellCooldown = false; }, 500);
+
+    var oreData = ORES[ore];
+    sendTask(oreData.task);
+    showToast('Sold ' + count + ' ' + oreData.name + ' for ' + (count * oreData.value) + ' coins');
+  };
+
+  // Buy pickaxe
+  window.buyPick = function(pickIndex) {
+    if (sellCooldown) return;
+    var pick = PICKS[pickIndex];
+    if (!pick) return;
+    if (state.tier >= pick.tier) return;
+    if (state.coins < pick.cost) {
+      showToast('Not enough coins!', true);
+      return;
+    }
+
+    sellCooldown = true;
+    setTimeout(function() { sellCooldown = false; }, 500);
+
+    sendTask(pick.task);
+    showToast('Purchased ' + pick.name + '!');
+  };
+
+  // Render everything
+  function render() {
+    // Header coins
+    document.getElementById('header-coins').textContent = state.coins;
+
+    // Grid counts
+    var oreKeys = ['copper', 'iron', 'gold', 'diamond'];
+    for (var i = 0; i < oreKeys.length; i++) {
+      var key = oreKeys[i];
+      var countEl = document.getElementById('grid-' + key);
+      var slotEl = document.getElementById('slot-' + key);
+      var count = state[key];
+
+      countEl.textContent = 'x' + count;
+      countEl.className = 'slot-count' + (count > 0 ? ' has-ore' : '');
+
+      // Selected state
+      slotEl.className = 'ore-slot' + (selectedOre === key ? ' selected' : '') +
+        (state.tier < ORES[key].tierReq ? ' locked' : '');
+    }
+
+    // Sell buttons
+    for (var i = 0; i < oreKeys.length; i++) {
+      var key = oreKeys[i];
+      var count = state[key];
+      var btnEl = document.getElementById('sell-' + key);
+      var valEl = document.getElementById('sell-' + key + '-val');
+      var totalVal = count * ORES[key].value;
+
+      btnEl.className = 'sell-btn' + (count <= 0 ? ' disabled' : '');
+      valEl.textContent = totalVal + ' coin' + (totalVal !== 1 ? 's' : '');
+    }
+
+    // Detail panel
+    var ore = ORES[selectedOre];
+    document.getElementById('detail-icon').className = 'detail-icon ' + selectedOre;
+    document.getElementById('detail-icon').innerHTML = ore.symbol;
+    document.getElementById('detail-name').textContent = ore.name;
+    document.getElementById('detail-desc').textContent = ore.desc;
+    document.getElementById('detail-value').textContent = ore.value;
+    document.getElementById('detail-owned').textContent = state[selectedOre];
+
+    // Upgrades
+    var upgradesHtml = '';
+    for (var i = 0; i < PICKS.length; i++) {
+      var pick = PICKS[i];
+      var owned = state.tier >= pick.tier;
+      var canAfford = state.coins >= pick.cost;
+      var isNext = pick.tier === state.tier + 1;
+
+      var cardClass = 'upgrade-card';
+      if (owned) cardClass += ' owned';
+      else if (isNext) cardClass += ' available';
+      else cardClass += ' locked';
+
+      upgradesHtml += '<div class="' + cardClass + '">';
+      upgradesHtml += '<div class="upgrade-icon">' + pick.icon + '</div>';
+      upgradesHtml += '<div class="upgrade-info">';
+      upgradesHtml += '<div class="upgrade-name">' + pick.name + '</div>';
+      upgradesHtml += '<div class="upgrade-desc">' + pick.desc + '</div>';
+      upgradesHtml += '</div>';
+      upgradesHtml += '<div class="upgrade-action">';
+
+      if (owned) {
+        upgradesHtml += '<div class="owned-badge">OWNED</div>';
+      } else if (isNext) {
+        var btnClass = 'buy-btn' + (canAfford ? '' : ' cant-afford');
+        upgradesHtml += '<div class="' + btnClass + '" onclick="buyPick(' + i + ')">' + pick.cost + ' coins</div>';
+      } else {
+        upgradesHtml += '<div class="upgrade-cost">' + pick.cost + ' coins</div>';
+      }
+
+      upgradesHtml += '</div></div>';
+    }
+    document.getElementById('upgrades-container').innerHTML = upgradesHtml;
+
+    // Footer
+    var pickEl = document.getElementById('footer-pick');
+    pickEl.textContent = PICK_NAMES[state.tier] || 'Wooden Pickaxe';
+    pickEl.className = 'pick-value ' + (PICK_CLASSES[state.tier] || 'tier1');
+  }
+
+  // Parse inv_ messages
+  function handleMessage(msg) {
+    if (typeof msg !== 'string') return;
+
+    if (msg.startsWith('inv_')) {
+      var parts = msg.substring(4).split('_');
+      if (parts.length >= 6) {
+        state.copper = parseInt(parts[0]) || 0;
+        state.iron = parseInt(parts[1]) || 0;
+        state.gold = parseInt(parts[2]) || 0;
+        state.diamond = parseInt(parts[3]) || 0;
+        state.coins = parseInt(parts[4]) || 0;
+        state.tier = parseInt(parts[5]) || 1;
+        render();
+      }
+    }
+  }
+
+  // Poll for sync
+  function requestSync() {
+    sendTask('SyncHUD');
+  }
+
+  // Set up message listener
+  if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+    PortalsSdk.setMessageListener(function(message) {
+      handleMessage(message);
+    });
+  } else {
+    window.addEventListener('message', function(event) {
+      if (event.data && typeof event.data === 'string') {
+        handleMessage(event.data);
+      }
+    });
+  }
+
+  // Start polling every 1.5s
+  setInterval(requestSync, 1500);
+
+  // Initial render
+  render();
+})();
+</script>
+</body>
+</html>
