@@ -34,45 +34,20 @@
   
   <script>
     const STORAGE_KEY = 'portals_copper_count';
-    let copper = 0;
-
-    // Load saved copper
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      copper = parseInt(saved) || 0;
-    }
 
     function updateDisplay() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const copper = parseInt(saved) || 0;
       document.getElementById('copper').textContent = copper;
     }
 
-    function save() {
-      localStorage.setItem(STORAGE_KEY, copper.toString());
-    }
-
-    function addCopper() {
-      copper++;
-      updateDisplay();
-      save();
-      console.log('Copper mined! Total:', copper);
-    }
-
-    // Listen for mine messages
-    window.addEventListener('message', (event) => {
-      const msg = event.data;
-      console.log('Received message:', msg);
-      
-      // Any message with "mine" or "copper" in it = add copper
-      if (typeof msg === 'string') {
-        if (msg.includes('mine') || msg.includes('copper')) {
-          addCopper();
-        }
-      }
-    });
-
-    // Initialize display
+    // Update every 100ms to stay synced with listener
+    setInterval(updateDisplay, 100);
+    
+    // Initial display
     updateDisplay();
-    console.log('Mini HUD ready. Current copper:', copper);
+    
+    console.log('[MiniHUD] Ready and syncing');
   </script>
 </body>
 </html>
