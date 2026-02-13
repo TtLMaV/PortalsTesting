@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 8px;
+      border: 2px solid #CD7F32;
+      font-family: Arial, sans-serif;
+    }
+    .hud {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .icon {
+      font-size: 20px;
+    }
+    .count {
+      color: #CD7F32;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <span class="icon">🟠</span>
+    <span class="count" id="copper">0</span>
+  </div>
+  
+  <script>
+    const STORAGE_KEY = 'portals_mining_inventory';
+    let copper = 0;
+
+    // Load saved copper
+    function load() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const inventory = JSON.parse(saved);
+        copper = inventory.copper || 0;
+        document.getElementById('copper').textContent = copper;
+      }
+    }
+
+    // Save copper
+    function save() {
+      const inventory = {
+        copper: copper,
+        iron: 0,
+        gold: 0,
+        totalMined: copper
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+    }
+
+    // Listen for mining messages
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      
+      if (msg === 'mine_copper' || (typeof msg === 'string' && msg.includes('copper'))) {
+        copper++;
+        document.getElementById('copper').textContent = copper;
+        save();
+      }
+    });
+
+    // Load on start
+    load();
+    
+    // Refresh every second to sync with main inventory
+    setInterval(load, 1000);
+  </script>
+</body>
+</html>
+```
+
+#### Upload to GitHub
+
+1. **Go to your repo:** https://github.com/TtLMaV/PortalsTesting
+2. **Click "Add file" → "Create new file"**
+3. **Name:** `Mining game/mini-hud.html`
+4. **Paste the code above**
+5. **Commit**
+
+Your URL will be:
+```
+https://ttlmav.github.io/PortalsTesting/Mining%20game/mini-hud.html
