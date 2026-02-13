@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Box Breathing — Solana</title>
+
+  <style>
+    :root{
+      --sol-purple:#9945FF;
+      --sol-green:#14F195;
+
+      --bg:#070913;
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --border:rgba(255,255,255,.10);
+
+      /* driven by JS */
+      --pulse: .12;        /* 0..1-ish */
+      --pulse2: .10;       /* secondary glow */
+    }
+
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(900px 700px at 15% 20%, rgba(153,69,255,.28), transparent 55%),
+        radial-gradient(900px 700px at 85% 80%, rgba(20,241,149,.20), transparent 55%),
+        radial-gradient(600px 500px at 60% 10%, rgba(153,69,255,.12), transparent 55%),
+        linear-gradient(180deg, #060712 0%, #050613 35%, #070a18 100%),
+        var(--bg);
+      color: var(--text);
+      padding: 18px;
+      box-sizing: border-box;
+      overflow:hidden;
+    }
+
+    /* ambient aura + synced pulse */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:-40%;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(153,69,255, calc(.10 + var(--pulse) * .25)), transparent 38%),
+        radial-gradient(circle at 78% 80%, rgba(20,241,149, calc(.08 + var(--pulse2) * .22)), transparent 40%),
+        radial-gradient(circle at 55% 55%, rgba(255,255,255,.04), transparent 45%);
+      filter: blur(28px);
+      opacity:.95;
+      transform: translate3d(0,0,0) scale(calc(1.02 + var(--pulse) * .03));
+      transition: transform 240ms ease, opacity 240ms ease;
+      pointer-events:none;
+    }
+
+    .wrap{
+      width: min(820px, 100%);
+      background: linear-gradient(145deg, rgba(153,69,255,.10), rgba(20,241,149,.06));
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 26px;
+      padding: 22px;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.45),
+        0 0 40px rgba(153,69,255,.18),
+        0 0 70px rgba(20,241,149,.10);
+      backdrop-filter: blur(14px);
+      position:relative;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+      min-width: 240px;
+    }
+
+    h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .2px;
+      font-weight: 750;
+    }
+
+    .sub{
+      margin:0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .hud{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      font-size: 13px;
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      min-height: 36px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .label{ color: var(--muted); }
+    .value{
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--sol-purple), var(--sol-green));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .stage{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.08);
+      background:
+        radial-gradient(circle at 50% 40%, rgba(153,69,255, calc(.08 + var(--pulse) * .18)), transparent 55%),
+        radial-gradient(circle at 55% 60%, rgba(20,241,149, calc(.06 + var(--pulse2) * .16)), transparent 55%),
+        rgba(0,0,0,.22);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.03),
+        0 10px 30px rgba(0,0,0,.25);
+      position:relative;
+      overflow:hidden;
+    }
+
+    /* stage shimmer */
+    .stage::after{
+      content:"";
+      position:absolute;
+      inset:-60%;
+      background: conic-gradient(from 220deg,
+        rgba(153,69,255,.00),
+        rgba(153,69,255,.20),
+        rgba(20,241,149,.16),
+        rgba(153,69,255,.00)
+      );
+      opacity: calc(.22 + var(--pulse) * .10);
+      filter: blur(28px);
+      animation: spin 10s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes spin{
+      from{ transform: rotate(0deg); }
+      to  { transform: rotate(360deg); }
+    }
+
+    .square{
+      width: min(360px, 78vw);
+      aspect-ratio: 1 / 1;
+      position:relative;
+      z-index:1;
+    }
+
+    .controls{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap: wrap;
+    }
+
+    .rangePill{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+    }
+
+    input[type="range"]{
+      width: 170px;
+      accent-color: var(--sol-green);
+    }
+
+    button{
+      border: none;
+      background: linear-gradient(90deg, var(--sol-purple), var(--sol-green));
+      color: #050613;
+      border-radius: 14px;
+      padding: 10px 16px;
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .15s ease, box-shadow .25s ease, filter .25s ease;
+      box-shadow:
+        0 10px 22px rgba(0,0,0,.35),
+        0 0 18px rgba(153,69,255,.25),
+        0 0 18px rgba(20,241,149,.18);
+    }
+
+    button:hover{
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+      box-shadow:
+        0 14px 30px rgba(0,0,0,.40),
+        0 0 26px rgba(153,69,255,.45),
+        0 0 26px rgba(20,241,149,.30);
+    }
+
+    button:active{ transform: translateY(0px); }
+
+    button.secondary{
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+      font-weight: 800;
+    }
+    button.secondary:hover{
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.05),
+        0 10px 26px rgba(0,0,0,.35);
+      filter: none;
+    }
+
+    .footer{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.78);
+    }
+
+    button:focus-visible, input:focus-visible{
+      outline: 2px solid rgba(20,241,149,.85);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .stage::after{ animation: none; }
+      button{ transition: none; }
+      body::before{ transition: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap" role="application" aria-label="Box breathing exercise">
+    <div class="header">
+      <div class="title">
+        <h1>Box Breathing</h1>
+        <p class="sub">Inhale → Hold → Exhale → Hold (equal counts). Keep shoulders relaxed. If you feel lightheaded, pause.</p>
+      </div>
+
+      <div class="hud">
+        <div class="pill" aria-live="polite">
+          <span class="label">Status</span>
+          <span class="value" id="status">Ready</span>
+        </div>
+        <div class="pill">
+          <span class="label">Phase</span>
+          <span class="value" id="phase">—</span>
+        </div>
+        <div class="pill">
+          <span class="label">Countdown</span>
+          <span class="value"><span id="count">—</span>s</span>
+        </div>
+        <div class="pill">
+          <span class="label">Length</span>
+          <span class="value"><span id="lenText">4</span>s</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="stage">
+        <svg class="square" viewBox="0 0 100 100" aria-hidden="true">
+          <defs>
+            <linearGradient id="solGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#9945FF"/>
+              <stop offset="100%" stop-color="#14F195"/>
+            </linearGradient>
+
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.8" result="blur"/>
+              <feColorMatrix in="blur" type="matrix"
+                values="1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        0 0 0 .9 0" result="glow"/>
+              <feMerge>
+                <feMergeNode in="glow"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <!-- Track -->
+          <path id="track"
+                d="M25,15 H75 Q85,15 85,25 V75 Q85,85 75,85 H25 Q15,85 15,75 V25 Q15,15 25,15 Z"
+                fill="none" stroke="rgba(255,255,255,.16)" stroke-width="2" />
+
+          <!-- Progress -->
+          <path id="progress"
+                d="M25,15 H75 Q85,15 85,25 V75 Q85,85 75,85 H25 Q15,85 15,75 V25 Q15,15 25,15 Z"
+                fill="none" stroke="url(#solGradient)" stroke-width="3.4"
+                stroke-linecap="round" filter="url(#glow)" />
+
+          <!-- Dot -->
+          <circle id="dot" r="4.2" cx="25" cy="15" fill="#14F195"
+                  style="filter: drop-shadow(0 0 8px rgba(20,241,149,.9)) drop-shadow(0 0 16px rgba(153,69,255,.6));" />
+
+          <!-- Center Phase Text (bold, in the middle) -->
+          <text id="centerPhase"
+                x="50" y="50"
+                text-anchor="middle"
+                dominant-baseline="middle"
+                font-size="11"
+                font-weight="900"
+                fill="url(#solGradient)"
+                style="
+                  letter-spacing:.6px;
+                  filter: drop-shadow(0 0 6px rgba(153,69,255,.7))
+                          drop-shadow(0 0 10px rgba(20,241,149,.45));
+                  pointer-events:none;
+                ">READY</text>
+        </svg>
+      </div>
+
+      <div class="controls">
+        <div class="pill rangePill">
+          <span class="label">Seconds</span>
+          <input id="lenRange" type="range" min="3" max="8" step="1" value="4" />
+        </div>
+
+        <button id="toggle" type="button" title="Start/Pause (Space)">Start</button>
+        <button id="reset" type="button" class="secondary" title="Reset (R)">Reset</button>
+        <button id="sound" type="button" class="secondary" title="Toggle sound (M)">Sound: On</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Tip: breathe gently through your nose. Don’t force the breath.</span>
+      <span class="kbd">Space: Start/Pause • R: Reset • M: Sound</span>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const phases = ["Inhale", "Hold", "Exhale", "Hold"];
+
+      const statusEl = document.getElementById("status");
+      const phaseEl  = document.getElementById("phase");
+      const countEl  = document.getElementById("count");
+      const lenText  = document.getElementById("lenText");
+      const centerPhaseEl = document.getElementById("centerPhase");
+
+      const lenRange = document.getElementById("lenRange");
+      const toggleBtn= document.getElementById("toggle");
+      const resetBtn = document.getElementById("reset");
+      const soundBtn = document.getElementById("sound");
+
+      const progress = document.getElementById("progress");
+      const dot = document.getElementById("dot");
+
+      // Total path length for perfect dash animation
+      const total = progress.getTotalLength();
+      progress.style.strokeDasharray = total;
+      progress.style.strokeDashoffset = total;
+
+      let sec = parseInt(lenRange.value, 10);
+      let running = false;
+
+      let phaseIndex = 0;
+      let phaseStart = 0;
+      let rafId = null;
+      let lastShown = null;
+
+      // Phase text animation state
+      let phaseAnimStart = 0; // performance.now()
+
+      // Sound (WebAudio) — very gentle
+      let soundOn = true;
+      let audioCtx = null;
+
+      function ensureAudio(){
+        if(!audioCtx){
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      }
+
+      function beep(type){
+        if(!soundOn) return;
+        try{
+          ensureAudio();
+          if(audioCtx.state === "suspended") audioCtx.resume();
+
+          const now = audioCtx.currentTime;
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+
+          // Simple “soft cues”: inhale higher, exhale lower, holds very soft
+          const base = (type === "Inhale") ? 392 : (type === "Exhale") ? 220 : 165;
+          o.type = "sine";
+          o.frequency.setValueAtTime(base, now);
+
+          // short and subtle
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.exponentialRampToValueAtTime(0.035, now + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+          o.connect(g).connect(audioCtx.destination);
+          o.start(now);
+          o.stop(now + 0.14);
+        } catch(_) {}
+      }
+
+      function vibe(){
+        // tiny haptic on supported devices
+        if(navigator.vibrate){
+          try{ navigator.vibrate(12); } catch(_) {}
+        }
+      }
+
+      function setPulse(p1, p2){
+        // clamp-ish
+        const a = Math.max(0, Math.min(1, p1));
+        const b = Math.max(0, Math.min(1, p2));
+        document.documentElement.style.setProperty("--pulse", a.toFixed(3));
+        document.documentElement.style.setProperty("--pulse2", b.toFixed(3));
+      }
+
+      function setReady(){
+        statusEl.textContent = "Ready";
+        toggleBtn.textContent = "Start";
+        phaseEl.textContent = "—";
+        countEl.textContent = "—";
+        centerPhaseEl.textContent = "READY";
+        centerPhaseEl.setAttribute("opacity", "1");
+        centerPhaseEl.setAttribute("transform", "translate(0,0) scale(1)");
+        progress.style.strokeDashoffset = total;
+        dot.setAttribute("cx", "25");
+        dot.setAttribute("cy", "15");
+        setPulse(.12, .10);
+      }
+
+      function pointOnPath(t){
+        const p = progress.getPointAtLength(total * t);
+        dot.setAttribute("cx", p.x.toFixed(2));
+        dot.setAttribute("cy", p.y.toFixed(2));
+      }
+
+      function animateCenterText(now, phaseName, tPhase){
+        // A gentle “pop” at phase start, then settle.
+        // localT: 0 at start of phase, 1 by ~35% of phase duration
+        const localT = Math.min(1, (now - phaseAnimStart) / 260);
+
+        // scale down smoothly from 1.08 to 1.00
+        const scale = 1.0 + (1 - localT) * 0.08;
+
+        // subtle opacity breathing: inhale increases, exhale decreases a touch
+        let baseOpacity = 0.92;
+        if(phaseName === "Inhale") baseOpacity = 0.98;
+        if(phaseName === "Exhale") baseOpacity = 0.88;
+
+        // gentle wave across phase for life
+        const wave = 0.06 * Math.sin(tPhase * Math.PI);
+        const opacity = Math.max(0.75, Math.min(1, baseOpacity + wave));
+
+        // SVG transform on text (origin at center)
+        centerPhaseEl.setAttribute("transform", `translate(50 50) scale(${scale.toFixed(3)}) translate(-50 -50)`);
+        centerPhaseEl.setAttribute("opacity", opacity.toFixed(3));
+      }
+
+      function tick(now){
+        if(!running) return;
+
+        const elapsed = (now - phaseStart) / 1000;
+        const tPhase = Math.min(1, elapsed / sec);
+        const overall = (phaseIndex + tPhase) / 4;
+
+        // visuals (path + dot)
+        progress.style.strokeDashoffset = (total * (1 - overall)).toFixed(2);
+        pointOnPath(overall);
+
+        // labels
+        const phaseName = phases[phaseIndex];
+        phaseEl.textContent = phaseName;
+        centerPhaseEl.textContent = phaseName.toUpperCase();
+
+        const remaining = Math.max(0, Math.ceil(sec - elapsed));
+        if(remaining !== lastShown){
+          countEl.textContent = String(remaining);
+          lastShown = remaining;
+        }
+
+        // Sync background pulse to breath
+        // Inhale: ramp up; Exhale: ramp down; Holds: steady
+        let p = 0.18, p2 = 0.14;
+        if(phaseName === "Inhale"){
+          p  = 0.18 + 0.55 * tPhase;
+          p2 = 0.14 + 0.45 * tPhase;
+        } else if(phaseName === "Exhale"){
+          p  = 0.73 - 0.55 * tPhase;
+          p2 = 0.59 - 0.45 * tPhase;
+        } else {
+          // Hold phases: subtle undulation
+          p  = 0.36 + 0.05 * Math.sin(tPhase * Math.PI);
+          p2 = 0.28 + 0.04 * Math.sin(tPhase * Math.PI);
+        }
+        setPulse(p, p2);
+
+        // Center text animation
+        animateCenterText(now, phaseName, tPhase);
+
+        // next phase
+        if(elapsed >= sec){
+          phaseIndex = (phaseIndex + 1) % 4;
+          phaseStart = now;
+          phaseAnimStart = now;
+          lastShown = null;
+
+          // cue at phase boundary
+          beep(phases[phaseIndex]);
+          vibe();
+        }
+
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function start(){
+        running = true;
+        statusEl.textContent = "Running";
+        toggleBtn.textContent = "Pause";
+        phaseStart = performance.now();
+        phaseAnimStart = phaseStart;
+        lastShown = null;
+
+        // cue immediately into first phase
+        beep(phases[phaseIndex]);
+        vibe();
+
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function pause(){
+        running = false;
+        statusEl.textContent = "Paused";
+        toggleBtn.textContent = "Resume";
+        if(rafId) cancelAnimationFrame(rafId);
+        rafId = null;
+        setPulse(.18, .14);
+      }
+
+      function toggle(){
+        running ? pause() : start();
+      }
+
+      function reset(){
+        pause();
+        phaseIndex = 0;
+        setReady();
+      }
+
+      function toggleSound(){
+        soundOn = !soundOn;
+        soundBtn.textContent = soundOn ? "Sound: On" : "Sound: Off";
+        // iOS/Chrome autoplay rules: create/resume context on user gesture
+        if(soundOn){
+          try{ ensureAudio(); if(audioCtx.state === "suspended") audioCtx.resume(); } catch(_) {}
+        }
+      }
+
+      // UI events
+      toggleBtn.addEventListener("click", toggle);
+      resetBtn.addEventListener("click", reset);
+      soundBtn.addEventListener("click", toggleSound);
+
+      lenRange.addEventListener("input", () => {
+        sec = parseInt(lenRange.value, 10);
+        lenText.textContent = String(sec);
+        if(running){
+          phaseStart = performance.now();
+          phaseAnimStart = phaseStart;
+          lastShown = null;
+        }
+      });
+
+      // Keyboard shortcuts: Space toggles, R resets, M toggles sound
+      window.addEventListener("keydown", (e) => {
+        if(e.code === "Space"){
+          e.preventDefault();
+          toggle();
+        }
+        if(e.key.toLowerCase() === "r"){
+          reset();
+        }
+        if(e.key.toLowerCase() === "m"){
+          toggleSound();
+        }
+      });
+
+      // init
+      lenText.textContent = String(sec);
+      soundBtn.textContent = soundOn ? "Sound: On" : "Sound: Off";
+      setReady();
+    })();
+  </script>
+</body>
+</html>
