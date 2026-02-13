@@ -5,26 +5,24 @@
   <style>
     body {
       margin: 0;
-      padding: 8px;
-      background: rgba(0, 0, 0, 0.8);
-      border-radius: 8px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.85);
+      border-radius: 10px;
       border: 2px solid #CD7F32;
       font-family: Arial, sans-serif;
     }
     .hud {
       display: flex;
       align-items: center;
-      gap: 8px;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
+      gap: 10px;
     }
     .icon {
-      font-size: 20px;
+      font-size: 24px;
     }
     .count {
       color: #CD7F32;
-      font-size: 18px;
+      font-size: 22px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -35,46 +33,47 @@
   </div>
   
   <script>
-    const STORAGE_KEY = 'portals_mining_inventory';
+    const STORAGE_KEY = 'portals_copper_count';
     let copper = 0;
 
     // Load saved copper
-    function load() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const inventory = JSON.parse(saved);
-        copper = inventory.copper || 0;
-        document.getElementById('copper').textContent = copper;
-      }
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      copper = parseInt(saved) || 0;
     }
 
-    // Save copper
+    function updateDisplay() {
+      document.getElementById('copper').textContent = copper;
+    }
+
     function save() {
-      const inventory = {
-        copper: copper,
-        iron: 0,
-        gold: 0,
-        totalMined: copper
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+      localStorage.setItem(STORAGE_KEY, copper.toString());
     }
 
-    // Listen for mining messages
+    function addCopper() {
+      copper++;
+      updateDisplay();
+      save();
+      console.log('Copper mined! Total:', copper);
+    }
+
+    // Listen for mine messages
     window.addEventListener('message', (event) => {
       const msg = event.data;
+      console.log('Received message:', msg);
       
-      if (msg === 'mine_copper' || (typeof msg === 'string' && msg.includes('copper'))) {
-        copper++;
-        document.getElementById('copper').textContent = copper;
-        save();
+      // Any message with "mine" or "copper" in it = add copper
+      if (typeof msg === 'string') {
+        if (msg.includes('mine') || msg.includes('copper')) {
+          addCopper();
+        }
       }
     });
 
-    // Load on start
-    load();
-    
-    // Refresh every second to sync with main inventory
-    setInterval(load, 1000);
+    // Initialize display
+    updateDisplay();
+    console.log('Mini HUD ready. Current copper:', copper);
   </script>
 </body>
 </html>
+
