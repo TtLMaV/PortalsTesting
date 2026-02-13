@@ -2,315 +2,155 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mining Inventory</title>
+  <title>Mining Inventory - Debug Mode</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      color: white;
+      font-family: monospace;
+      background: #000;
+      color: #0f0;
       padding: 20px;
     }
-
-    .container {
-      max-width: 400px;
-      margin: 0 auto;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 15px;
-      border: 2px solid rgba(205, 127, 50, 0.3);
-    }
-
-    .header h1 {
-      font-size: 28px;
-      margin-bottom: 10px;
-      color: #CD7F32;
-    }
-
-    .inventory {
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 15px;
-      padding: 25px;
-      border: 2px solid rgba(205, 127, 50, 0.5);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .ore-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 15px;
-      margin-bottom: 15px;
-      background: rgba(205, 127, 50, 0.15);
-      border-radius: 10px;
-      border-left: 4px solid #CD7F32;
-      transition: all 0.3s ease;
-    }
-
-    .ore-item:hover {
-      background: rgba(205, 127, 50, 0.25);
-      transform: translateX(5px);
-    }
-
-    .ore-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .ore-icon {
-      width: 50px;
-      height: 50px;
-      background: linear-gradient(135deg, #CD7F32 0%, #B87333 100%);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 4px 15px rgba(205, 127, 50, 0.4);
-    }
-
-    .ore-name {
-      font-size: 18px;
-      font-weight: bold;
-      color: #CD7F32;
-    }
-
-    .ore-count {
-      font-size: 32px;
-      font-weight: bold;
-      color: white;
-      text-shadow: 0 2px 10px rgba(205, 127, 50, 0.5);
-    }
-
-    .stats {
-      margin-top: 20px;
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      text-align: center;
-    }
-
-    .stat-label {
-      font-size: 14px;
-      color: #999;
-      margin-bottom: 5px;
-    }
-
-    .stat-value {
+    .big {
       font-size: 24px;
       font-weight: bold;
-      color: #4CAF50;
+      color: #0ff;
+      margin: 20px 0;
     }
-
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #CD7F32 0%, #B87333 100%);
-      color: white;
-      padding: 15px 25px;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      opacity: 0;
-      transform: translateY(-20px);
-      transition: all 0.3s ease;
-      pointer-events: none;
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .notification.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .debug {
-      margin-top: 20px;
+    .log {
+      background: #111;
       padding: 10px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 5px;
+      border: 1px solid #333;
+      margin: 5px 0;
       font-size: 12px;
-      color: #666;
-      max-height: 150px;
-      overflow-y: auto;
     }
-
-    .reset-btn {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      background: rgba(255, 0, 0, 0.3);
-      border: 2px solid rgba(255, 0, 0, 0.5);
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.3s;
+    .error {
+      color: #f00;
     }
-
-    .reset-btn:hover {
-      background: rgba(255, 0, 0, 0.5);
+    .success {
+      color: #0f0;
+    }
+    .info {
+      color: #ff0;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>⛏️ Mining Inventory</h1>
-      <div class="stat-label">Total Ores Mined</div>
-      <div class="stat-value" id="totalMined">0</div>
-    </div>
-
-    <div class="inventory">
-      <div class="ore-item">
-        <div class="ore-info">
-          <div class="ore-icon">🟠</div>
-          <div class="ore-name">Copper Ore</div>
-        </div>
-        <div class="ore-count" id="copperCount">0</div>
-      </div>
-    </div>
-
-    <div class="stats">
-      <div class="stat-label">Last Action</div>
-      <div id="lastAction" style="color: #999; font-size: 14px;">Waiting for mining...</div>
-    </div>
-
-    <button class="reset-btn" onclick="resetInventory()">Reset Inventory (Debug)</button>
-
-    <div class="debug" id="debugLog"></div>
-  </div>
-
-  <div class="notification" id="notification"></div>
+  <h1>🔍 Portals Message Debugger</h1>
+  <div class="big">Copper: <span id="copper">0</span></div>
+  <div class="big">Total: <span id="total">0</span></div>
+  
+  <hr>
+  <h2>Message Log:</h2>
+  <div id="log"></div>
 
   <script>
     const STORAGE_KEY = 'portals_mining_inventory';
-    
-    let inventory = {
-      copper: 0,
-      iron: 0,
-      gold: 0,
-      totalMined: 0
-    };
+    let inventory = { copper: 0, total: 0 };
 
-    function loadInventory() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          inventory = JSON.parse(saved);
-          debugLog('Loaded saved inventory: ' + JSON.stringify(inventory));
-        } catch (e) {
-          debugLog('Error loading inventory: ' + e.message);
-        }
-      } else {
-        debugLog('No saved inventory found, starting fresh');
-      }
-      updateDisplay();
+    // Load saved data
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      inventory = JSON.parse(saved);
+      log('✅ Loaded saved inventory: ' + JSON.stringify(inventory), 'success');
+    } else {
+      log('ℹ️ No saved data, starting fresh', 'info');
     }
-
-    function saveInventory() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-      debugLog('Saved inventory: ' + JSON.stringify(inventory));
-    }
+    updateDisplay();
 
     function updateDisplay() {
-      document.getElementById('copperCount').textContent = inventory.copper;
-      document.getElementById('totalMined').textContent = inventory.totalMined;
+      document.getElementById('copper').textContent = inventory.copper;
+      document.getElementById('total').textContent = inventory.total;
     }
 
-    function addOre(oreType, amount = 1) {
-      if (inventory.hasOwnProperty(oreType)) {
-        inventory[oreType] += amount;
-        inventory.totalMined += amount;
-        saveInventory();
-        updateDisplay();
-        showNotification(`+${amount} ${oreType.charAt(0).toUpperCase() + oreType.slice(1)} Ore`);
-        updateLastAction(`Mined ${amount} ${oreType}`);
-        debugLog(`Added ${amount} ${oreType}. New total: ${inventory[oreType]}`);
-      }
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+      log('💾 Saved to localStorage', 'success');
     }
 
-    function showNotification(message) {
-      const notif = document.getElementById('notification');
-      notif.textContent = message;
-      notif.classList.add('show');
-      setTimeout(() => {
-        notif.classList.remove('show');
-      }, 2000);
+    function addCopper() {
+      inventory.copper++;
+      inventory.total++;
+      updateDisplay();
+      save();
+      log('⛏️ +1 Copper! New total: ' + inventory.copper, 'success');
     }
 
-    function updateLastAction(action) {
-      const timestamp = new Date().toLocaleTimeString();
-      document.getElementById('lastAction').textContent = `${action} at ${timestamp}`;
+    function log(message, type = '') {
+      const logDiv = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = 'log ' + type;
+      entry.innerHTML = `[${time}] ${message}`;
+      logDiv.insertBefore(entry, logDiv.firstChild);
     }
 
-    function debugLog(message) {
-      const debugDiv = document.getElementById('debugLog');
-      const timestamp = new Date().toLocaleTimeString();
-      debugDiv.innerHTML = `[${timestamp}] ${message}<br>` + debugDiv.innerHTML;
-    }
-
-    function resetInventory() {
-      if (confirm('Are you sure you want to reset your inventory?')) {
-        inventory = { copper: 0, iron: 0, gold: 0, totalMined: 0 };
-        saveInventory();
-        updateDisplay();
-        showNotification('Inventory Reset');
-        debugLog('Inventory reset to zero');
-      }
-    }
-
-    // Listen for messages from Portals - FIXED VERSION
+    // CATCH EVERYTHING
     window.addEventListener('message', (event) => {
-      // Don't check origin - accept from any source (required for Portals)
-      const msg = event.data;
-      debugLog('Received raw message: ' + JSON.stringify(msg));
-
-      // Handle string messages (format: "mine_copper")
-      if (typeof msg === 'string') {
-        debugLog('Processing string message: ' + msg);
-        const parts = msg.split('_');
-        
-        if (parts[0] === 'mine') {
-          const oreType = parts[1];
-          const amount = parts[2] ? parseInt(parts[2]) : 1;
-          debugLog('Mining ' + amount + ' ' + oreType);
-          addOre(oreType, amount);
-        }
-      }
+      log('📨 RAW EVENT RECEIVED:', 'info');
+      log('   Origin: ' + event.origin, 'info');
+      log('   Data type: ' + typeof event.data, 'info');
+      log('   Data value: ' + JSON.stringify(event.data), 'info');
       
-      // Handle object messages (if Portals sends them differently)
-      else if (typeof msg === 'object' && msg !== null) {
-        debugLog('Processing object message');
-        
-        // Check if it's a Portals task message
-        if (msg.type === 'portalsMessage' || msg.message) {
-          const actualMessage = msg.message || msg.data;
-          debugLog('Extracted message from object: ' + actualMessage);
-          
-          if (typeof actualMessage === 'string' && actualMessage.startsWith('mine_')) {
-            const parts = actualMessage.split('_');
-            const oreType = parts[1];
-            const amount = parts[2] ? parseInt(parts[2]) : 1;
-            addOre(oreType, amount);
-          }
+      const msg = event.data;
+
+      // Try every possible format Portals might send
+
+      // Format 1: Simple string "mine_copper"
+      if (msg === 'mine_copper') {
+        log('✅ Matched format: simple string "mine_copper"', 'success');
+        addCopper();
+        return;
+      }
+
+      // Format 2: String starting with "mine_"
+      if (typeof msg === 'string' && msg.startsWith('mine_')) {
+        log('✅ Matched format: string starting with "mine_"', 'success');
+        addCopper();
+        return;
+      }
+
+      // Format 3: Object with message property
+      if (typeof msg === 'object' && msg.message) {
+        log('✅ Found object with .message property: ' + msg.message, 'success');
+        if (msg.message.includes('copper') || msg.message.includes('mine')) {
+          addCopper();
+          return;
         }
       }
+
+      // Format 4: Object with data property
+      if (typeof msg === 'object' && msg.data) {
+        log('✅ Found object with .data property: ' + msg.data, 'success');
+        if (msg.data.includes('copper') || msg.data.includes('mine')) {
+          addCopper();
+          return;
+        }
+      }
+
+      // Format 5: Object with type and payload
+      if (typeof msg === 'object' && msg.type) {
+        log('✅ Found object with .type: ' + msg.type, 'success');
+        if (msg.type.includes('copper') || msg.type.includes('mine')) {
+          addCopper();
+          return;
+        }
+      }
+
+      // Format 6: Just any object mentioning copper or mine
+      if (typeof msg === 'object') {
+        const str = JSON.stringify(msg).toLowerCase();
+        if (str.includes('copper') || str.includes('mine')) {
+          log('✅ Found "copper" or "mine" in object', 'success');
+          addCopper();
+          return;
+        }
+      }
+
+      log('❌ Message did not match any expected format', 'error');
     });
 
-    window.addEventListener('load', () => {
-      loadInventory();
-      debugLog('Inventory system initialized and ready');
-      debug
+    log('🚀 Debugger initialized and listening...', 'success');
+    log('ℹ️ Waiting for messages from Portals...', 'info');
+  </script>
+</body>
+</html>
