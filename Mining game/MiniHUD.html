@@ -13,6 +13,11 @@
     }
     .hud {
       display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .main {
+      display: flex;
       align-items: center;
       gap: 10px;
     }
@@ -24,31 +29,90 @@
       font-size: 22px;
       font-weight: bold;
     }
+    .status {
+      font-size: 8px;
+      color: #666;
+      font-family: monospace;
+    }
+    .test-btn {
+      margin-top: 5px;
+      padding: 4px 8px;
+      background: #CD7F32;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div class="hud">
-    <span class="icon">🟠</span>
-    <span class="count" id="copper">0</span>
+    <div class="main">
+      <span class="icon">🟠</span>
+      <span class="count" id="copper">0</span>
+    </div>
+    <div class="status" id="status">Loading...</div>
+    <button class="test-btn" onclick="testAdd()">Test +1</button>
   </div>
   
   <script>
-    const STORAGE_KEY = 'portals_copper_count';
+    const STORAGE_KEY = 'portals_copper_simple';
+    let copper = 0;
+    let messageCount = 0;
+
+    function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      document.getElementById('status').textContent = `${time}: ${msg}`;
+      console.log(`[${time}]`, msg);
+    }
+
+    function load() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        copper = parseInt(saved) || 0;
+      }
+      updateDisplay();
+      log(`Loaded: ${copper}`);
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, copper.toString());
+      log(`Saved: ${copper}`);
+    }
 
     function updateDisplay() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      const copper = parseInt(saved) || 0;
       document.getElementById('copper').textContent = copper;
     }
 
-    // Update every 100ms to stay synced with listener
-    setInterval(updateDisplay, 100);
-    
-    // Initial display
-    updateDisplay();
-    
-    console.log('[MiniHUD] Ready and syncing');
+    function addCopper() {
+      copper++;
+      updateDisplay();
+      save();
+      log(`+1 copper! Total: ${copper}`);
+    }
+
+    function testAdd() {
+      addCopper();
+    }
+
+    // Listen for EVERYTHING
+    window.addEventListener('message', (event) => {
+      messageCount++;
+      const msg = event.data;
+      
+      log(`Msg #${messageCount}: ${typeof msg === 'string' ? msg : JSON.stringify(msg)}`);
+      console.log('Full event:', event);
+      
+      // Just add copper for ANY message (for testing)
+      addCopper();
+    });
+
+    // Load on start
+    load();
+    log('Ready - Waiting for messages...');
   </script>
 </body>
 </html>
+
 
