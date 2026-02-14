@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mining</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  .mine-container {
+    background: linear-gradient(180deg, #2a1a0a 0%, #1a0f05 100%);
+    border: 4px solid #5c3a1e;
+    border-image: none;
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px #3d2410,
+      inset 0 0 20px rgba(0,0,0,0.5),
+      0 8px 32px rgba(0,0,0,0.8);
+    width: 340px;
+    padding: 20px;
+    position: relative;
+    image-rendering: pixelated;
+  }
+
+  /* Corner accents */
+  .mine-container::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 6px; right: 6px; bottom: 6px;
+    border: 1px solid rgba(92, 58, 30, 0.4);
+    pointer-events: none;
+  }
+
+  /* Ore icon area */
+  .ore-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 10px;
+    background: rgba(0,0,0,0.3);
+    border: 2px solid #3d2410;
+  }
+
+  .ore-icon {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+    position: relative;
+  }
+
+  /* Pixel art rocks */
+  .ore-icon canvas {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+  }
+
+  .ore-name {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .ore-name .type { display: block; font-size: 8px; color: #888; margin-top: 4px; }
+
+  /* Colors per ore */
+  .copper .ore-name { color: #cd7f32; }
+  .iron .ore-name { color: #a8a8a8; }
+  .gold .ore-name { color: #ffd700; }
+  .diamond .ore-name { color: #4fc3f7; }
+
+  /* Progress bar */
+  .bar-wrapper {
+    background: #0a0604;
+    border: 2px solid #3d2410;
+    height: 28px;
+    position: relative;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .bar-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    position: relative;
+    transition: width 0.1s linear;
+  }
+
+  .copper .bar-fill {
+    background: linear-gradient(180deg, #cd7f32 0%, #a0622a 40%, #7a4b20 100%);
+    box-shadow: inset 0 1px 0 rgba(255,200,100,0.4), inset 0 -1px 0 rgba(0,0,0,0.3);
+  }
+  .iron .bar-fill {
+    background: linear-gradient(180deg, #b0b0b0 0%, #888 40%, #666 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3);
+  }
+  .gold .bar-fill {
+    background: linear-gradient(180deg, #ffd700 0%, #daa520 40%, #b8860b 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,100,0.5), inset 0 -1px 0 rgba(0,0,0,0.3);
+  }
+  .diamond .bar-fill {
+    background: linear-gradient(180deg, #4fc3f7 0%, #039be5 40%, #0277bd 100%);
+    box-shadow: inset 0 1px 0 rgba(150,220,255,0.5), inset 0 -1px 0 rgba(0,0,0,0.3);
+  }
+
+  /* Pixel shimmer on bar */
+  .bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.1) 0px,
+      rgba(255,255,255,0.1) 2px,
+      transparent 2px,
+      transparent 4px
+    );
+    animation: shimmer 0.6s steps(4) infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(8px); }
+  }
+
+  /* Status text */
+  .status {
+    text-align: center;
+    font-size: 9px;
+    color: #c4a882;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .status.complete {
+    color: #4caf50;
+    animation: blink 0.5s steps(1) 3;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Sparks when mining */
+  .sparks {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .spark {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #ffd700;
+    opacity: 0;
+  }
+
+  .spark.active {
+    animation: sparkFly 0.4s steps(4) forwards;
+  }
+
+  @keyframes sparkFly {
+    0% { opacity: 1; transform: translate(0, 0); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
+  }
+
+  /* Pickaxe swing animation */
+  .pickaxe {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 20px;
+    transform-origin: bottom right;
+    animation: swing 0.8s steps(3) infinite;
+    display: none;
+  }
+
+  .mining .pickaxe { display: block; }
+
+  @keyframes swing {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(-30deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  /* XP drop style notification */
+  .xp-drop {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0;
+    pointer-events: none;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  }
+
+  .copper .xp-drop { color: #cd7f32; }
+  .iron .xp-drop { color: #d0d0d0; }
+  .gold .xp-drop { color: #ffd700; }
+  .diamond .xp-drop { color: #4fc3f7; }
+
+  .xp-drop.show {
+    animation: xpFloat 1.5s steps(8) forwards;
+  }
+
+  @keyframes xpFloat {
+    0% { opacity: 1; transform: translate(-50%, -50%); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -150%); }
+  }
+</style>
+</head>
+<body>
+
+<div class="mine-container copper" id="mineBox">
+  <div class="pickaxe" id="pickaxe">&#9935;</div>
+
+  <div class="ore-display">
+    <div class="ore-icon"><canvas id="oreCanvas" width="16" height="16"></canvas></div>
+    <div class="ore-name">
+      <span id="oreName">Copper Ore</span>
+      <span class="type" id="oreType">Mining...</span>
+    </div>
+  </div>
+
+  <div class="bar-wrapper">
+    <div class="bar-bg"></div>
+    <div class="bar-fill" id="barFill"></div>
+    <div class="sparks" id="sparks"></div>
+  </div>
+
+  <div class="status" id="status">Mining...</div>
+  <div class="xp-drop" id="xpDrop">+1</div>
+</div>
+
+<script>
+  // ========== CONFIG ==========
+  const ORE_CONFIG = {
+    copper:  { name: 'Copper Ore',  time: 5,  task: 'mine_c_done', colors: ['#cd7f32','#a0622a','#7a4b20'] },
+    iron:    { name: 'Iron Ore',    time: 10, task: 'mine_i_done', colors: ['#b0b0b0','#888888','#666666'] },
+    gold:    { name: 'Gold Ore',    time: 15, task: 'mine_g_done', colors: ['#ffd700','#daa520','#b8860b'] },
+    diamond: { name: 'Diamond',     time: 20, task: 'mine_d_done', colors: ['#4fc3f7','#039be5','#0277bd'] }
+  };
+
+  // Get ore type from URL param, default copper
+  const params = new URLSearchParams(window.location.search);
+  const oreType = params.get('ore') || 'copper';
+  const config = ORE_CONFIG[oreType] || ORE_CONFIG.copper;
+
+  // ========== ELEMENTS ==========
+  const mineBox = document.getElementById('mineBox');
+  const barFill = document.getElementById('barFill');
+  const status = document.getElementById('status');
+  const oreName = document.getElementById('oreName');
+  const oreTypeLabel = document.getElementById('oreType');
+  const xpDrop = document.getElementById('xpDrop');
+  const sparksEl = document.getElementById('sparks');
+  const canvas = document.getElementById('oreCanvas');
+
+  // ========== SETUP ==========
+  mineBox.className = 'mine-container ' + oreType;
+  oreName.textContent = config.name;
+  oreTypeLabel.textContent = 'Mining...';
+  status.textContent = 'Mining...';
+
+  // Draw pixel ore rock
+  drawOre(config.colors);
+
+  // ========== MINING ==========
+  let startTime = Date.now();
+  let duration = config.time * 1000;
+  let complete = false;
+  let sparkTimer = null;
+
+  mineBox.classList.add('mining');
+
+  // Spark effects
+  sparkTimer = setInterval(createSpark, 200);
+
+  function update() {
+    if (complete) return;
+
+    let elapsed = Date.now() - startTime;
+    let progress = Math.min(elapsed / duration, 1.0);
+
+    barFill.style.width = (progress * 100) + '%';
+
+    let remaining = Math.max(0, Math.ceil((duration - elapsed) / 1000));
+    status.textContent = 'Mining... ' + remaining + 's';
+
+    if (progress >= 1.0) {
+      complete = true;
+      mineBox.classList.remove('mining');
+      clearInterval(sparkTimer);
+
+      status.textContent = '+1 ' + config.name + '!';
+      status.classList.add('complete');
+      oreTypeLabel.textContent = 'Complete!';
+
+      // XP drop animation
+      xpDrop.textContent = '+1 ' + config.name;
+      xpDrop.classList.add('show');
+
+      // Send message to Portals
+      sendToPortals(config.task);
+
+      return;
+    }
+
+    requestAnimationFrame(update);
+  }
+
+  requestAnimationFrame(update);
+
+  // ========== PORTALS SDK ==========
+  function sendToPortals(taskName) {
+    try {
+      if (window.PortalsSdk) {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: taskName,
+          TaskTargetState: 'SetNotActiveToActive'
+        }));
+      } else if (window.parent && window.parent.postMessage) {
+        window.parent.postMessage(JSON.stringify({
+          TaskName: taskName,
+          TaskTargetState: 'SetNotActiveToActive'
+        }), '*');
+      }
+    } catch(e) {
+      console.log('[Mining] Send error:', e);
+    }
+  }
+
+  // ========== SPARK EFFECTS ==========
+  function createSpark() {
+    if (complete) return;
+    for (let i = 0; i < 3; i++) {
+      let spark = document.createElement('div');
+      spark.className = 'spark';
+      spark.style.left = (Math.random() * 80 + 10) + '%';
+      spark.style.top = (Math.random() * 60 + 20) + '%';
+      spark.style.setProperty('--dx', (Math.random() * 30 - 15) + 'px');
+      spark.style.setProperty('--dy', -(Math.random() * 20 + 10) + 'px');
+      spark.style.background = config.colors[Math.floor(Math.random() * config.colors.length)];
+      sparksEl.appendChild(spark);
+
+      requestAnimationFrame(() => spark.classList.add('active'));
+      setTimeout(() => spark.remove(), 400);
+    }
+  }
+
+  // ========== PIXEL ART ORE ==========
+  function drawOre(colors) {
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    // Rock base (dark)
+    ctx.fillStyle = '#3a3a3a';
+    const rock = [
+      [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0]
+    ];
+
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        if (rock[y][x]) {
+          ctx.fillStyle = '#3a3a3a';
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+
+    // Ore veins
+    ctx.fillStyle = colors[0];
+    const veins = [[4,3],[5,3],[5,4],[10,5],[11,5],[11,6],[3,8],[4,8],[4,9],[9,10],[10,10],[10,11],[7,6],[7,7]];
+    veins.forEach(([x,y]) => { ctx.fillRect(x, y, 1, 1); });
+
+    // Highlights
+    ctx.fillStyle = colors[2];
+    const darks = [[6,4],[12,6],[5,9],[11,11]];
+    darks.forEach(([x,y]) => { ctx.fillRect(x, y, 1, 1); });
+  }
+</script>
+
+</body>
+</html>
