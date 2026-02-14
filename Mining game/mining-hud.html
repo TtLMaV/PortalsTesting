@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mining HUD</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: transparent;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ========== MAIN CONTAINER ========== */
+  .hud-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 210px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* ========== INVENTORY PANEL ========== */
+  .inv-panel {
+    background: linear-gradient(180deg, #3b3024 0%, #2a2118 100%);
+    border: 3px solid #5c4a32;
+    box-shadow:
+      0 0 0 1px #000,
+      inset 0 0 10px rgba(0,0,0,0.5),
+      0 4px 16px rgba(0,0,0,0.7);
+    padding: 6px;
+  }
+
+  .inv-header {
+    text-align: center;
+    font-size: 7px;
+    color: #c8a96e;
+    letter-spacing: 2px;
+    padding: 4px 0 6px;
+    border-bottom: 1px solid #5c4a32;
+    margin-bottom: 6px;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  /* ========== INVENTORY GRID ========== */
+  .inv-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+  }
+
+  .inv-slot {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #1a1510 0%, #241c14 50%, #1a1510 100%);
+    border: 1px solid #4a3a28;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.1s;
+  }
+
+  .inv-slot.occupied {
+    border-color: #6b5530;
+  }
+
+  .inv-slot.occupied:hover {
+    border-color: #c8a96e;
+  }
+
+  .inv-slot .item-icon {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+  }
+
+  .inv-slot .item-count {
+    position: absolute;
+    bottom: 1px;
+    right: 2px;
+    font-size: 7px;
+    color: #ffff00;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  }
+
+  .inv-slot .item-name-tip {
+    display: none;
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1510;
+    border: 1px solid #c8a96e;
+    color: #c8a96e;
+    font-size: 6px;
+    padding: 2px 4px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .inv-slot.occupied:hover .item-name-tip {
+    display: block;
+  }
+
+  /* ========== MINING OVERLAY ========== */
+  .mine-overlay {
+    background: linear-gradient(180deg, #2a1a0a 0%, #1a0f05 100%);
+    border: 3px solid #5c4a32;
+    box-shadow:
+      0 0 0 1px #000,
+      inset 0 0 10px rgba(0,0,0,0.5),
+      0 4px 16px rgba(0,0,0,0.7);
+    padding: 8px;
+    display: none;
+  }
+
+  .mine-overlay.active { display: block; }
+
+  .mine-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .mine-ore-icon {
+    width: 24px;
+    height: 24px;
+    image-rendering: pixelated;
+  }
+
+  .mine-ore-name {
+    font-size: 8px;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .mine-bar-outer {
+    background: #0a0604;
+    border: 2px solid #3d2410;
+    height: 18px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .mine-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* Bar shimmer */
+  .mine-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.08) 0px,
+      rgba(255,255,255,0.08) 2px,
+      transparent 2px,
+      transparent 4px
+    );
+    animation: barShimmer 0.6s steps(4) infinite;
+  }
+
+  @keyframes barShimmer {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(8px); }
+  }
+
+  /* Ore-specific bar colors */
+  .mine-bar-fill.copper {
+    background: linear-gradient(180deg, #cd7f32 0%, #a0622a 40%, #7a4b20 100%);
+  }
+  .mine-bar-fill.iron {
+    background: linear-gradient(180deg, #b0b0b0 0%, #888 40%, #666 100%);
+  }
+  .mine-bar-fill.gold {
+    background: linear-gradient(180deg, #ffd700 0%, #daa520 40%, #b8860b 100%);
+  }
+  .mine-bar-fill.diamond {
+    background: linear-gradient(180deg, #4fc3f7 0%, #039be5 40%, #0277bd 100%);
+  }
+
+  .mine-status {
+    text-align: center;
+    font-size: 6px;
+    color: #c4a882;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .mine-status.complete { color: #4caf50; }
+
+  /* Pickaxe icon */
+  .pickaxe-icon {
+    font-size: 12px;
+    animation: pickSwing 0.6s steps(3) infinite;
+  }
+
+  @keyframes pickSwing {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(-25deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  .pickaxe-icon.stopped { animation: none; }
+
+  /* ========== XP/LOOT DROP ========== */
+  .loot-drop {
+    position: fixed;
+    pointer-events: none;
+    font-size: 9px;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+    opacity: 0;
+    z-index: 200;
+  }
+
+  .loot-drop.show {
+    animation: lootFloat 1.8s steps(10) forwards;
+  }
+
+  @keyframes lootFloat {
+    0% { opacity: 1; transform: translateY(0); }
+    70% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-60px); }
+  }
+
+  /* ========== SPARKS ========== */
+  .spark-container {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .spark {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    opacity: 0;
+  }
+
+  .spark.pop {
+    animation: sparkPop 0.3s steps(3) forwards;
+  }
+
+  @keyframes sparkPop {
+    0% { opacity: 1; transform: translate(0,0); }
+    100% { opacity: 0; transform: translate(var(--sx), var(--sy)); }
+  }
+
+  /* ========== STATS BAR ========== */
+  .stats-bar {
+    background: linear-gradient(180deg, #3b3024 0%, #2a2118 100%);
+    border: 3px solid #5c4a32;
+    box-shadow: 0 0 0 1px #000, 0 4px 16px rgba(0,0,0,0.7);
+    padding: 6px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .stat-icon {
+    font-size: 10px;
+  }
+
+  .stat-val {
+    font-size: 7px;
+    color: #ffd700;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .stat-label {
+    font-size: 5px;
+    color: #888;
+    text-shadow: 1px 1px 0 #000;
+  }
+</style>
+</head>
+<body>
+
+<div class="hud-container">
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-icon">&#9935;</span>
+      <div>
+        <div class="stat-val" id="pickLevel">Lv 1</div>
+        <div class="stat-label">PICKAXE</div>
+      </div>
+    </div>
+    <div class="stat">
+      <span class="stat-icon" style="color: #ffd700;">&#9679;</span>
+      <div>
+        <div class="stat-val" id="coinCount">0</div>
+        <div class="stat-label">COINS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mining Progress Overlay -->
+  <div class="mine-overlay" id="mineOverlay">
+    <div class="mine-header">
+      <span class="pickaxe-icon" id="pickIcon">&#9935;</span>
+      <canvas class="mine-ore-icon" id="mineOreIcon" width="16" height="16"></canvas>
+      <span class="mine-ore-name" id="mineOreName">Mining...</span>
+    </div>
+    <div class="mine-bar-outer">
+      <div class="mine-bar-fill" id="mineBarFill"></div>
+      <div class="spark-container" id="mineSparks"></div>
+    </div>
+    <div class="mine-status" id="mineStatus">Mining...</div>
+  </div>
+
+  <!-- Inventory Panel -->
+  <div class="inv-panel">
+    <div class="inv-header">INVENTORY</div>
+    <div class="inv-grid" id="invGrid"></div>
+  </div>
+
+</div>
+
+<script>
+  // ========================================
+  // ORE CONFIG
+  // ========================================
+  const ORE = {
+    copper:  { name: 'Copper Ore',  time: 5,  color: '#cd7f32', colors: ['#cd7f32','#a0622a','#7a4b20'], task: 'mine_c_done' },
+    iron:    { name: 'Iron Ore',    time: 10, color: '#a8a8a8', colors: ['#b0b0b0','#888888','#666666'], task: 'mine_i_done' },
+    gold:    { name: 'Gold Ore',    time: 15, color: '#ffd700', colors: ['#ffd700','#daa520','#b8860b'], task: 'mine_g_done' },
+    diamond: { name: 'Diamond',     time: 20, color: '#4fc3f7', colors: ['#4fc3f7','#039be5','#0277bd'], task: 'mine_d_done' }
+  };
+
+  const TOTAL_SLOTS = 28;
+
+  // ========================================
+  // STATE
+  // ========================================
+  let inventory = {}; // { copper: 5, iron: 2, ... }
+  let coins = 0;
+  let pickLevel = 1;
+  let isMining = false;
+  let miningTimer = null;
+  let miningStart = 0;
+  let miningDuration = 0;
+  let miningOre = null;
+  let sparkInterval = null;
+
+  // ========================================
+  // ELEMENTS
+  // ========================================
+  const invGrid = document.getElementById('invGrid');
+  const mineOverlay = document.getElementById('mineOverlay');
+  const mineBarFill = document.getElementById('mineBarFill');
+  const mineStatus = document.getElementById('mineStatus');
+  const mineOreName = document.getElementById('mineOreName');
+  const mineOreIcon = document.getElementById('mineOreIcon');
+  const pickIcon = document.getElementById('pickIcon');
+  const mineSparks = document.getElementById('mineSparks');
+  const coinCountEl = document.getElementById('coinCount');
+  const pickLevelEl = document.getElementById('pickLevel');
+
+  // ========================================
+  // INIT INVENTORY GRID
+  // ========================================
+  function initGrid() {
+    invGrid.innerHTML = '';
+    for (let i = 0; i < TOTAL_SLOTS; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'inv-slot';
+      slot.dataset.index = i;
+      invGrid.appendChild(slot);
+    }
+  }
+  initGrid();
+
+  // ========================================
+  // RENDER INVENTORY
+  // ========================================
+  function renderInventory() {
+    // Clear all slots
+    const slots = invGrid.querySelectorAll('.inv-slot');
+    slots.forEach(s => {
+      s.innerHTML = '';
+      s.className = 'inv-slot';
+    });
+
+    // Fill slots with ore stacks
+    let slotIndex = 0;
+    for (const [oreKey, count] of Object.entries(inventory)) {
+      if (count <= 0 || slotIndex >= TOTAL_SLOTS) continue;
+      const ore = ORE[oreKey];
+      if (!ore) continue;
+
+      const slot = slots[slotIndex];
+      slot.className = 'inv-slot occupied';
+
+      // Pixel ore icon
+      const canvas = document.createElement('canvas');
+      canvas.width = 16;
+      canvas.height = 16;
+      canvas.className = 'item-icon';
+      drawOreIcon(canvas, ore.colors);
+      slot.appendChild(canvas);
+
+      // Count
+      if (count > 1) {
+        const countEl = document.createElement('div');
+        countEl.className = 'item-count';
+        countEl.textContent = count;
+        slot.appendChild(countEl);
+      }
+
+      // Tooltip
+      const tip = document.createElement('div');
+      tip.className = 'item-name-tip';
+      tip.textContent = ore.name + (count > 1 ? ' x' + count : '');
+      slot.appendChild(tip);
+
+      slotIndex++;
+    }
+  }
+
+  // ========================================
+  // DRAW PIXEL ORE ICON
+  // ========================================
+  function drawOreIcon(canvas, colors) {
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    // Rock shape
+    const rock = [
+      [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0]
+    ];
+
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        if (rock[y][x]) {
+          ctx.fillStyle = '#3a3a3a';
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+
+    // Ore veins
+    ctx.fillStyle = colors[0];
+    [[4,3],[5,3],[5,4],[10,5],[11,5],[11,6],[3,8],[4,8],[4,9],[9,10],[10,10],[10,11],[7,6],[7,7]].forEach(([x,y]) => {
+      ctx.fillRect(x, y, 1, 1);
+    });
+
+    // Dark accents
+    ctx.fillStyle = colors[2];
+    [[6,4],[12,6],[5,9],[11,11]].forEach(([x,y]) => {
+      ctx.fillRect(x, y, 1, 1);
+    });
+  }
+
+  // ========================================
+  // START MINING
+  // ========================================
+  function startMining(oreType) {
+    if (isMining) return;
+
+    const ore = ORE[oreType];
+    if (!ore) return;
+
+    isMining = true;
+    miningOre = oreType;
+    miningDuration = ore.time * 1000;
+    miningStart = Date.now();
+
+    // Show overlay
+    mineOverlay.classList.add('active');
+    mineBarFill.style.width = '0%';
+    mineBarFill.className = 'mine-bar-fill ' + oreType;
+    mineOreName.textContent = ore.name;
+    mineOreName.style.color = ore.color;
+    mineStatus.textContent = 'Mining...';
+    mineStatus.classList.remove('complete');
+    pickIcon.classList.remove('stopped');
+
+    // Draw ore icon in mining overlay
+    drawOreIcon(mineOreIcon, ore.colors);
+
+    // Sparks
+    sparkInterval = setInterval(() => createSparks(ore.colors), 200);
+
+    // Start progress
+    requestAnimationFrame(updateMining);
+  }
+
+  // ========================================
+  // UPDATE MINING PROGRESS
+  // ========================================
+  function updateMining() {
+    if (!isMining) return;
+
+    const elapsed = Date.now() - miningStart;
+    const progress = Math.min(elapsed / miningDuration, 1.0);
+    mineBarFill.style.width = (progress * 100) + '%';
+
+    const remaining = Math.max(0, Math.ceil((miningDuration - elapsed) / 1000));
+    mineStatus.textContent = 'Mining... ' + remaining + 's';
+
+    if (progress >= 1.0) {
+      completeMining();
+      return;
+    }
+
+    requestAnimationFrame(updateMining);
+  }
+
+  // ========================================
+  // COMPLETE MINING
+  // ========================================
+  function completeMining() {
+    isMining = false;
+    clearInterval(sparkInterval);
+    pickIcon.classList.add('stopped');
+
+    const ore = ORE[miningOre];
+
+    // Add to inventory
+    if (!inventory[miningOre]) inventory[miningOre] = 0;
+    inventory[miningOre]++;
+    renderInventory();
+
+    // Update status
+    mineStatus.textContent = '+1 ' + ore.name + '!';
+    mineStatus.classList.add('complete');
+
+    // Loot drop animation
+    showLootDrop('+1 ' + ore.name, ore.color);
+
+    // Send completion to Portals
+    sendToPortals(ore.task);
+
+    // Hide overlay after 1.5s
+    setTimeout(() => {
+      mineOverlay.classList.remove('active');
+      miningOre = null;
+    }, 1500);
+  }
+
+  // ========================================
+  // LOOT DROP ANIMATION
+  // ========================================
+  function showLootDrop(text, color) {
+    const drop = document.createElement('div');
+    drop.className = 'loot-drop';
+    drop.textContent = text;
+    drop.style.color = color;
+    drop.style.right = '80px';
+    drop.style.top = '120px';
+    document.body.appendChild(drop);
+
+    requestAnimationFrame(() => drop.classList.add('show'));
+    setTimeout(() => drop.remove(), 1800);
+  }
+
+  // ========================================
+  // SPARK EFFECTS
+  // ========================================
+  function createSparks(colors) {
+    if (!isMining) return;
+    for (let i = 0; i < 3; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'spark';
+      spark.style.left = (Math.random() * 80 + 10) + '%';
+      spark.style.top = (Math.random() * 50 + 25) + '%';
+      spark.style.setProperty('--sx', (Math.random() * 20 - 10) + 'px');
+      spark.style.setProperty('--sy', -(Math.random() * 15 + 5) + 'px');
+      spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+      mineSparks.appendChild(spark);
+      requestAnimationFrame(() => spark.classList.add('pop'));
+      setTimeout(() => spark.remove(), 300);
+    }
+  }
+
+  // ========================================
+  // PORTALS COMMUNICATION
+  // ========================================
+  function sendToPortals(taskName) {
+    try {
+      if (window.PortalsSdk) {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: taskName,
+          TaskTargetState: 'SetNotActiveToActive'
+        }));
+        console.log('[HUD] Sent to Portals:', taskName);
+      } else {
+        console.log('[HUD] No PortalsSdk, would send:', taskName);
+      }
+    } catch(e) {
+      console.log('[HUD] Send error:', e);
+    }
+  }
+
+  // Listen for messages FROM Portals
+  function handlePortalsMessage(msg) {
+    console.log('[HUD] Received:', msg);
+
+    if (typeof msg !== 'string') return;
+
+    // Start mining: "mine_copper", "mine_iron", "mine_gold", "mine_diamond"
+    if (msg.startsWith('mine_')) {
+      const oreType = msg.substring(5);
+      if (ORE[oreType]) {
+        startMining(oreType);
+      }
+    }
+
+    // Add coins: "coins_10"
+    if (msg.startsWith('coins_')) {
+      const amount = parseInt(msg.substring(6));
+      if (!isNaN(amount)) {
+        coins += amount;
+        coinCountEl.textContent = coins;
+        showLootDrop('+' + amount + ' coins', '#ffd700');
+      }
+    }
+
+    // Set pickaxe level: "pick_2"
+    if (msg.startsWith('pick_')) {
+      const level = parseInt(msg.substring(5));
+      if (!isNaN(level)) {
+        pickLevel = level;
+        pickLevelEl.textContent = 'Lv ' + level;
+      }
+    }
+
+    // Reset inventory (new game)
+    if (msg === 'reset') {
+      inventory = {};
+      coins = 0;
+      pickLevel = 1;
+      coinCountEl.textContent = '0';
+      pickLevelEl.textContent = 'Lv 1';
+      renderInventory();
+    }
+  }
+
+  // Portals SDK message listener
+  if (window.PortalsSdk) {
+    PortalsSdk.onMessageFromUnity = function(message) {
+      handlePortalsMessage(message);
+    };
+  }
+
+  // Also listen via postMessage (for testing)
+  window.addEventListener('message', function(event) {
+    if (event.data && typeof event.data === 'string') {
+      handlePortalsMessage(event.data);
+    }
+  });
+
+  // ========================================
+  // UPDATE STATS DISPLAY
+  // ========================================
+  function updateStats() {
+    coinCountEl.textContent = coins;
+    pickLevelEl.textContent = 'Lv ' + pickLevel;
+  }
+
+  // Initial render
+  renderInventory();
+  updateStats();
+
+  console.log('[HUD] Mining HUD loaded. Send "mine_copper" to start mining.');
+</script>
+
+</body>
+</html>
