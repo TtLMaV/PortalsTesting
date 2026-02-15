@@ -635,16 +635,17 @@
       document.getElementById('finalTime').textContent = elapsed + 's';
       document.getElementById('finalCombo').textContent = 'x' + bestCombo;
 
-      // Tell Portals - mining complete
+      // Tell Portals - mining complete (notification, move rock away)
       triggerTask(TASK_NAME);
-      console.log('[Mine] Sent Mine_c1_done');
+      console.log('[Mine] Sent mine_c_done');
 
-      // Close iframe after 2 seconds
+      // Close iframe after 2 seconds (iframe handles its own close)
       setTimeout(function() {
         closeIframe();
       }, 2000);
 
-      // Trigger rock respawn after 12 seconds (10s cooldown + 2s completion)
+      // Respawn rock after 12 seconds (10s cooldown + 2s completion screen)
+      // Iframe JS stays alive even after close in Portals
       setTimeout(function() {
         triggerTask('Mine_C1_Respawn');
         console.log('[Mine] Sent Mine_C1_Respawn');
