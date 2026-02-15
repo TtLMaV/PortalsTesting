@@ -639,10 +639,8 @@
       triggerTask(TASK_NAME);
       console.log('[Mine] Sent Mine_c1_done');
 
-      // Close iframe after 2 seconds
-      // Send ore update to HUD right before closing
+      // Send ore update to HUD at 1.5 seconds
       setTimeout(function() {
-        // Tell HUD to update copper count
         if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
           PortalsSdk.sendMessageToUnity(JSON.stringify({
             TaskName: 'ore_copper_hud',
@@ -650,8 +648,12 @@
           }));
           console.log('[Mine] Sent ore_copper_hud');
         }
+      }, 1500);
+
+      // Close iframe at 2.5 seconds (after HUD message sent)
+      setTimeout(function() {
         closeIframe();
-      }, 2000);
+      }, 2500);
     }
 
     // ========================================
