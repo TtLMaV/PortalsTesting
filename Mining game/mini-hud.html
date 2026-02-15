@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>MINERSIM HUD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; overflow: hidden;
+      background: transparent;
+      font-family: 'Chakra Petch', sans-serif;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .hud-bar {
+      display: flex; align-items: center; gap: 6px;
+      background: linear-gradient(180deg, rgba(42,37,32,0.92) 0%, rgba(26,24,21,0.95) 100%);
+      border: 1px solid #5a4a35;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      padding: 6px 12px;
+      clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 8px 100%);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+      width: fit-content;
+      margin: 0 auto;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .hud-divider {
+      width: 1px; height: 20px;
+      background: #3a3025;
+      margin: 0 2px;
+    }
+
+    .hud-item {
+      display: flex; align-items: center; gap: 4px;
+      padding: 2px 6px;
+    }
+
+    .hud-icon { font-size: 14px; opacity: 0.85; }
+
+    .hud-value {
+      font-size: 13px; font-weight: 700;
+      color: #c8a04a;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+      min-width: 14px; text-align: center;
+    }
+
+    .hud-label {
+      font-size: 8px; color: #666;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    /* Ore items get colored values */
+    .hud-value.copper { color: #cd7f32; }
+    .hud-value.iron { color: #a8a8a8; }
+    .hud-value.gold { color: #e8c840; }
+    .hud-value.diamond { color: #60c8e8; }
+    .hud-value.coins { color: #c8a04a; }
+    .hud-value.pick { color: #c8a04a; }
+
+    /* Subtle pulse when value changes */
+    @keyframes valuePop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    .hud-value.pop { animation: valuePop 0.3s ease; }
+
+    /* Title tag */
+    .hud-title {
+      font-size: 9px; font-weight: 700;
+      color: #5a4a35; letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-right: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-bar">
+    <span class="hud-title">MINERSIM</span>
+
+    <div class="hud-divider"></div>
+
+    <!-- Coins -->
+    <div class="hud-item">
+      <span class="hud-icon">&#129689;</span>
+      <span class="hud-value coins" id="hudCoins">0</span>
+    </div>
+
+    <div class="hud-divider"></div>
+
+    <!-- Pickaxe -->
+    <div class="hud-item">
+      <span class="hud-icon">&#9935;</span>
+      <span class="hud-value pick" id="hudPick">Lv.1</span>
+    </div>
+
+    <div class="hud-divider"></div>
+
+    <!-- Copper -->
+    <div class="hud-item">
+      <span class="hud-icon" style="color:#cd7f32;">&#9679;</span>
+      <span class="hud-value copper" id="hudCopper">0</span>
+    </div>
+
+    <!-- Iron -->
+    <div class="hud-item">
+      <span class="hud-icon" style="color:#a8a8a8;">&#9679;</span>
+      <span class="hud-value iron" id="hudIron">0</span>
+    </div>
+
+    <!-- Gold -->
+    <div class="hud-item">
+      <span class="hud-icon" style="color:#e8c840;">&#9679;</span>
+      <span class="hud-value gold" id="hudGold">0</span>
+    </div>
+
+    <!-- Diamond -->
+    <div class="hud-item">
+      <span class="hud-icon" style="color:#60c8e8;">&#9670;</span>
+      <span class="hud-value diamond" id="hudDiamond">0</span>
+    </div>
+  </div>
+
+  <!-- Portals SDK -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js"></script>
+
+  <script>
+    // ========================================
+    // STATE
+    // ========================================
+    var coins = 0;
+    var pickLevel = 1;
+    var ores = { copper: 0, iron: 0, gold: 0, diamond: 0 };
+
+    // ========================================
+    // ELEMENTS
+    // ========================================
+    var hudCoins = document.getElementById('hudCoins');
+    var hudPick = document.getElementById('hudPick');
+    var hudCopper = document.getElementById('hudCopper');
+    var hudIron = document.getElementById('hudIron');
+    var hudGold = document.getElementById('hudGold');
+    var hudDiamond = document.getElementById('hudDiamond');
+
+    // ========================================
+    // VALUE POP ANIMATION
+    // ========================================
+    function popValue(el) {
+      el.classList.remove('pop');
+      void el.offsetWidth;
+      el.classList.add('pop');
+    }
+
+    // ========================================
+    // PORTALS SDK
+    // ========================================
+    var lastMessageId = '';
+    var lastMessageTime = 0;
+
+    function processMessage(msg, source) {
+      var now = Date.now();
+      var msgId = msg + '_' + Math.floor(now / 100);
+      if (msgId === lastMessageId && now - lastMessageTime < 200) return;
+      lastMessageId = msgId;
+      lastMessageTime = now;
+      handleMessage(msg);
+    }
+
+    function setupMessageListener() {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+        PortalsSdk.setMessageListener(function(msg) {
+          console.log('[MiniHUD] SDK:', msg);
+          processMessage(msg, 'SDK');
+        });
+        console.log('[MiniHUD] SDK listener ready');
+      } else {
+        setTimeout(setupMessageListener, 100);
+      }
+    }
+
+    window.addEventListener('message', function(event) {
+      if (event.data && typeof event.data === 'string') {
+        processMessage(event.data, 'postMessage-string');
+      }
+      else if (event.data && event.data.portalsMessage) {
+        processMessage(event.data.portalsMessage, 'postMessage-portalsMessage');
+      }
+      else if (event.data && event.data.message && typeof event.data.message === 'string') {
+        processMessage(event.data.message, 'postMessage-message');
+      }
+    });
+
+    setupMessageListener();
+
+    // ========================================
+    // HANDLE MESSAGES FROM PORTALS
+    // ========================================
+    function handleMessage(msg) {
+      console.log('[MiniHUD] Received:', msg);
+      if (typeof msg !== 'string') return;
+      var parts = msg.split('_');
+      var cmd = parts[0];
+
+      // Ore mined: ore_copper, ore_iron, ore_gold, ore_diamond
+      if (cmd === 'ore' && parts.length >= 2) {
+        var type = parts[1];
+        if (ores.hasOwnProperty(type)) {
+          ores[type]++;
+          updateOreDisplay(type);
+        }
+      }
+
+      // Coins update: coins_50
+      if (cmd === 'coins' && parts.length >= 2) {
+        var amount = parseInt(parts[1]);
+        if (!isNaN(amount)) {
+          coins += amount;
+          hudCoins.textContent = coins;
+          popValue(hudCoins);
+        }
+      }
+
+      // Pickaxe level: pick_2
+      if (cmd === 'pick' && parts.length >= 2) {
+        var level = parseInt(parts[1]);
+        if (!isNaN(level)) {
+          pickLevel = level;
+          hudPick.textContent = 'Lv.' + pickLevel;
+          popValue(hudPick);
+        }
+      }
+
+      // Full sync: hudsync_coins_pick_copper_iron_gold_diamond
+      if (cmd === 'hudsync' && parts.length >= 7) {
+        var c = parseInt(parts[1]);
+        var p = parseInt(parts[2]);
+        var co = parseInt(parts[3]);
+        var ir = parseInt(parts[4]);
+        var go = parseInt(parts[5]);
+        var di = parseInt(parts[6]);
+        if (!isNaN(c)) { coins = c; hudCoins.textContent = coins; }
+        if (!isNaN(p)) { pickLevel = p; hudPick.textContent = 'Lv.' + pickLevel; }
+        if (!isNaN(co)) { ores.copper = co; hudCopper.textContent = co; }
+        if (!isNaN(ir)) { ores.iron = ir; hudIron.textContent = ir; }
+        if (!isNaN(go)) { ores.gold = go; hudGold.textContent = go; }
+        if (!isNaN(di)) { ores.diamond = di; hudDiamond.textContent = di; }
+      }
+
+      // Reset
+      if (msg === 'reset') {
+        coins = 0; pickLevel = 1;
+        ores = { copper: 0, iron: 0, gold: 0, diamond: 0 };
+        hudCoins.textContent = '0';
+        hudPick.textContent = 'Lv.1';
+        hudCopper.textContent = '0';
+        hudIron.textContent = '0';
+        hudGold.textContent = '0';
+        hudDiamond.textContent = '0';
+      }
+    }
+
+    function updateOreDisplay(type) {
+      var el = null;
+      if (type === 'copper') el = hudCopper;
+      if (type === 'iron') el = hudIron;
+      if (type === 'gold') el = hudGold;
+      if (type === 'diamond') el = hudDiamond;
+      if (el) {
+        el.textContent = ores[type];
+        popValue(el);
+      }
+    }
+
+    // ========================================
+    // INIT
+    // ========================================
+    console.log('[MiniHUD] Loaded. Waiting for Portals messages.');
+  </script>
+</body>
+</html>
+
