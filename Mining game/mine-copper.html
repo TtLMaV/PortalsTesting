@@ -594,8 +594,11 @@
       // Tell Portals
       triggerTask(TASK_NAME);
 
-      // Close after 2 seconds
-      setTimeout(function() { closeIframe(); }, 2000);
+      // Reset iframe state then close
+      setTimeout(function() {
+        resetGame();
+        setTimeout(function() { closeIframe(); }, 100);
+      }, 2000);
     }
 
     // ========================================
