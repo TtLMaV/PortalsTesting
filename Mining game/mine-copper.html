@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Mine Copper</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; overflow: hidden;
+      background: transparent;
+      font-family: 'Chakra Petch', sans-serif;
+      color: #e0dcd0;
+    }
+
+    .mine-panel {
+      width: 320px; margin: 0 auto;
+      background: linear-gradient(160deg, rgba(42,37,32,0.96) 0%, rgba(26,24,21,0.98) 100%);
+      border: 2px solid #5a4a35;
+      border-radius: 4px;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+      padding: 16px;
+      animation: slideUp 0.3s ease;
+      position: relative;
+    }
+
+    .mine-panel::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+      background: #cd7f32; border-radius: 2px 0 0 0;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Header */
+    .mine-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .mine-icon-area {
+      position: relative; width: 50px; height: 50px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .pickaxe-swing {
+      font-size: 28px; display: inline-block;
+      transform-origin: bottom right;
+      animation: pickSwing 0.5s ease-in-out infinite;
+    }
+    @keyframes pickSwing {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-35deg); }
+    }
+
+    .ore-icon {
+      font-size: 22px; position: absolute; bottom: 2px; right: 0;
+      color: #cd7f32;
+    }
+
+    .mine-info { flex: 1; }
+    .mine-title {
+      font-size: 16px; font-weight: 700; color: #cd7f32;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .mine-sub {
+      font-size: 10px; color: #777; letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    /* Progress bar */
+    .bar-outer {
+      background: #151210; border: 1px solid #3a3025; border-radius: 2px;
+      height: 26px; position: relative; overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .bar-fill {
+      height: 100%; width: 0%; border-radius: 1px;
+      background: linear-gradient(180deg, #cd7f32 0%, #8B5e24 100%);
+      transition: width 0.1s linear;
+      position: relative;
+    }
+    .bar-fill::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+      background: rgba(255,255,255,0.08);
+    }
+    .bar-text {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
+      z-index: 2; pointer-events: none;
+    }
+
+    /* Timer text */
+    .time-remaining {
+      text-align: center; font-size: 11px; color: #666;
+      letter-spacing: 1px;
+    }
+
+    /* Complete state */
+    .complete-panel {
+      text-align: center; display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .complete-icon { font-size: 36px; margin-bottom: 6px; }
+    .complete-text {
+      font-size: 16px; font-weight: 700; color: #cd7f32;
+      letter-spacing: 1px;
+    }
+    .complete-sub {
+      font-size: 10px; color: #666; letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Sparks */
+    .spark-zone {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; overflow: hidden;
+    }
+    .spark {
+      position: absolute; width: 3px; height: 3px; opacity: 0;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    }
+    .spark.pop { animation: sparkFly 0.35s ease-out forwards; }
+    @keyframes sparkFly {
+      0% { opacity: 1; transform: translate(0,0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0.2); }
+    }
+  </style>
+</head>
+<body>
+  <div class="mine-panel">
+
+    <!-- MINING STATE -->
+    <div id="miningState">
+      <div class="mine-header">
+        <div class="mine-icon-area">
+          <span class="pickaxe-swing" id="pickSwing">&#9935;</span>
+          <span class="ore-icon">&#9679;</span>
+        </div>
+        <div class="mine-info">
+          <div class="mine-title">Copper Ore</div>
+          <div class="mine-sub" id="mineSub">Mining...</div>
+        </div>
+      </div>
+      <div class="bar-outer">
+        <div class="bar-fill" id="barFill">
+          <div class="spark-zone" id="sparkZone"></div>
+        </div>
+        <div class="bar-text" id="barText">0%</div>
+      </div>
+      <div class="time-remaining" id="timeText">10s remaining</div>
+    </div>
+
+    <!-- COMPLETE STATE -->
+    <div class="complete-panel" id="completeState">
+      <div class="complete-icon">&#9935;</div>
+      <div class="complete-text">+1 Copper Ore!</div>
+      <div class="complete-sub">Added to inventory</div>
+    </div>
+
+  </div>
+
+  <!-- Portals SDK -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js"></script>
+
+  <script>
+    // ========================================
+    // CONFIG
+    // ========================================
+    var MINE_TIME = 10;  // seconds
+    var TASK_NAME = 'mine_c_done';
+
+    // ========================================
+    // ELEMENTS
+    // ========================================
+    var barFill = document.getElementById('barFill');
+    var barText = document.getElementById('barText');
+    var timeText = document.getElementById('timeText');
+    var mineSub = document.getElementById('mineSub');
+    var sparkZone = document.getElementById('sparkZone');
+    var miningState = document.getElementById('miningState');
+    var completeState = document.getElementById('completeState');
+
+    // ========================================
+    // MINING TIMER
+    // ========================================
+    var startTime = Date.now();
+    var duration = MINE_TIME * 1000;
+    var done = false;
+    var sparkTimer = null;
+
+    function update() {
+      if (done) return;
+      var elapsed = Date.now() - startTime;
+      var progress = Math.min(elapsed / duration, 1.0);
+      var pct = Math.floor(progress * 100);
+
+      barFill.style.width = pct + '%';
+      barText.textContent = pct + '%';
+
+      var remaining = Math.max(0, Math.ceil((duration - elapsed) / 1000));
+      timeText.textContent = remaining + 's remaining';
+      mineSub.textContent = 'Mining... ' + remaining + 's';
+
+      if (progress >= 1.0) {
+        completeMining();
+        return;
+      }
+      requestAnimationFrame(update);
+    }
+
+    function completeMining() {
+      done = true;
+      clearInterval(sparkTimer);
+
+      // Show complete
+      miningState.style.display = 'none';
+      completeState.style.display = 'block';
+
+      // Tell Portals we're done
+      triggerTask(TASK_NAME);
+
+      // Close iframe after 2 seconds
+      setTimeout(function() {
+        closeIframe();
+      }, 2000);
+    }
+
+    // ========================================
+    // SPARKS
+    // ========================================
+    function createSparks() {
+      if (done) return;
+      for (var i = 0; i < 2; i++) {
+        var spark = document.createElement('div');
+        spark.className = 'spark';
+        spark.style.left = (Math.random() * 80 + 10) + '%';
+        spark.style.top = (Math.random() * 60 + 20) + '%';
+        spark.style.setProperty('--sx', (Math.random() * 24 - 12) + 'px');
+        spark.style.setProperty('--sy', -(Math.random() * 16 + 4) + 'px');
+        spark.style.background = '#cd7f32';
+        spark.style.boxShadow = '0 0 4px #cd7f32';
+        sparkZone.appendChild(spark);
+        (function(s) { requestAnimationFrame(function() { s.classList.add('pop'); }); })(spark);
+        (function(s) { setTimeout(function() { s.remove(); }, 400); })(spark);
+      }
+    }
+
+    sparkTimer = setInterval(createSparks, 200);
+
+    // ========================================
+    // PORTALS SDK
+    // ========================================
+    function triggerTask(taskName) {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: taskName,
+          TaskTargetState: 'SetNotActiveToActive'
+        }));
+        console.log('[Mine] Sent:', taskName);
+      }
+    }
+
+    function closeIframe() {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.closeIframe) {
+        PortalsSdk.closeIframe();
+        console.log('[Mine] Closed iframe');
+      }
+    }
+
+    // ========================================
+    // START
+    // ========================================
+    requestAnimationFrame(update);
+    console.log('[Mine] Copper mining started. ' + MINE_TIME + 's');
+  </script>
+</body>
+</html>
