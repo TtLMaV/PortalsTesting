@@ -635,11 +635,21 @@
       document.getElementById('finalTime').textContent = elapsed + 's';
       document.getElementById('finalCombo').textContent = 'x' + bestCombo;
 
-      // Tell Portals
+      // Tell Portals - mining complete (notification, move rock away)
       triggerTask(TASK_NAME);
+      console.log('[Mine] Sent mine_c_done');
 
-      // Show completion for 2 seconds then close
-      setTimeout(function() { closeIframe(); }, 2000);
+      // Close iframe after 2 seconds (iframe handles its own close)
+      setTimeout(function() {
+        closeIframe();
+      }, 2000);
+
+      // Respawn rock after 12 seconds (10s cooldown + 2s completion screen)
+      // Iframe JS stays alive even after close in Portals
+      setTimeout(function() {
+        triggerTask('Respawn_C1');
+        console.log('[Mine] Sent Respawn_C1');
+      }, 12000);
     }
 
     // ========================================
@@ -694,38 +704,48 @@
     // ========================================
     // AUTO-RESET: Polls every 500ms
     // When done for 3+ seconds, show intro and reset
+    // Works for unlimited game loops
     // ========================================
     var doneTime = 0;
-    var hasAutoReset = false;
+    var resetState = 0; // 0=idle, 1=waiting, 2=resetting
 
     setInterval(function() {
-      if (done && !hasAutoReset) {
-        if (doneTime === 0) doneTime = Date.now();
-        // Wait 3 seconds after completion (1s after iframe closes)
-        if (Date.now() - doneTime > 3000) {
-          hasAutoReset = true;
-          // Show intro overlay again
-          var overlay = document.getElementById('introOverlay');
-          if (overlay) {
-            overlay.style.display = '';
-            overlay.style.opacity = '1';
-            overlay.style.animation = 'none';
-          }
-          // Reset game behind overlay
-          resetGame();
-          // Fade out overlay after 1.2s
-          setTimeout(function() {
-            if (overlay) {
-              overlay.style.animation = 'introFade 0.6s ease forwards';
-            }
-            setTimeout(function() {
-              if (overlay) overlay.style.display = 'none';
-              // Ready for next round
-              doneTime = 0;
-              hasAutoReset = false;
-            }, 700);
-          }, 1200);
+      // State 0: Watch for completion
+      if (done && resetState === 0) {
+        doneTime = Date.now();
+        resetState = 1;
+        console.log('[Mine] Completion detected, waiting 3s to reset');
+      }
+
+      // State 1: Wait 3 seconds then trigger reset
+      if (resetState === 1 && Date.now() - doneTime > 3000) {
+        resetState = 2;
+        console.log('[Mine] Starting auto-reset');
+
+        // Show intro overlay
+        var overlay = document.getElementById('introOverlay');
+        if (overlay) {
+          overlay.style.display = '';
+          overlay.style.opacity = '1';
+          overlay.style.animation = 'none';
         }
+
+        // Reset game state behind overlay
+        resetGame();
+
+        // Fade out overlay after 1.2s
+        setTimeout(function() {
+          var ov = document.getElementById('introOverlay');
+          if (ov) ov.style.animation = 'introFade 0.6s ease forwards';
+          setTimeout(function() {
+            var ov2 = document.getElementById('introOverlay');
+            if (ov2) ov2.style.display = 'none';
+            // Back to idle - ready for next game loop
+            resetState = 0;
+            doneTime = 0;
+            console.log('[Mine] Reset complete, ready for next round');
+          }, 700);
+        }, 1200);
       }
     }, 500);
 
