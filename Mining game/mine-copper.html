@@ -635,21 +635,23 @@
       document.getElementById('finalTime').textContent = elapsed + 's';
       document.getElementById('finalCombo').textContent = 'x' + bestCombo;
 
-      // Tell Portals - mining complete (notification, move rock away)
+      // Tell Portals - mining complete (move rock away)
       triggerTask(TASK_NAME);
-      console.log('[Mine] Sent mine_c_done');
+      console.log('[Mine] Sent Mine_c1_done');
 
-      // Close iframe after 2 seconds (iframe handles its own close)
+      // Close iframe after 2 seconds
+      // Send ore update to HUD right before closing
       setTimeout(function() {
+        // Tell HUD to update copper count
+        if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+          PortalsSdk.sendMessageToUnity(JSON.stringify({
+            TaskName: 'ore_copper_hud',
+            TaskTargetState: 'SetNotActiveToActive'
+          }));
+          console.log('[Mine] Sent ore_copper_hud');
+        }
         closeIframe();
       }, 2000);
-
-      // Respawn rock after 12 seconds (10s cooldown + 2s completion screen)
-      // Iframe JS stays alive even after close in Portals
-      setTimeout(function() {
-        triggerTask('Mine_C1_Respawn');
-        console.log('[Mine] Sent Mine_C1_Respawn');
-      }, 12000);
     }
 
     // ========================================
