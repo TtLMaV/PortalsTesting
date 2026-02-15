@@ -351,7 +351,7 @@
     // CONFIG
     // ========================================
     var TOTAL_CLICKS = 25;       // clicks needed to mine
-    var TASK_NAME = 'mine_c_done';
+    var TASK_NAME = 'Mine_c1_done';
     var ORE_COLOR = '#cd7f32';
     // ========================================
     // STATE
@@ -647,8 +647,8 @@
       // Respawn rock after 12 seconds (10s cooldown + 2s completion screen)
       // Iframe JS stays alive even after close in Portals
       setTimeout(function() {
-        triggerTask('Respawn_C1');
-        console.log('[Mine] Sent Respawn_C1');
+        triggerTask('Mine_C1_Respawn');
+        console.log('[Mine] Sent Mine_C1_Respawn');
       }, 12000);
     }
 
