@@ -13,23 +13,23 @@
       background: transparent;
       font-family: 'Chakra Petch', sans-serif;
       color: #e0dcd0;
+      user-select: none; -webkit-user-select: none;
     }
 
     .mine-panel {
-      width: 320px; margin: 0 auto;
-      background: linear-gradient(160deg, rgba(42,37,32,0.96) 0%, rgba(26,24,21,0.98) 100%);
+      width: 360px; margin: 20px auto;
+      background: linear-gradient(160deg, rgba(42,37,32,0.97) 0%, rgba(26,24,21,0.99) 100%);
       border: 2px solid #5a4a35;
       border-radius: 4px;
-      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
       box-shadow: 0 8px 32px rgba(0,0,0,0.8);
-      padding: 16px;
+      padding: 18px;
       animation: slideUp 0.3s ease;
       position: relative;
     }
-
     .mine-panel::before {
       content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
-      background: #cd7f32; border-radius: 2px 0 0 0;
+      background: #cd7f32;
     }
 
     @keyframes slideUp {
@@ -37,52 +37,125 @@
       to { transform: translateY(0); opacity: 1; }
     }
 
-    /* Header */
+    /* Shake */
+    .shake { animation: shakeIt 0.1s ease; }
+    @keyframes shakeIt {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-3px, 1px); }
+      50% { transform: translate(2px, -2px); }
+      75% { transform: translate(-1px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    /* ========== HEADER ========== */
     .mine-header {
-      display: flex; align-items: center; gap: 12px;
+      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 14px;
     }
-
-    .mine-icon-area {
-      position: relative; width: 50px; height: 50px;
-      display: flex; align-items: center; justify-content: center;
-    }
-
-    .pickaxe-swing {
-      font-size: 28px; display: inline-block;
-      transform-origin: bottom right;
-      animation: pickSwing 0.5s ease-in-out infinite;
-    }
-    @keyframes pickSwing {
-      0%, 100% { transform: rotate(0deg); }
-      50% { transform: rotate(-35deg); }
-    }
-
-    .ore-icon {
-      font-size: 22px; position: absolute; bottom: 2px; right: 0;
-      color: #cd7f32;
-    }
-
-    .mine-info { flex: 1; }
+    .mine-title-area { display: flex; align-items: center; gap: 8px; }
     .mine-title {
       font-size: 16px; font-weight: 700; color: #cd7f32;
       letter-spacing: 2px; text-transform: uppercase;
     }
-    .mine-sub {
-      font-size: 10px; color: #777; letter-spacing: 1px;
-      margin-top: 2px;
+    .mine-sub { font-size: 10px; color: #666; letter-spacing: 1px; }
+
+    .click-counter {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 2px;
+      border: 1px solid #3a3025;
+    }
+    .click-count {
+      font-size: 16px; font-weight: 700; color: #c8a04a;
+      letter-spacing: 1px;
+    }
+    .click-label { font-size: 8px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ========== ROCK AREA ========== */
+    .rock-zone {
+      position: relative;
+      height: 160px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+      cursor: pointer;
+      border: 1px solid #2a2520;
+      border-radius: 3px;
+      background: radial-gradient(ellipse at center, rgba(40,35,28,0.6) 0%, rgba(20,18,14,0.3) 70%);
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .rock-zone:active { cursor: crosshair; }
+
+    /* Rock SVG */
+    .rock-container { position: relative; transition: transform 0.05s; }
+    .rock-svg { width: 100px; height: 90px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+
+    /* Crack overlay */
+    .crack-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; opacity: 0; transition: opacity 0.2s;
     }
 
-    /* Progress bar */
+    /* Click sparks */
+    .click-spark {
+      position: absolute; pointer-events: none;
+      width: 6px; height: 6px;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+      opacity: 0;
+    }
+    .click-spark.fly { animation: sparkBurst 0.4s ease-out forwards; }
+    @keyframes sparkBurst {
+      0% { opacity: 1; transform: translate(0,0) scale(1) rotate(0deg); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3) rotate(180deg); }
+    }
+
+    /* Click damage number */
+    .dmg-number {
+      position: absolute; pointer-events: none;
+      font-size: 16px; font-weight: 700; color: #c8a04a;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
+      opacity: 0; letter-spacing: 1px;
+    }
+    .dmg-number.pop { animation: dmgPop 0.7s ease-out forwards; }
+    @keyframes dmgPop {
+      0% { opacity: 1; transform: translateY(0) scale(1.2); }
+      60% { opacity: 1; transform: translateY(-30px) scale(1); }
+      100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
+    }
+
+    /* Pickaxe hit indicator */
+    .pick-hit {
+      position: absolute; font-size: 30px; pointer-events: none; opacity: 0;
+      transform-origin: bottom right;
+    }
+    .pick-hit.swing { animation: pickHit 0.25s ease-out forwards; }
+    @keyframes pickHit {
+      0% { opacity: 1; transform: rotate(15deg) scale(1.1); }
+      40% { opacity: 1; transform: rotate(-40deg) scale(1); }
+      100% { opacity: 0; transform: rotate(-40deg) scale(0.8); }
+    }
+
+    /* Tap hint */
+    .tap-hint {
+      position: absolute; bottom: 8px; left: 0; right: 0;
+      text-align: center; font-size: 10px; color: #555;
+      letter-spacing: 2px; text-transform: uppercase;
+      animation: pulseHint 1.5s ease-in-out infinite;
+    }
+    @keyframes pulseHint {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.9; }
+    }
+
+    /* ========== PROGRESS BAR ========== */
     .bar-outer {
       background: #151210; border: 1px solid #3a3025; border-radius: 2px;
-      height: 26px; position: relative; overflow: hidden;
-      margin-bottom: 8px;
+      height: 24px; position: relative; overflow: hidden;
+      margin-bottom: 6px;
     }
     .bar-fill {
       height: 100%; width: 0%; border-radius: 1px;
       background: linear-gradient(180deg, #cd7f32 0%, #8B5e24 100%);
-      transition: width 0.1s linear;
+      transition: width 0.15s ease-out;
       position: relative;
     }
     .bar-fill::after {
@@ -92,79 +165,144 @@
     .bar-text {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
       z-index: 2; pointer-events: none;
     }
 
-    /* Timer text */
-    .time-remaining {
-      text-align: center; font-size: 11px; color: #666;
-      letter-spacing: 1px;
+    /* ========== COMBO ========== */
+    .combo-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 4px;
     }
+    .combo-text { font-size: 10px; color: #666; letter-spacing: 1px; }
+    .combo-value { font-size: 12px; font-weight: 700; color: #c8a04a; letter-spacing: 1px; }
+    .combo-value.hot { color: #e85030; }
+    .combo-value.fire { color: #ff4020; text-shadow: 0 0 8px rgba(255,64,32,0.5); }
 
-    /* Complete state */
+    /* ========== COMPLETE ========== */
     .complete-panel {
       text-align: center; display: none;
-      animation: fadeIn 0.3s ease;
+      animation: completeIn 0.4s ease;
     }
-    .complete-icon { font-size: 36px; margin-bottom: 6px; }
+    @keyframes completeIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .complete-icon { font-size: 44px; margin-bottom: 8px; }
     .complete-text {
-      font-size: 16px; font-weight: 700; color: #cd7f32;
-      letter-spacing: 1px;
+      font-size: 18px; font-weight: 700; color: #cd7f32;
+      letter-spacing: 2px;
     }
     .complete-sub {
-      font-size: 10px; color: #666; letter-spacing: 1px;
-      margin-top: 4px;
+      font-size: 10px; color: #666; letter-spacing: 1px; margin-top: 4px;
     }
-
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    /* Sparks */
-    .spark-zone {
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      pointer-events: none; overflow: hidden;
+    .complete-stats {
+      display: flex; justify-content: center; gap: 20px; margin-top: 12px;
     }
-    .spark {
-      position: absolute; width: 3px; height: 3px; opacity: 0;
-      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-    }
-    .spark.pop { animation: sparkFly 0.35s ease-out forwards; }
-    @keyframes sparkFly {
-      0% { opacity: 1; transform: translate(0,0) scale(1); }
-      100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0.2); }
-    }
+    .complete-stat { text-align: center; }
+    .complete-stat-val { font-size: 16px; font-weight: 700; color: #c8a04a; }
+    .complete-stat-lbl { font-size: 8px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
   </style>
 </head>
 <body>
-  <div class="mine-panel">
+  <div class="mine-panel" id="minePanel">
 
     <!-- MINING STATE -->
     <div id="miningState">
+      <!-- Header -->
       <div class="mine-header">
-        <div class="mine-icon-area">
-          <span class="pickaxe-swing" id="pickSwing">&#9935;</span>
-          <span class="ore-icon">&#9679;</span>
+        <div>
+          <div class="mine-title-area">
+            <span style="font-size:20px;">&#9935;</span>
+            <span class="mine-title">Copper Ore</span>
+          </div>
+          <div class="mine-sub">Click the rock to mine!</div>
         </div>
-        <div class="mine-info">
-          <div class="mine-title">Copper Ore</div>
-          <div class="mine-sub" id="mineSub">Mining...</div>
+        <div class="click-counter">
+          <div>
+            <div class="click-count" id="clickCount">0</div>
+            <div class="click-label">Clicks</div>
+          </div>
         </div>
       </div>
-      <div class="bar-outer">
-        <div class="bar-fill" id="barFill">
-          <div class="spark-zone" id="sparkZone"></div>
+
+      <!-- Rock click area -->
+      <div class="rock-zone" id="rockZone">
+        <div class="rock-container" id="rockContainer">
+          <!-- Low poly rock SVG -->
+          <svg class="rock-svg" id="rockSvg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+            <!-- Main rock body - low poly facets -->
+            <polygon points="50,5 85,25 95,55 80,80 55,88 20,82 5,55 15,22" fill="#8B7355" stroke="#6B5740" stroke-width="1"/>
+            <!-- Light facet -->
+            <polygon points="50,5 85,25 70,50 30,45 15,22" fill="#9B8365" stroke="#7B6B50" stroke-width="0.5"/>
+            <!-- Dark facet -->
+            <polygon points="85,25 95,55 70,50" fill="#7B6345" stroke="#6B5740" stroke-width="0.5"/>
+            <!-- Shadow facet -->
+            <polygon points="5,55 20,82 55,88 80,80 95,55 70,50 30,45 15,22" fill="#6B5335" stroke="#5B4530" stroke-width="0.5"/>
+            <!-- Copper veins -->
+            <line x1="35" y1="30" x2="55" y2="42" stroke="#cd7f32" stroke-width="2" opacity="0.7"/>
+            <line x1="60" y1="35" x2="72" y2="55" stroke="#cd7f32" stroke-width="1.5" opacity="0.6"/>
+            <line x1="25" y1="50" x2="45" y2="65" stroke="#cd7f32" stroke-width="1.5" opacity="0.5"/>
+            <!-- Copper spots -->
+            <circle cx="45" cy="36" r="3" fill="#cd7f32" opacity="0.8"/>
+            <circle cx="65" cy="48" r="2.5" fill="#cd7f32" opacity="0.7"/>
+            <circle cx="35" cy="58" r="2" fill="#cd7f32" opacity="0.6"/>
+          </svg>
+
+          <!-- Crack overlays that appear as you mine -->
+          <svg class="crack-overlay" id="crack1" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+            <line x1="45" y1="20" x2="50" y2="45" stroke="#1a1510" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="50" y1="45" x2="42" y2="55" stroke="#1a1510" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <svg class="crack-overlay" id="crack2" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+            <line x1="65" y1="25" x2="58" y2="50" stroke="#1a1510" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="58" y1="50" x2="65" y2="65" stroke="#1a1510" stroke-width="1" stroke-linecap="round"/>
+            <line x1="50" y1="45" x2="55" y2="38" stroke="#1a1510" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <svg class="crack-overlay" id="crack3" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+            <line x1="30" y1="35" x2="50" y2="50" stroke="#1a1510" stroke-width="2" stroke-linecap="round"/>
+            <line x1="50" y1="50" x2="70" y2="45" stroke="#1a1510" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="50" y1="50" x2="48" y2="70" stroke="#1a1510" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="40" y1="25" x2="35" y2="40" stroke="#1a1510" stroke-width="1" stroke-linecap="round"/>
+          </svg>
         </div>
+        <div class="tap-hint" id="tapHint">&#9650; CLICK TO MINE &#9650;</div>
+      </div>
+
+      <!-- Combo -->
+      <div class="combo-bar">
+        <span class="combo-text">COMBO</span>
+        <span class="combo-value" id="comboText">x1</span>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="bar-outer">
+        <div class="bar-fill" id="barFill"></div>
         <div class="bar-text" id="barText">0%</div>
       </div>
-      <div class="time-remaining" id="timeText">10s remaining</div>
     </div>
 
     <!-- COMPLETE STATE -->
     <div class="complete-panel" id="completeState">
-      <div class="complete-icon">&#9935;</div>
+      <div class="complete-icon">&#9935;&#128142;</div>
       <div class="complete-text">+1 Copper Ore!</div>
       <div class="complete-sub">Added to inventory</div>
+      <div class="complete-stats">
+        <div class="complete-stat">
+          <div class="complete-stat-val" id="finalClicks">0</div>
+          <div class="complete-stat-lbl">Clicks</div>
+        </div>
+        <div class="complete-stat">
+          <div class="complete-stat-val" id="finalTime">0s</div>
+          <div class="complete-stat-lbl">Time</div>
+        </div>
+        <div class="complete-stat">
+          <div class="complete-stat-val" id="finalCombo">x1</div>
+          <div class="complete-stat-lbl">Best Combo</div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -176,86 +314,231 @@
     // ========================================
     // CONFIG
     // ========================================
-    var MINE_TIME = 10;  // seconds
+    var TOTAL_CLICKS = 25;       // clicks needed to mine
     var TASK_NAME = 'mine_c_done';
+    var ORE_COLOR = '#cd7f32';
+
+    // ========================================
+    // STATE
+    // ========================================
+    var clicks = 0;
+    var done = false;
+    var combo = 0;
+    var bestCombo = 0;
+    var lastClickTime = 0;
+    var COMBO_WINDOW = 600;  // ms - clicks within this window build combo
+    var startTime = Date.now();
 
     // ========================================
     // ELEMENTS
     // ========================================
+    var minePanel = document.getElementById('minePanel');
+    var rockZone = document.getElementById('rockZone');
+    var rockContainer = document.getElementById('rockContainer');
     var barFill = document.getElementById('barFill');
     var barText = document.getElementById('barText');
-    var timeText = document.getElementById('timeText');
-    var mineSub = document.getElementById('mineSub');
-    var sparkZone = document.getElementById('sparkZone');
+    var clickCount = document.getElementById('clickCount');
+    var comboText = document.getElementById('comboText');
+    var tapHint = document.getElementById('tapHint');
     var miningState = document.getElementById('miningState');
     var completeState = document.getElementById('completeState');
+    var crack1 = document.getElementById('crack1');
+    var crack2 = document.getElementById('crack2');
+    var crack3 = document.getElementById('crack3');
 
     // ========================================
-    // MINING TIMER
+    // CLICK HANDLER
     // ========================================
-    var startTime = Date.now();
-    var duration = MINE_TIME * 1000;
-    var done = false;
-    var sparkTimer = null;
-
-    function update() {
+    rockZone.addEventListener('click', function(e) {
       if (done) return;
-      var elapsed = Date.now() - startTime;
-      var progress = Math.min(elapsed / duration, 1.0);
-      var pct = Math.floor(progress * 100);
 
+      clicks++;
+      var now = Date.now();
+
+      // Combo system
+      if (now - lastClickTime < COMBO_WINDOW) {
+        combo++;
+      } else {
+        combo = 1;
+      }
+      lastClickTime = now;
+      if (combo > bestCombo) bestCombo = combo;
+
+      // Update UI
+      clickCount.textContent = clicks;
+      updateCombo();
+      updateBar();
+      updateCracks();
+
+      // Hide hint after first click
+      if (clicks === 1) tapHint.style.display = 'none';
+
+      // Visual feedback
+      doShake();
+      spawnSparks(e);
+      spawnDmgNumber(e);
+      spawnPickHit(e);
+      rockBounce();
+
+      // Check complete
+      if (clicks >= TOTAL_CLICKS) {
+        completeMining();
+      }
+    });
+
+    // Prevent double-tap zoom on mobile
+    rockZone.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      // Create synthetic click at touch position
+      var touch = e.changedTouches[0];
+      var clickEvt = new MouseEvent('click', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        bubbles: true
+      });
+      rockZone.dispatchEvent(clickEvt);
+    });
+
+    // ========================================
+    // PROGRESS BAR
+    // ========================================
+    function updateBar() {
+      var pct = Math.min(Math.floor((clicks / TOTAL_CLICKS) * 100), 100);
       barFill.style.width = pct + '%';
       barText.textContent = pct + '%';
-
-      var remaining = Math.max(0, Math.ceil((duration - elapsed) / 1000));
-      timeText.textContent = remaining + 's remaining';
-      mineSub.textContent = 'Mining... ' + remaining + 's';
-
-      if (progress >= 1.0) {
-        completeMining();
-        return;
-      }
-      requestAnimationFrame(update);
     }
 
+    // ========================================
+    // COMBO
+    // ========================================
+    function updateCombo() {
+      comboText.textContent = 'x' + combo;
+      comboText.className = 'combo-value';
+      if (combo >= 8) {
+        comboText.classList.add('fire');
+      } else if (combo >= 4) {
+        comboText.classList.add('hot');
+      }
+    }
+
+    // Decay combo if no clicks
+    setInterval(function() {
+      if (done) return;
+      if (Date.now() - lastClickTime > COMBO_WINDOW && combo > 0) {
+        combo = 0;
+        comboText.textContent = 'x1';
+        comboText.className = 'combo-value';
+      }
+    }, 200);
+
+    // ========================================
+    // CRACKS
+    // ========================================
+    function updateCracks() {
+      var pct = clicks / TOTAL_CLICKS;
+      if (pct >= 0.25) crack1.style.opacity = Math.min((pct - 0.25) * 4, 1);
+      if (pct >= 0.50) crack2.style.opacity = Math.min((pct - 0.50) * 4, 1);
+      if (pct >= 0.75) crack3.style.opacity = Math.min((pct - 0.75) * 4, 1);
+    }
+
+    // ========================================
+    // VISUAL EFFECTS
+    // ========================================
+    function doShake() {
+      minePanel.classList.remove('shake');
+      void minePanel.offsetWidth;
+      minePanel.classList.add('shake');
+    }
+
+    function rockBounce() {
+      rockContainer.style.transform = 'scale(0.92)';
+      setTimeout(function() { rockContainer.style.transform = 'scale(1)'; }, 80);
+    }
+
+    function spawnSparks(e) {
+      var rect = rockZone.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+
+      for (var i = 0; i < 5; i++) {
+        var spark = document.createElement('div');
+        spark.className = 'click-spark';
+        spark.style.left = x + 'px';
+        spark.style.top = y + 'px';
+        var angle = (Math.random() * 360) * (Math.PI / 180);
+        var dist = 20 + Math.random() * 30;
+        spark.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+        spark.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+        spark.style.background = ORE_COLOR;
+        spark.style.boxShadow = '0 0 4px ' + ORE_COLOR;
+        rockZone.appendChild(spark);
+        (function(s) { requestAnimationFrame(function() { s.classList.add('fly'); }); })(spark);
+        (function(s) { setTimeout(function() { s.remove(); }, 500); })(spark);
+      }
+    }
+
+    function spawnDmgNumber(e) {
+      var rect = rockZone.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+
+      var dmg = document.createElement('div');
+      dmg.className = 'dmg-number';
+      dmg.style.left = (x + (Math.random() * 20 - 10)) + 'px';
+      dmg.style.top = (y - 10) + 'px';
+
+      if (combo >= 8) {
+        dmg.textContent = '+' + combo + '!';
+        dmg.style.color = '#ff4020';
+        dmg.style.fontSize = '20px';
+      } else if (combo >= 4) {
+        dmg.textContent = '+' + combo;
+        dmg.style.color = '#e85030';
+        dmg.style.fontSize = '18px';
+      } else {
+        dmg.textContent = '+1';
+      }
+
+      rockZone.appendChild(dmg);
+      requestAnimationFrame(function() { dmg.classList.add('pop'); });
+      setTimeout(function() { dmg.remove(); }, 800);
+    }
+
+    function spawnPickHit(e) {
+      var rect = rockZone.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+
+      var pick = document.createElement('div');
+      pick.className = 'pick-hit';
+      pick.textContent = '\u26CF';
+      pick.style.left = (x - 20) + 'px';
+      pick.style.top = (y - 25) + 'px';
+      rockZone.appendChild(pick);
+      requestAnimationFrame(function() { pick.classList.add('swing'); });
+      setTimeout(function() { pick.remove(); }, 300);
+    }
+
+    // ========================================
+    // COMPLETE
+    // ========================================
     function completeMining() {
       done = true;
-      clearInterval(sparkTimer);
+      var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
-      // Show complete
       miningState.style.display = 'none';
       completeState.style.display = 'block';
 
-      // Tell Portals we're done
+      document.getElementById('finalClicks').textContent = clicks;
+      document.getElementById('finalTime').textContent = elapsed + 's';
+      document.getElementById('finalCombo').textContent = 'x' + bestCombo;
+
+      // Tell Portals
       triggerTask(TASK_NAME);
 
-      // Close iframe after 2 seconds
-      setTimeout(function() {
-        closeIframe();
-      }, 2000);
+      // Close after 2 seconds
+      setTimeout(function() { closeIframe(); }, 2000);
     }
-
-    // ========================================
-    // SPARKS
-    // ========================================
-    function createSparks() {
-      if (done) return;
-      for (var i = 0; i < 2; i++) {
-        var spark = document.createElement('div');
-        spark.className = 'spark';
-        spark.style.left = (Math.random() * 80 + 10) + '%';
-        spark.style.top = (Math.random() * 60 + 20) + '%';
-        spark.style.setProperty('--sx', (Math.random() * 24 - 12) + 'px');
-        spark.style.setProperty('--sy', -(Math.random() * 16 + 4) + 'px');
-        spark.style.background = '#cd7f32';
-        spark.style.boxShadow = '0 0 4px #cd7f32';
-        sparkZone.appendChild(spark);
-        (function(s) { requestAnimationFrame(function() { s.classList.add('pop'); }); })(spark);
-        (function(s) { setTimeout(function() { s.remove(); }, 400); })(spark);
-      }
-    }
-
-    sparkTimer = setInterval(createSparks, 200);
 
     // ========================================
     // PORTALS SDK
@@ -278,10 +561,9 @@
     }
 
     // ========================================
-    // START
+    // INIT
     // ========================================
-    requestAnimationFrame(update);
-    console.log('[Mine] Copper mining started. ' + MINE_TIME + 's');
+    console.log('[Mine] Copper - click ' + TOTAL_CLICKS + ' times to mine.');
   </script>
 </body>
 </html>
