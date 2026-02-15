@@ -1,706 +1,808 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mining HUD</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>MINERSIM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: 'Chakra Petch', sans-serif; color: #e0dcd0; overflow: hidden; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    .overlay { display: flex; align-items: center; justify-content: center; padding: 12px; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes shimmerGold { 0%,100% { text-shadow: 1px 1px 2px rgba(0,0,0,0.5), 0 0 4px rgba(255,200,50,0.2); } 50% { text-shadow: 1px 1px 2px rgba(0,0,0,0.5), 0 0 12px rgba(255,200,50,0.5); } }
+    @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 6px rgba(200,160,60,0.3); } 50% { box-shadow: 0 0 18px rgba(200,160,60,0.5); } }
 
-  body {
-    background: transparent;
-    font-family: 'Press Start 2P', monospace;
-    overflow: hidden;
-    user-select: none;
-  }
+    /* ========== MAIN CONTAINER ========== */
+    .menu-container {
+      width: 100%; max-width: 420px; max-height: 90vh;
+      background: linear-gradient(160deg, #2a2520 0%, #1a1815 40%, #151210 100%);
+      border: 3px solid #5a4a35;
+      border-radius: 4px;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+      box-shadow: 0 0 0 1px #3a3025, 0 16px 48px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+      display: flex; flex-direction: column; overflow: hidden;
+      animation: slideUp 0.4s ease;
+    }
 
-  /* ========== MAIN CONTAINER ========== */
-  .hud-container {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    width: 210px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+    /* ========== HEADER ========== */
+    .menu-header {
+      background: linear-gradient(180deg, #3a3025 0%, #252018 100%);
+      padding: 10px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 2px solid #5a4a35;
+      position: relative;
+    }
+    .menu-header::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; width: 60px; height: 2px;
+      background: #c8a04a;
+    }
 
-  /* ========== INVENTORY PANEL ========== */
-  .inv-panel {
-    background: linear-gradient(180deg, #3b3024 0%, #2a2118 100%);
-    border: 3px solid #5c4a32;
-    box-shadow:
-      0 0 0 1px #000,
-      inset 0 0 10px rgba(0,0,0,0.5),
-      0 4px 16px rgba(0,0,0,0.7);
-    padding: 6px;
-  }
+    .game-title {
+      font-size: 18px; font-weight: 700; color: #c8a04a;
+      text-shadow: 1px 1px 0 #000, 0 0 10px rgba(200,160,74,0.2);
+      letter-spacing: 4px; text-transform: uppercase;
+    }
 
-  .inv-header {
-    text-align: center;
-    font-size: 7px;
-    color: #c8a96e;
-    letter-spacing: 2px;
-    padding: 4px 0 6px;
-    border-bottom: 1px solid #5c4a32;
-    margin-bottom: 6px;
-    text-shadow: 1px 1px 0 #000;
-  }
+    .header-stats { display: flex; gap: 8px; align-items: center; }
 
-  /* ========== INVENTORY GRID ========== */
-  .inv-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 3px;
-  }
+    .stat-box {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(0,0,0,0.4); padding: 5px 8px; border-radius: 2px;
+      border: 1px solid #3a3025; border-left: 2px solid #c8a04a;
+    }
+    .stat-icon { font-size: 14px; opacity: 0.8; }
+    .stat-value { font-size: 14px; font-weight: 700; color: #c8a04a; animation: shimmerGold 3s ease-in-out infinite; }
+    .stat-label { font-size: 8px; color: #777; text-transform: uppercase; letter-spacing: 1px; }
 
-  .inv-slot {
-    aspect-ratio: 1;
-    background: linear-gradient(135deg, #1a1510 0%, #241c14 50%, #1a1510 100%);
-    border: 1px solid #4a3a28;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.1s;
-  }
+    /* ========== NAV TABS ========== */
+    .nav-tabs {
+      display: flex; background: rgba(0,0,0,0.25); border-bottom: 1px solid #3a3025;
+    }
+    .nav-tab {
+      flex: 1; padding: 8px 6px; text-align: center; cursor: pointer;
+      transition: all 0.15s; border-right: 1px solid #2a2520;
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+      position: relative;
+    }
+    .nav-tab:last-child { border-right: none; }
+    .nav-tab:hover { background: rgba(200,160,74,0.08); }
+    .nav-tab.active {
+      background: linear-gradient(180deg, rgba(200,160,74,0.12) 0%, transparent 100%);
+    }
+    .nav-tab.active::after {
+      content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 2px;
+      background: #c8a04a;
+    }
+    .nav-tab-icon { font-size: 18px; opacity: 0.7; }
+    .nav-tab.active .nav-tab-icon { opacity: 1; }
+    .nav-tab-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #666; }
+    .nav-tab.active .nav-tab-label { color: #c8a04a; }
 
-  .inv-slot.occupied {
-    border-color: #6b5530;
-  }
+    /* ========== CONTENT AREA ========== */
+    .content-area { flex: 1; overflow-y: auto; padding: 12px; }
+    .tab-content { display: none; animation: fadeInContent 0.2s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeInContent { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-  .inv-slot.occupied:hover {
-    border-color: #c8a96e;
-  }
+    .section-title {
+      font-size: 12px; font-weight: 700; color: #c8a04a; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+      text-transform: uppercase; letter-spacing: 2px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #3a3025, transparent); }
 
-  .inv-slot .item-icon {
-    width: 32px;
-    height: 32px;
-    image-rendering: pixelated;
-  }
+    /* ========== MINING TAB ========== */
+    .mining-status-card {
+      background: linear-gradient(160deg, rgba(50,45,38,0.9) 0%, rgba(30,28,24,0.9) 100%);
+      border: 2px solid #3a3025; border-radius: 3px; padding: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4); margin-bottom: 14px;
+      text-align: center; position: relative;
+    }
+    .mining-status-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+      background: #3a3025; transition: background 0.3s;
+    }
+    .mining-status-card.active::before { background: #c8a04a; }
+    .mining-status-card.active { border-color: #5a4a35; animation: pulseGlow 2s infinite; }
 
-  .inv-slot .item-count {
-    position: absolute;
-    bottom: 1px;
-    right: 2px;
-    font-size: 7px;
-    color: #ffff00;
-    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-  }
+    .mining-ore-display {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin-bottom: 12px;
+    }
+    .mining-ore-icon-large { font-size: 40px; }
+    .mining-ore-info { text-align: left; }
+    .mining-ore-name { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+    .mining-ore-sub { font-size: 10px; color: #777; letter-spacing: 1px; }
 
-  .inv-slot .item-name-tip {
-    display: none;
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1a1510;
-    border: 1px solid #c8a96e;
-    color: #c8a96e;
-    font-size: 6px;
-    padding: 2px 4px;
-    white-space: nowrap;
-    z-index: 100;
-    pointer-events: none;
-  }
+    .mine-bar-outer {
+      background: #151210; border: 1px solid #3a3025; border-radius: 2px;
+      height: 22px; position: relative; overflow: hidden; margin-bottom: 8px;
+    }
+    .mine-bar-fill {
+      height: 100%; width: 0%; border-radius: 1px;
+      transition: width 0.1s linear; position: relative;
+    }
+    .mine-bar-fill::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+      background: rgba(255,255,255,0.08);
+    }
 
-  .inv-slot.occupied:hover .item-name-tip {
-    display: block;
-  }
+    .mine-bar-fill.copper { background: linear-gradient(180deg, #cd7f32 0%, #8B5e24 100%); }
+    .mine-bar-fill.iron { background: linear-gradient(180deg, #a0a0a0 0%, #686868 100%); }
+    .mine-bar-fill.gold { background: linear-gradient(180deg, #e8c840 0%, #b8960b 100%); }
+    .mine-bar-fill.diamond { background: linear-gradient(180deg, #60c8e8 0%, #2888b0 100%); }
 
-  /* ========== MINING OVERLAY ========== */
-  .mine-overlay {
-    background: linear-gradient(180deg, #2a1a0a 0%, #1a0f05 100%);
-    border: 3px solid #5c4a32;
-    box-shadow:
-      0 0 0 1px #000,
-      inset 0 0 10px rgba(0,0,0,0.5),
-      0 4px 16px rgba(0,0,0,0.7);
-    padding: 8px;
-    display: none;
-  }
+    .mine-bar-text {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
+      z-index: 2; pointer-events: none; letter-spacing: 1px;
+    }
 
-  .mine-overlay.active { display: block; }
+    .mining-idle-text { font-size: 12px; color: #555; padding: 20px 0; letter-spacing: 1px; }
 
-  .mine-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
+    /* Pickaxe swing */
+    .pickaxe-swing { display: inline-block; font-size: 26px; transform-origin: bottom right; }
+    .pickaxe-swing.active { animation: pickSwing 0.5s ease-in-out infinite; }
+    @keyframes pickSwing { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-35deg); } }
 
-  .mine-ore-icon {
-    width: 24px;
-    height: 24px;
-    image-rendering: pixelated;
-  }
+    /* Sparks - angular low poly feel */
+    .spark-zone { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; }
+    .spark {
+      position: absolute; width: 3px; height: 3px; opacity: 0;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    }
+    .spark.pop { animation: sparkFly 0.35s ease-out forwards; }
+    @keyframes sparkFly {
+      0% { opacity: 1; transform: translate(0,0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0.2); }
+    }
 
-  .mine-ore-name {
-    font-size: 8px;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 0 #000;
-  }
+    /* ========== INVENTORY TAB ========== */
+    .inventory-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+    }
 
-  .mine-bar-outer {
-    background: #0a0604;
-    border: 2px solid #3d2410;
-    height: 18px;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 4px;
-  }
+    .inv-slot {
+      aspect-ratio: 1;
+      background: linear-gradient(160deg, #2a2520 0%, #1e1c18 100%);
+      border: 1px solid #3a3025; border-radius: 2px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; transition: all 0.15s;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .inv-slot.occupied { border-color: #4a4035; }
+    .inv-slot.occupied:hover { border-color: #c8a04a; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(200,160,74,0.15); }
+    .inv-slot.empty { opacity: 0.25; }
 
-  .mine-bar-fill {
-    height: 100%;
-    width: 0%;
-    transition: width 0.1s linear;
-  }
+    .inv-slot-icon { font-size: 26px; margin-bottom: 1px; }
+    .inv-slot-count {
+      font-size: 10px; font-weight: 700; color: #c8a04a; letter-spacing: 1px;
+    }
+    .inv-slot-name {
+      position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+      background: #1a1815; border: 1px solid #c8a04a; border-radius: 2px;
+      padding: 2px 6px; font-size: 9px; font-weight: 700; color: #c8a04a;
+      white-space: nowrap; z-index: 100; pointer-events: none; display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6); letter-spacing: 1px;
+    }
+    .inv-slot.occupied:hover .inv-slot-name { display: block; }
 
-  /* Bar shimmer */
-  .mine-bar-fill::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: repeating-linear-gradient(
-      90deg,
-      rgba(255,255,255,0.08) 0px,
-      rgba(255,255,255,0.08) 2px,
-      transparent 2px,
-      transparent 4px
-    );
-    animation: barShimmer 0.6s steps(4) infinite;
-  }
+    /* ========== STATS TAB ========== */
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 14px; }
+    .stats-card {
+      background: linear-gradient(160deg, #2a2520 0%, #1e1c18 100%);
+      border: 1px solid #3a3025; border-radius: 2px; padding: 12px; text-align: center;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .stats-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, #3a3025, transparent);
+    }
+    .stats-card-icon { font-size: 26px; margin-bottom: 4px; }
+    .stats-card-value { font-size: 20px; font-weight: 700; color: #c8a04a; }
+    .stats-card-label { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 2px; }
 
-  @keyframes barShimmer {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(8px); }
-  }
+    .pickaxe-card {
+      background: linear-gradient(160deg, #2a2520 0%, #1e1c18 100%);
+      border: 1px solid #3a3025; border-radius: 2px; padding: 14px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); text-align: center;
+      border-left: 3px solid #c8a04a;
+    }
+    .pick-display { font-size: 44px; margin-bottom: 6px; }
+    .pick-name { font-size: 15px; font-weight: 700; color: #c8a04a; margin-bottom: 2px; letter-spacing: 1px; }
+    .pick-desc { font-size: 10px; color: #666; letter-spacing: 1px; }
 
-  /* Ore-specific bar colors */
-  .mine-bar-fill.copper {
-    background: linear-gradient(180deg, #cd7f32 0%, #a0622a 40%, #7a4b20 100%);
-  }
-  .mine-bar-fill.iron {
-    background: linear-gradient(180deg, #b0b0b0 0%, #888 40%, #666 100%);
-  }
-  .mine-bar-fill.gold {
-    background: linear-gradient(180deg, #ffd700 0%, #daa520 40%, #b8860b 100%);
-  }
-  .mine-bar-fill.diamond {
-    background: linear-gradient(180deg, #4fc3f7 0%, #039be5 40%, #0277bd 100%);
-  }
+    /* ========== NOTIFICATIONS ========== */
+    .notifications {
+      position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+      z-index: 1001; display: flex; flex-direction: column; gap: 6px; pointer-events: none;
+    }
+    .notification {
+      background: rgba(26,24,21,0.96); border: 1px solid #3a3025; border-radius: 2px;
+      padding: 8px 14px; display: flex; align-items: center; gap: 8px;
+      animation: notifSlide 0.25s ease, notifFade 0.4s ease 2s forwards;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      border-left: 3px solid #c8a04a;
+    }
+    .notification.success { border-left-color: #5a8a50; }
+    .notification.loot { border-left-color: #c8a04a; }
+    .notification-icon { font-size: 18px; }
+    .notification-text { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+    @keyframes notifSlide { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes notifFade { to { opacity: 0; transform: translateY(-20px); } }
 
-  .mine-status {
-    text-align: center;
-    font-size: 6px;
-    color: #c4a882;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 0 #000;
-  }
+    /* ========== FOOTER ========== */
+    .menu-footer {
+      background: rgba(0,0,0,0.35); padding: 6px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid #2a2520; font-size: 9px; color: #444; letter-spacing: 1px;
+    }
 
-  .mine-status.complete { color: #4caf50; }
-
-  /* Pickaxe icon */
-  .pickaxe-icon {
-    font-size: 12px;
-    animation: pickSwing 0.6s steps(3) infinite;
-  }
-
-  @keyframes pickSwing {
-    0% { transform: rotate(0deg); }
-    50% { transform: rotate(-25deg); }
-    100% { transform: rotate(0deg); }
-  }
-
-  .pickaxe-icon.stopped { animation: none; }
-
-  /* ========== XP/LOOT DROP ========== */
-  .loot-drop {
-    position: fixed;
-    pointer-events: none;
-    font-size: 9px;
-    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-    opacity: 0;
-    z-index: 200;
-  }
-
-  .loot-drop.show {
-    animation: lootFloat 1.8s steps(10) forwards;
-  }
-
-  @keyframes lootFloat {
-    0% { opacity: 1; transform: translateY(0); }
-    70% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-60px); }
-  }
-
-  /* ========== SPARKS ========== */
-  .spark-container {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  .spark {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    opacity: 0;
-  }
-
-  .spark.pop {
-    animation: sparkPop 0.3s steps(3) forwards;
-  }
-
-  @keyframes sparkPop {
-    0% { opacity: 1; transform: translate(0,0); }
-    100% { opacity: 0; transform: translate(var(--sx), var(--sy)); }
-  }
-
-  /* ========== STATS BAR ========== */
-  .stats-bar {
-    background: linear-gradient(180deg, #3b3024 0%, #2a2118 100%);
-    border: 3px solid #5c4a32;
-    box-shadow: 0 0 0 1px #000, 0 4px 16px rgba(0,0,0,0.7);
-    padding: 6px 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .stat {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .stat-icon {
-    font-size: 10px;
-  }
-
-  .stat-val {
-    font-size: 7px;
-    color: #ffd700;
-    text-shadow: 1px 1px 0 #000;
-  }
-
-  .stat-label {
-    font-size: 5px;
-    color: #888;
-    text-shadow: 1px 1px 0 #000;
-  }
-</style>
+    /* ========== SCROLLBAR ========== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #151210; }
+    ::-webkit-scrollbar-thumb { background: #3a3025; border-radius: 1px; }
+  </style>
 </head>
 <body>
+  <div class="overlay">
+    <div class="menu-container">
 
-<div class="hud-container">
-
-  <!-- Stats Bar -->
-  <div class="stats-bar">
-    <div class="stat">
-      <span class="stat-icon">&#9935;</span>
-      <div>
-        <div class="stat-val" id="pickLevel">Lv 1</div>
-        <div class="stat-label">PICKAXE</div>
+      <!-- HEADER -->
+      <div class="menu-header">
+        <div class="game-title">MINERSIM</div>
+        <div class="header-stats">
+          <div class="stat-box">
+            <span class="stat-icon">&#129689;</span>
+            <div>
+              <div class="stat-value" id="headerCoins">0</div>
+              <div class="stat-label">Coins</div>
+            </div>
+          </div>
+          <div class="stat-box">
+            <span class="stat-icon">&#9935;</span>
+            <div>
+              <div class="stat-value" id="headerPick">Lv.1</div>
+              <div class="stat-label">Pick</div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="stat">
-      <span class="stat-icon" style="color: #ffd700;">&#9679;</span>
-      <div>
-        <div class="stat-val" id="coinCount">0</div>
-        <div class="stat-label">COINS</div>
+
+      <!-- NAV TABS -->
+      <div class="nav-tabs">
+        <div class="nav-tab active" data-tab="mining">
+          <span class="nav-tab-icon">&#9935;</span>
+          <span class="nav-tab-label">Mining</span>
+        </div>
+        <div class="nav-tab" data-tab="inventory">
+          <span class="nav-tab-icon">&#127890;</span>
+          <span class="nav-tab-label">Items</span>
+        </div>
+        <div class="nav-tab" data-tab="stats">
+          <span class="nav-tab-icon">&#128202;</span>
+          <span class="nav-tab-label">Stats</span>
+        </div>
       </div>
+
+      <!-- CONTENT -->
+      <div class="content-area">
+
+        <!-- MINING TAB -->
+        <div class="tab-content active" id="tab-mining">
+          <div class="mining-status-card" id="miningCard">
+            <div id="miningIdle">
+              <div class="mining-idle-text">Walk to a rock to start mining</div>
+            </div>
+            <div id="miningActive" style="display:none;">
+              <div class="mining-ore-display">
+                <div>
+                  <span class="pickaxe-swing active" id="pickSwing">&#9935;</span>
+                </div>
+                <div style="font-size:36px;" id="miningOreEmoji">&#129704;</div>
+                <div class="mining-ore-info">
+                  <div class="mining-ore-name" id="miningOreName">Copper Ore</div>
+                  <div class="mining-ore-sub" id="miningOreSub">Mining...</div>
+                </div>
+              </div>
+              <div class="mine-bar-outer">
+                <div class="mine-bar-fill copper" id="mineBarFill">
+                  <div class="spark-zone" id="sparkZone"></div>
+                </div>
+                <div class="mine-bar-text" id="mineBarText">0%</div>
+              </div>
+            </div>
+            <div id="miningComplete" style="display:none;">
+              <div style="font-size:36px; margin-bottom:6px;">&#127881;</div>
+              <div style="font-size:16px; font-weight:800; color:#27ae60;" id="completeText">+1 Copper Ore!</div>
+              <div style="font-size:11px; color:#aaa; margin-top:4px;">Added to inventory</div>
+            </div>
+          </div>
+
+          <!-- Recent Loot -->
+          <div class="section-title">&#128240; Recent Loot</div>
+          <div id="lootLog" style="max-height: 140px; overflow-y: auto;">
+            <div style="font-size: 12px; color: #666; text-align: center; padding: 10px;">No loot yet - go mine some rocks!</div>
+          </div>
+        </div>
+
+        <!-- INVENTORY TAB -->
+        <div class="tab-content" id="tab-inventory">
+          <div class="section-title">&#127890; Inventory</div>
+          <div class="inventory-grid" id="invGrid"></div>
+        </div>
+
+        <!-- STATS TAB -->
+        <div class="tab-content" id="tab-stats">
+          <div class="section-title">&#128202; Mining Stats</div>
+          <div class="stats-grid">
+            <div class="stats-card">
+              <div class="stats-card-icon" style="color:#cd7f32;">&#129704;</div>
+              <div class="stats-card-value" id="statCopper">0</div>
+              <div class="stats-card-label">Copper Mined</div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-card-icon" style="color:#a8a8a8;">&#129704;</div>
+              <div class="stats-card-value" id="statIron">0</div>
+              <div class="stats-card-label">Iron Mined</div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-card-icon" style="color:#ffd700;">&#129704;</div>
+              <div class="stats-card-value" id="statGold">0</div>
+              <div class="stats-card-label">Gold Mined</div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-card-icon" style="color:#4fc3f7;">&#128142;</div>
+              <div class="stats-card-value" id="statDiamond">0</div>
+              <div class="stats-card-label">Diamond Mined</div>
+            </div>
+          </div>
+
+          <div class="section-title">&#9935; Pickaxe</div>
+          <div class="pickaxe-card">
+            <div class="pick-display" id="pickDisplay">&#9935;</div>
+            <div class="pick-name" id="pickName">Bronze Pickaxe</div>
+            <div class="pick-desc" id="pickDesc">A basic pickaxe. Gets the job done.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="menu-footer">
+        <span>MINERSIM v1.0</span>
+        <span id="footerStatus">Ready</span>
+      </div>
+
     </div>
   </div>
 
-  <!-- Mining Progress Overlay -->
-  <div class="mine-overlay" id="mineOverlay">
-    <div class="mine-header">
-      <span class="pickaxe-icon" id="pickIcon">&#9935;</span>
-      <canvas class="mine-ore-icon" id="mineOreIcon" width="16" height="16"></canvas>
-      <span class="mine-ore-name" id="mineOreName">Mining...</span>
-    </div>
-    <div class="mine-bar-outer">
-      <div class="mine-bar-fill" id="mineBarFill"></div>
-      <div class="spark-container" id="mineSparks"></div>
-    </div>
-    <div class="mine-status" id="mineStatus">Mining...</div>
-  </div>
+  <div class="notifications" id="notifications"></div>
 
-  <!-- Inventory Panel -->
-  <div class="inv-panel">
-    <div class="inv-header">INVENTORY</div>
-    <div class="inv-grid" id="invGrid"></div>
-  </div>
+  <!-- Portals SDK -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js"></script>
 
-</div>
+  <script>
+    // ========================================
+    // CONFIG
+    // ========================================
+    var ORE = {
+      copper:  { name: 'Copper Ore',  time: 5,  emoji: '\u{1FA78}', color: '#cd7f32', barClass: 'copper',  task: 'mine_c_done' },
+      iron:    { name: 'Iron Ore',    time: 10, emoji: '\u{1FA78}', color: '#a8a8a8', barClass: 'iron',    task: 'mine_i_done' },
+      gold:    { name: 'Gold Ore',    time: 15, emoji: '\u{1FA78}', color: '#ffd700', barClass: 'gold',    task: 'mine_g_done' },
+      diamond: { name: 'Diamond',     time: 20, emoji: '\u{1F48E}', color: '#4fc3f7', barClass: 'diamond', task: 'mine_d_done' }
+    };
 
-<script>
-  // ========================================
-  // ORE CONFIG
-  // ========================================
-  const ORE = {
-    copper:  { name: 'Copper Ore',  time: 5,  color: '#cd7f32', colors: ['#cd7f32','#a0622a','#7a4b20'], task: 'mine_c_done' },
-    iron:    { name: 'Iron Ore',    time: 10, color: '#a8a8a8', colors: ['#b0b0b0','#888888','#666666'], task: 'mine_i_done' },
-    gold:    { name: 'Gold Ore',    time: 15, color: '#ffd700', colors: ['#ffd700','#daa520','#b8860b'], task: 'mine_g_done' },
-    diamond: { name: 'Diamond',     time: 20, color: '#4fc3f7', colors: ['#4fc3f7','#039be5','#0277bd'], task: 'mine_d_done' }
-  };
+    var PICK_NAMES = {
+      1: { name: 'Bronze Pickaxe', desc: 'A basic pickaxe. Gets the job done.' },
+      2: { name: 'Iron Pickaxe', desc: 'Stronger than bronze. Mines faster.' },
+      3: { name: 'Steel Pickaxe', desc: 'A reliable upgrade for serious miners.' },
+      4: { name: 'Rune Pickaxe', desc: 'The finest pickaxe. Legendary mining speed.' }
+    };
 
-  const TOTAL_SLOTS = 28;
+    var TOTAL_SLOTS = 28;
 
-  // ========================================
-  // STATE
-  // ========================================
-  let inventory = {}; // { copper: 5, iron: 2, ... }
-  let coins = 0;
-  let pickLevel = 1;
-  let isMining = false;
-  let miningTimer = null;
-  let miningStart = 0;
-  let miningDuration = 0;
-  let miningOre = null;
-  let sparkInterval = null;
+    // ========================================
+    // STATE
+    // ========================================
+    var inventory = {};
+    var coins = 0;
+    var pickLevel = 1;
+    var isMining = false;
+    var miningStart = 0;
+    var miningDuration = 0;
+    var miningOre = null;
+    var sparkInterval = null;
+    var totalMined = { copper: 0, iron: 0, gold: 0, diamond: 0 };
+    var lootHistory = [];
 
-  // ========================================
-  // ELEMENTS
-  // ========================================
-  const invGrid = document.getElementById('invGrid');
-  const mineOverlay = document.getElementById('mineOverlay');
-  const mineBarFill = document.getElementById('mineBarFill');
-  const mineStatus = document.getElementById('mineStatus');
-  const mineOreName = document.getElementById('mineOreName');
-  const mineOreIcon = document.getElementById('mineOreIcon');
-  const pickIcon = document.getElementById('pickIcon');
-  const mineSparks = document.getElementById('mineSparks');
-  const coinCountEl = document.getElementById('coinCount');
-  const pickLevelEl = document.getElementById('pickLevel');
+    // ========================================
+    // ELEMENTS
+    // ========================================
+    var invGrid = document.getElementById('invGrid');
+    var miningCard = document.getElementById('miningCard');
+    var miningIdle = document.getElementById('miningIdle');
+    var miningActiveEl = document.getElementById('miningActive');
+    var miningCompleteEl = document.getElementById('miningComplete');
+    var mineBarFill = document.getElementById('mineBarFill');
+    var mineBarText = document.getElementById('mineBarText');
+    var miningOreName = document.getElementById('miningOreName');
+    var miningOreSub = document.getElementById('miningOreSub');
+    var miningOreEmoji = document.getElementById('miningOreEmoji');
+    var pickSwingEl = document.getElementById('pickSwing');
+    var sparkZone = document.getElementById('sparkZone');
+    var completeText = document.getElementById('completeText');
+    var lootLog = document.getElementById('lootLog');
+    var headerCoins = document.getElementById('headerCoins');
+    var headerPick = document.getElementById('headerPick');
+    var footerStatus = document.getElementById('footerStatus');
 
-  // ========================================
-  // INIT INVENTORY GRID
-  // ========================================
-  function initGrid() {
-    invGrid.innerHTML = '';
-    for (let i = 0; i < TOTAL_SLOTS; i++) {
-      const slot = document.createElement('div');
-      slot.className = 'inv-slot';
-      slot.dataset.index = i;
-      invGrid.appendChild(slot);
-    }
-  }
-  initGrid();
-
-  // ========================================
-  // RENDER INVENTORY
-  // ========================================
-  function renderInventory() {
-    // Clear all slots
-    const slots = invGrid.querySelectorAll('.inv-slot');
-    slots.forEach(s => {
-      s.innerHTML = '';
-      s.className = 'inv-slot';
+    // ========================================
+    // TAB SWITCHING
+    // ========================================
+    var tabs = document.querySelectorAll('.nav-tab');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        var tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(function(tc) { tc.classList.remove('active'); });
+        var target = document.getElementById('tab-' + tab.dataset.tab);
+        if (target) target.classList.add('active');
+      });
     });
 
-    // Fill slots with ore stacks
-    let slotIndex = 0;
-    for (const [oreKey, count] of Object.entries(inventory)) {
-      if (count <= 0 || slotIndex >= TOTAL_SLOTS) continue;
-      const ore = ORE[oreKey];
-      if (!ore) continue;
-
-      const slot = slots[slotIndex];
-      slot.className = 'inv-slot occupied';
-
-      // Pixel ore icon
-      const canvas = document.createElement('canvas');
-      canvas.width = 16;
-      canvas.height = 16;
-      canvas.className = 'item-icon';
-      drawOreIcon(canvas, ore.colors);
-      slot.appendChild(canvas);
-
-      // Count
-      if (count > 1) {
-        const countEl = document.createElement('div');
-        countEl.className = 'item-count';
-        countEl.textContent = count;
-        slot.appendChild(countEl);
-      }
-
-      // Tooltip
-      const tip = document.createElement('div');
-      tip.className = 'item-name-tip';
-      tip.textContent = ore.name + (count > 1 ? ' x' + count : '');
-      slot.appendChild(tip);
-
-      slotIndex++;
-    }
-  }
-
-  // ========================================
-  // DRAW PIXEL ORE ICON
-  // ========================================
-  function drawOreIcon(canvas, colors) {
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = false;
-
-    // Rock shape
-    const rock = [
-      [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
-      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-      [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0]
-    ];
-
-    for (let y = 0; y < 16; y++) {
-      for (let x = 0; x < 16; x++) {
-        if (rock[y][x]) {
-          ctx.fillStyle = '#3a3a3a';
-          ctx.fillRect(x, y, 1, 1);
-        }
-      }
-    }
-
-    // Ore veins
-    ctx.fillStyle = colors[0];
-    [[4,3],[5,3],[5,4],[10,5],[11,5],[11,6],[3,8],[4,8],[4,9],[9,10],[10,10],[10,11],[7,6],[7,7]].forEach(([x,y]) => {
-      ctx.fillRect(x, y, 1, 1);
-    });
-
-    // Dark accents
-    ctx.fillStyle = colors[2];
-    [[6,4],[12,6],[5,9],[11,11]].forEach(([x,y]) => {
-      ctx.fillRect(x, y, 1, 1);
-    });
-  }
-
-  // ========================================
-  // START MINING
-  // ========================================
-  function startMining(oreType) {
-    if (isMining) return;
-
-    const ore = ORE[oreType];
-    if (!ore) return;
-
-    isMining = true;
-    miningOre = oreType;
-    miningDuration = ore.time * 1000;
-    miningStart = Date.now();
-
-    // Show overlay
-    mineOverlay.classList.add('active');
-    mineBarFill.style.width = '0%';
-    mineBarFill.className = 'mine-bar-fill ' + oreType;
-    mineOreName.textContent = ore.name;
-    mineOreName.style.color = ore.color;
-    mineStatus.textContent = 'Mining...';
-    mineStatus.classList.remove('complete');
-    pickIcon.classList.remove('stopped');
-
-    // Draw ore icon in mining overlay
-    drawOreIcon(mineOreIcon, ore.colors);
-
-    // Sparks
-    sparkInterval = setInterval(() => createSparks(ore.colors), 200);
-
-    // Start progress
-    requestAnimationFrame(updateMining);
-  }
-
-  // ========================================
-  // UPDATE MINING PROGRESS
-  // ========================================
-  function updateMining() {
-    if (!isMining) return;
-
-    const elapsed = Date.now() - miningStart;
-    const progress = Math.min(elapsed / miningDuration, 1.0);
-    mineBarFill.style.width = (progress * 100) + '%';
-
-    const remaining = Math.max(0, Math.ceil((miningDuration - elapsed) / 1000));
-    mineStatus.textContent = 'Mining... ' + remaining + 's';
-
-    if (progress >= 1.0) {
-      completeMining();
-      return;
-    }
-
-    requestAnimationFrame(updateMining);
-  }
-
-  // ========================================
-  // COMPLETE MINING
-  // ========================================
-  function completeMining() {
-    isMining = false;
-    clearInterval(sparkInterval);
-    pickIcon.classList.add('stopped');
-
-    const ore = ORE[miningOre];
-
-    // Add to inventory
-    if (!inventory[miningOre]) inventory[miningOre] = 0;
-    inventory[miningOre]++;
-    renderInventory();
-
-    // Update status
-    mineStatus.textContent = '+1 ' + ore.name + '!';
-    mineStatus.classList.add('complete');
-
-    // Loot drop animation
-    showLootDrop('+1 ' + ore.name, ore.color);
-
-    // Send completion to Portals
-    sendToPortals(ore.task);
-
-    // Hide overlay after 1.5s
-    setTimeout(() => {
-      mineOverlay.classList.remove('active');
-      miningOre = null;
-    }, 1500);
-  }
-
-  // ========================================
-  // LOOT DROP ANIMATION
-  // ========================================
-  function showLootDrop(text, color) {
-    const drop = document.createElement('div');
-    drop.className = 'loot-drop';
-    drop.textContent = text;
-    drop.style.color = color;
-    drop.style.right = '80px';
-    drop.style.top = '120px';
-    document.body.appendChild(drop);
-
-    requestAnimationFrame(() => drop.classList.add('show'));
-    setTimeout(() => drop.remove(), 1800);
-  }
-
-  // ========================================
-  // SPARK EFFECTS
-  // ========================================
-  function createSparks(colors) {
-    if (!isMining) return;
-    for (let i = 0; i < 3; i++) {
-      const spark = document.createElement('div');
-      spark.className = 'spark';
-      spark.style.left = (Math.random() * 80 + 10) + '%';
-      spark.style.top = (Math.random() * 50 + 25) + '%';
-      spark.style.setProperty('--sx', (Math.random() * 20 - 10) + 'px');
-      spark.style.setProperty('--sy', -(Math.random() * 15 + 5) + 'px');
-      spark.style.background = colors[Math.floor(Math.random() * colors.length)];
-      mineSparks.appendChild(spark);
-      requestAnimationFrame(() => spark.classList.add('pop'));
-      setTimeout(() => spark.remove(), 300);
-    }
-  }
-
-  // ========================================
-  // PORTALS COMMUNICATION
-  // ========================================
-  function sendToPortals(taskName) {
-    try {
-      if (window.PortalsSdk) {
+    // ========================================
+    // PORTALS SDK
+    // ========================================
+    function triggerTask(taskName, targetState) {
+      if (!targetState) targetState = 'SetNotActiveToActive';
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
         PortalsSdk.sendMessageToUnity(JSON.stringify({
           TaskName: taskName,
-          TaskTargetState: 'SetNotActiveToActive'
+          TaskTargetState: targetState
         }));
-        console.log('[HUD] Sent to Portals:', taskName);
+      }
+      console.log('[MINERSIM] Task:', taskName, targetState);
+    }
+
+    var lastMessageId = '';
+    var lastMessageTime = 0;
+
+    function processMessage(msg, source) {
+      var now = Date.now();
+      var msgId = msg + '_' + Math.floor(now / 100);
+      if (msgId === lastMessageId && now - lastMessageTime < 200) {
+        return;
+      }
+      lastMessageId = msgId;
+      lastMessageTime = now;
+      handlePortalsMessage(msg);
+    }
+
+    function setupMessageListener() {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+        PortalsSdk.setMessageListener(function(msg) {
+          console.log('[MINERSIM] SDK:', msg);
+          processMessage(msg, 'SDK');
+        });
+        console.log('[MINERSIM] SDK listener ready');
       } else {
-        console.log('[HUD] No PortalsSdk, would send:', taskName);
-      }
-    } catch(e) {
-      console.log('[HUD] Send error:', e);
-    }
-  }
-
-  // Listen for messages FROM Portals
-  function handlePortalsMessage(msg) {
-    console.log('[HUD] Received:', msg);
-
-    if (typeof msg !== 'string') return;
-
-    // Start mining: "mine_copper", "mine_iron", "mine_gold", "mine_diamond"
-    if (msg.startsWith('mine_')) {
-      const oreType = msg.substring(5);
-      if (ORE[oreType]) {
-        startMining(oreType);
+        setTimeout(setupMessageListener, 100);
       }
     }
 
-    // Add coins: "coins_10"
-    if (msg.startsWith('coins_')) {
-      const amount = parseInt(msg.substring(6));
-      if (!isNaN(amount)) {
-        coins += amount;
-        coinCountEl.textContent = coins;
-        showLootDrop('+' + amount + ' coins', '#ffd700');
+    window.addEventListener('message', function(event) {
+      if (event.data && typeof event.data === 'string') {
+        processMessage(event.data, 'postMessage-string');
+      }
+      else if (event.data && event.data.portalsMessage) {
+        processMessage(event.data.portalsMessage, 'postMessage-portalsMessage');
+      }
+      else if (event.data && event.data.message && typeof event.data.message === 'string') {
+        processMessage(event.data.message, 'postMessage-message');
+      }
+    });
+
+    setupMessageListener();
+
+    // ========================================
+    // HANDLE MESSAGES
+    // ========================================
+    function handlePortalsMessage(msg) {
+      console.log('[MINERSIM] Received:', msg);
+      if (typeof msg !== 'string') return;
+      var parts = msg.split('_');
+      var cmd = parts[0];
+
+      if (cmd === 'mine' && parts.length >= 2) {
+        var oreType = parts[1];
+        if (ORE[oreType]) startMining(oreType);
+      }
+
+      if (cmd === 'sync' && parts.length >= 3) {
+        var c = parseInt(parts[1]);
+        var p = parseInt(parts[2]);
+        if (!isNaN(c)) { coins = c; headerCoins.textContent = coins; }
+        if (!isNaN(p)) { pickLevel = p; updatePickDisplay(); }
+      }
+
+      if (cmd === 'coins' && parts.length >= 2) {
+        var amount = parseInt(parts[1]);
+        if (!isNaN(amount)) {
+          coins += amount;
+          headerCoins.textContent = coins;
+          notify('+' + amount + ' coins!', 'loot', '\u{1FA99}');
+        }
+      }
+
+      if (cmd === 'pick' && parts.length >= 2) {
+        var level = parseInt(parts[1]);
+        if (!isNaN(level)) { pickLevel = level; updatePickDisplay(); }
+      }
+
+      if (msg === 'reset') {
+        inventory = {};
+        coins = 0;
+        pickLevel = 1;
+        totalMined = { copper: 0, iron: 0, gold: 0, diamond: 0 };
+        lootHistory = [];
+        headerCoins.textContent = '0';
+        updatePickDisplay();
+        renderInventory();
+        renderLootLog();
+        renderStats();
       }
     }
 
-    // Set pickaxe level: "pick_2"
-    if (msg.startsWith('pick_')) {
-      const level = parseInt(msg.substring(5));
-      if (!isNaN(level)) {
-        pickLevel = level;
-        pickLevelEl.textContent = 'Lv ' + level;
-      }
+    // ========================================
+    // START MINING
+    // ========================================
+    function startMining(oreType) {
+      if (isMining) return;
+      var ore = ORE[oreType];
+      if (!ore) return;
+
+      isMining = true;
+      miningOre = oreType;
+      miningDuration = ore.time * 1000;
+      miningStart = Date.now();
+
+      miningIdle.style.display = 'none';
+      miningCompleteEl.style.display = 'none';
+      miningActiveEl.style.display = 'block';
+      miningCard.classList.add('active');
+
+      mineBarFill.style.width = '0%';
+      mineBarFill.className = 'mine-bar-fill ' + ore.barClass;
+      mineBarText.textContent = '0%';
+      miningOreName.textContent = ore.name;
+      miningOreName.style.color = ore.color;
+      miningOreSub.textContent = 'Mining... ' + ore.time + 's';
+      miningOreEmoji.textContent = ore.emoji;
+      miningOreEmoji.style.color = ore.color;
+      pickSwingEl.classList.add('active');
+
+      footerStatus.textContent = 'Mining ' + ore.name + '...';
+
+      sparkInterval = setInterval(function() { createSparks(ore.color); }, 200);
+      requestAnimationFrame(updateMining);
     }
 
-    // Reset inventory (new game)
-    if (msg === 'reset') {
-      inventory = {};
-      coins = 0;
-      pickLevel = 1;
-      coinCountEl.textContent = '0';
-      pickLevelEl.textContent = 'Lv 1';
+    function updateMining() {
+      if (!isMining) return;
+      var elapsed = Date.now() - miningStart;
+      var progress = Math.min(elapsed / miningDuration, 1.0);
+      var pct = Math.floor(progress * 100);
+
+      mineBarFill.style.width = pct + '%';
+      mineBarText.textContent = pct + '%';
+
+      var remaining = Math.max(0, Math.ceil((miningDuration - elapsed) / 1000));
+      miningOreSub.textContent = 'Mining... ' + remaining + 's';
+
+      if (progress >= 1.0) {
+        completeMining();
+        return;
+      }
+      requestAnimationFrame(updateMining);
+    }
+
+    function completeMining() {
+      isMining = false;
+      clearInterval(sparkInterval);
+      pickSwingEl.classList.remove('active');
+      miningCard.classList.remove('active');
+
+      var ore = ORE[miningOre];
+
+      if (!inventory[miningOre]) inventory[miningOre] = 0;
+      inventory[miningOre]++;
+      totalMined[miningOre]++;
+
+      lootHistory.unshift({ ore: miningOre, name: ore.name, color: ore.color, time: Date.now() });
+      if (lootHistory.length > 20) lootHistory.pop();
+
+      miningActiveEl.style.display = 'none';
+      miningCompleteEl.style.display = 'block';
+      completeText.textContent = '+1 ' + ore.name + '!';
+      completeText.style.color = '#27ae60';
+
+      notify('+1 ' + ore.name, 'loot', ore.emoji);
+      footerStatus.textContent = 'Complete!';
+
+      triggerTask(ore.task);
+
       renderInventory();
+      renderLootLog();
+      renderStats();
+
+      setTimeout(function() {
+        miningCompleteEl.style.display = 'none';
+        miningIdle.style.display = 'block';
+        miningOre = null;
+        footerStatus.textContent = 'Ready';
+      }, 2000);
     }
-  }
 
-  // Portals SDK message listener
-  if (window.PortalsSdk) {
-    PortalsSdk.onMessageFromUnity = function(message) {
-      handlePortalsMessage(message);
-    };
-  }
-
-  // Also listen via postMessage (for testing)
-  window.addEventListener('message', function(event) {
-    if (event.data && typeof event.data === 'string') {
-      handlePortalsMessage(event.data);
+    // ========================================
+    // SPARKS
+    // ========================================
+    function createSparks(color) {
+      if (!isMining) return;
+      for (var i = 0; i < 2; i++) {
+        var spark = document.createElement('div');
+        spark.className = 'spark';
+        spark.style.left = (Math.random() * 80 + 10) + '%';
+        spark.style.top = (Math.random() * 60 + 20) + '%';
+        spark.style.setProperty('--sx', (Math.random() * 24 - 12) + 'px');
+        spark.style.setProperty('--sy', -(Math.random() * 16 + 4) + 'px');
+        spark.style.background = color;
+        spark.style.boxShadow = '0 0 4px ' + color;
+        sparkZone.appendChild(spark);
+        (function(s) { requestAnimationFrame(function() { s.classList.add('pop'); }); })(spark);
+        (function(s) { setTimeout(function() { s.remove(); }, 400); })(spark);
+      }
     }
-  });
 
-  // ========================================
-  // UPDATE STATS DISPLAY
-  // ========================================
-  function updateStats() {
-    coinCountEl.textContent = coins;
-    pickLevelEl.textContent = 'Lv ' + pickLevel;
-  }
+    // ========================================
+    // NOTIFICATIONS
+    // ========================================
+    function notify(text, type, icon) {
+      var notifArea = document.getElementById('notifications');
+      var notif = document.createElement('div');
+      notif.className = 'notification ' + (type || '');
+      notif.innerHTML = '<span class="notification-icon">' + (icon || '') + '</span><span class="notification-text">' + text + '</span>';
+      notifArea.appendChild(notif);
+      setTimeout(function() { notif.remove(); }, 3000);
+    }
 
-  // Initial render
-  renderInventory();
-  updateStats();
+    // ========================================
+    // INVENTORY RENDER
+    // ========================================
+    function initGrid() {
+      invGrid.innerHTML = '';
+      for (var i = 0; i < TOTAL_SLOTS; i++) {
+        var slot = document.createElement('div');
+        slot.className = 'inv-slot empty';
+        invGrid.appendChild(slot);
+      }
+    }
+    initGrid();
 
-  console.log('[HUD] Mining HUD loaded. Send "mine_copper" to start mining.');
-</script>
+    function renderInventory() {
+      var slots = invGrid.querySelectorAll('.inv-slot');
+      slots.forEach(function(s) {
+        s.innerHTML = '';
+        s.className = 'inv-slot empty';
+      });
+
+      var slotIndex = 0;
+      var keys = Object.keys(inventory);
+      for (var k = 0; k < keys.length; k++) {
+        var oreKey = keys[k];
+        var count = inventory[oreKey];
+        if (count <= 0 || slotIndex >= TOTAL_SLOTS) continue;
+        var ore = ORE[oreKey];
+        if (!ore) continue;
+
+        var slot = slots[slotIndex];
+        slot.className = 'inv-slot occupied';
+
+        var iconEl = document.createElement('div');
+        iconEl.className = 'inv-slot-icon';
+        iconEl.textContent = ore.emoji;
+        iconEl.style.color = ore.color;
+        slot.appendChild(iconEl);
+
+        var countEl = document.createElement('div');
+        countEl.className = 'inv-slot-count';
+        countEl.textContent = count;
+        slot.appendChild(countEl);
+
+        var nameEl = document.createElement('div');
+        nameEl.className = 'inv-slot-name';
+        nameEl.textContent = ore.name + ' x' + count;
+        slot.appendChild(nameEl);
+
+        slotIndex++;
+      }
+    }
+
+    // ========================================
+    // LOOT LOG
+    // ========================================
+    function renderLootLog() {
+      if (lootHistory.length === 0) {
+        lootLog.innerHTML = '<div style="font-size:12px;color:#666;text-align:center;padding:10px;">No loot yet - go mine some rocks!</div>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < Math.min(lootHistory.length, 8); i++) {
+        var entry = lootHistory[i];
+        var ago = getTimeAgo(entry.time);
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(0,0,0,0.2);border-radius:2px;margin-bottom:4px;border-left:2px solid #3a3025;">';
+        html += '<span style="font-size:12px;"><span style="color:' + entry.color + ';">' + entry.ore.charAt(0).toUpperCase() + entry.ore.slice(1) + ' Ore</span></span>';
+        html += '<span style="font-size:10px;color:#888;">+1 &middot; ' + ago + '</span>';
+        html += '</div>';
+      }
+      lootLog.innerHTML = html;
+    }
+
+    function getTimeAgo(timestamp) {
+      var secs = Math.floor((Date.now() - timestamp) / 1000);
+      if (secs < 5) return 'just now';
+      if (secs < 60) return secs + 's ago';
+      var mins = Math.floor(secs / 60);
+      return mins + 'm ago';
+    }
+
+    setInterval(renderLootLog, 10000);
+
+    // ========================================
+    // STATS RENDER
+    // ========================================
+    function renderStats() {
+      document.getElementById('statCopper').textContent = totalMined.copper;
+      document.getElementById('statIron').textContent = totalMined.iron;
+      document.getElementById('statGold').textContent = totalMined.gold;
+      document.getElementById('statDiamond').textContent = totalMined.diamond;
+    }
+
+    function updatePickDisplay() {
+      headerPick.textContent = 'Lv.' + pickLevel;
+      var pickInfo = PICK_NAMES[pickLevel] || PICK_NAMES[1];
+      var pickNameEl = document.getElementById('pickName');
+      var pickDescEl = document.getElementById('pickDesc');
+      if (pickNameEl) pickNameEl.textContent = pickInfo.name;
+      if (pickDescEl) pickDescEl.textContent = pickInfo.desc;
+    }
+
+    // ========================================
+    // INIT
+    // ========================================
+    setTimeout(function() {
+      triggerTask('hud_ready', 'SetNotActiveToCompleted');
+      console.log('[MINERSIM] HUD ready');
+    }, 500);
+
+    renderInventory();
+    renderLootLog();
+    renderStats();
+    updatePickDisplay();
+
+    console.log('[MINERSIM] Loaded. Waiting for Portals messages.');
+  </script>
 
 </body>
 </html>
+
