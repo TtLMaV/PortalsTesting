@@ -635,25 +635,14 @@
       document.getElementById('finalTime').textContent = elapsed + 's';
       document.getElementById('finalCombo').textContent = 'x' + bestCombo;
 
-      // Tell Portals - mining complete (move rock away)
+      // Tell Portals - mining complete
       triggerTask(TASK_NAME);
       console.log('[Mine] Sent Mine_c1_done');
 
-      // Send ore update to HUD at 1.5 seconds
-      setTimeout(function() {
-        if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
-          PortalsSdk.sendMessageToUnity(JSON.stringify({
-            TaskName: 'ore_copper_hud',
-            TaskTargetState: 'SetNotActiveToActive'
-          }));
-          console.log('[Mine] Sent ore_copper_hud');
-        }
-      }, 1500);
-
-      // Close iframe at 2.5 seconds (after HUD message sent)
+      // Close iframe after 2 seconds
       setTimeout(function() {
         closeIframe();
-      }, 2500);
+      }, 2000);
     }
 
     // ========================================
