@@ -317,6 +317,7 @@
     var TOTAL_CLICKS = 25;       // clicks needed to mine
     var TASK_NAME = 'mine_c_done';
     var ORE_COLOR = '#cd7f32';
+    var SOUND_URL = 'https://ttlmav.github.io/PortalsTesting/Mining%20game/Mining%201.mp3';
 
     // ========================================
     // STATE
@@ -328,6 +329,53 @@
     var lastClickTime = 0;
     var COMBO_WINDOW = 600;  // ms - clicks within this window build combo
     var startTime = Date.now();
+    var audioCtx = null;
+    var audioBuffer = null;
+
+    // ========================================
+    // AUDIO - click sound with pitch variance
+    // ========================================
+    function initAudio() {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Preload the sound file into a buffer
+        var request = new XMLHttpRequest();
+        request.open('GET', SOUND_URL, true);
+        request.responseType = 'arraybuffer';
+        request.onload = function() {
+          audioCtx.decodeAudioData(request.response, function(buffer) {
+            audioBuffer = buffer;
+            console.log('[Mine] Audio loaded');
+          });
+        };
+        request.send();
+      } catch(e) {
+        console.log('[Mine] Audio init error:', e);
+      }
+    }
+
+    function playHitSound() {
+      if (!audioCtx || !audioBuffer) return;
+      // Resume context if suspended (autoplay policy)
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      var source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+
+      // Random pitch between 0.8 and 1.3
+      source.playbackRate.value = 0.8 + Math.random() * 0.5;
+
+      // Slight volume variance too
+      var gain = audioCtx.createGain();
+      gain.gain.value = 0.4 + Math.random() * 0.3;
+
+      source.connect(gain);
+      gain.connect(audioCtx.destination);
+      source.start(0);
+    }
+
+    // Preload audio immediately
+    initAudio();
 
     // ========================================
     // ELEMENTS
@@ -372,6 +420,9 @@
 
       // Hide hint after first click
       if (clicks === 1) tapHint.style.display = 'none';
+
+      // Play hit sound with random pitch
+      playHitSound();
 
       // Visual feedback
       doShake();
@@ -559,6 +610,43 @@
         console.log('[Mine] Closed iframe');
       }
     }
+
+    // ========================================
+    // RESET (for iframe reuse)
+    // ========================================
+    function resetGame() {
+      clicks = 0;
+      done = false;
+      combo = 0;
+      bestCombo = 0;
+      lastClickTime = 0;
+      startTime = Date.now();
+
+      clickCount.textContent = '0';
+      comboText.textContent = 'x1';
+      comboText.className = 'combo-value';
+      barFill.style.width = '0%';
+      barText.textContent = '0%';
+      crack1.style.opacity = 0;
+      crack2.style.opacity = 0;
+      crack3.style.opacity = 0;
+      tapHint.style.display = '';
+
+      miningState.style.display = 'block';
+      completeState.style.display = 'none';
+
+      console.log('[Mine] Game reset');
+    }
+
+    // Reset if the iframe becomes visible again (Portals reuse)
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden && done) resetGame();
+    });
+
+    // Also listen for a focus event as backup
+    window.addEventListener('focus', function() {
+      if (done) resetGame();
+    });
 
     // ========================================
     // INIT
