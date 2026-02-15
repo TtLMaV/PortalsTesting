@@ -678,6 +678,12 @@
       miningState.style.display = 'block';
       completeState.style.display = 'none';
 
+      // Re-init audio pool
+      audioPool = [];
+      poolIndex = 0;
+      audioReady = false;
+      initAudio();
+
       console.log('[Mine] Game reset');
     }
 
