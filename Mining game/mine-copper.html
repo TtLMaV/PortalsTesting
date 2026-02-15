@@ -134,6 +134,36 @@
       100% { opacity: 0; transform: rotate(-40deg) scale(0.8); }
     }
 
+    /* ========== INTRO OVERLAY ========== */
+    .intro-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(160deg, rgba(42,37,32,0.99) 0%, rgba(26,24,21,0.99) 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 50;
+      animation: introFade 0.6s ease 1.2s forwards;
+    }
+    @keyframes introFade {
+      0% { opacity: 1; }
+      100% { opacity: 0; pointer-events: none; }
+    }
+    .intro-pick {
+      font-size: 48px; margin-bottom: 10px;
+      animation: introPick 0.4s ease-in-out 3;
+    }
+    @keyframes introPick {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-30deg); }
+    }
+    .intro-text {
+      font-size: 14px; font-weight: 700; color: #c8a04a;
+      letter-spacing: 3px; text-transform: uppercase;
+      animation: introTextPulse 0.6s ease-in-out infinite alternate;
+    }
+    @keyframes introTextPulse {
+      0% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
     /* Tap hint */
     .tap-hint {
       position: absolute; bottom: 8px; left: 0; right: 0;
@@ -208,6 +238,12 @@
 </head>
 <body>
   <div class="mine-panel" id="minePanel">
+
+    <!-- INTRO OVERLAY - covers reset -->
+    <div class="intro-overlay" id="introOverlay">
+      <div class="intro-pick">&#9935;</div>
+      <div class="intro-text">Preparing Rock...</div>
+    </div>
 
     <!-- MINING STATE -->
     <div id="miningState">
@@ -594,11 +630,8 @@
       // Tell Portals
       triggerTask(TASK_NAME);
 
-      // Show completion for 2 seconds, then hard reload + close
-      setTimeout(function() {
-        closeIframe();
-        location.reload(true);
-      }, 2000);
+      // Show completion for 2 seconds then close
+      setTimeout(function() { closeIframe(); }, 2000);
     }
 
     // ========================================
@@ -659,8 +692,16 @@
     });
 
     // ========================================
-    // INIT
+    // INIT - reset on every load (intro overlay hides it)
     // ========================================
+    resetGame();
+
+    // Remove intro overlay after animation finishes
+    var introOverlay = document.getElementById('introOverlay');
+    setTimeout(function() {
+      if (introOverlay) introOverlay.style.display = 'none';
+    }, 1900);
+
     console.log('[Mine] Copper - click ' + TOTAL_CLICKS + ' times to mine.');
   </script>
 </body>
