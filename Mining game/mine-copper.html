@@ -329,52 +329,59 @@
     var lastClickTime = 0;
     var COMBO_WINDOW = 600;  // ms - clicks within this window build combo
     var startTime = Date.now();
-    var audioCtx = null;
-    var audioBuffer = null;
-
     // ========================================
     // AUDIO - click sound with pitch variance
     // ========================================
+    // Pre-create a pool of Audio elements for overlapping playback
+    var audioPool = [];
+    var POOL_SIZE = 6;
+    var audioReady = false;
+
     function initAudio() {
       try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        // Preload the sound file into a buffer
-        var request = new XMLHttpRequest();
-        request.open('GET', SOUND_URL, true);
-        request.responseType = 'arraybuffer';
-        request.onload = function() {
-          audioCtx.decodeAudioData(request.response, function(buffer) {
-            audioBuffer = buffer;
-            console.log('[Mine] Audio loaded');
-          });
-        };
-        request.send();
+        for (var i = 0; i < POOL_SIZE; i++) {
+          var a = new Audio();
+          a.src = SOUND_URL;
+          a.preload = 'auto';
+          a.volume = 0.5;
+          audioPool.push(a);
+        }
+        audioReady = true;
+        console.log('[Mine] Audio pool created');
       } catch(e) {
         console.log('[Mine] Audio init error:', e);
       }
     }
 
+    var poolIndex = 0;
+
     function playHitSound() {
-      if (!audioCtx || !audioBuffer) return;
-      // Resume context if suspended (autoplay policy)
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (!audioReady || audioPool.length === 0) return;
+      try {
+        var audio = audioPool[poolIndex];
+        poolIndex = (poolIndex + 1) % POOL_SIZE;
 
-      var source = audioCtx.createBufferSource();
-      source.buffer = audioBuffer;
+        // Reset to start
+        audio.currentTime = 0;
 
-      // Random pitch between 0.8 and 1.3
-      source.playbackRate.value = 0.8 + Math.random() * 0.5;
+        // Random volume variance
+        audio.volume = 0.3 + Math.random() * 0.4;
 
-      // Slight volume variance too
-      var gain = audioCtx.createGain();
-      gain.gain.value = 0.4 + Math.random() * 0.3;
+        // Random playback rate (pitch) - not all browsers support this on Audio elements
+        // but it works in Chrome/Edge which Portals likely uses
+        if (typeof audio.playbackRate !== 'undefined') {
+          audio.playbackRate = 0.8 + Math.random() * 0.5;
+        }
 
-      source.connect(gain);
-      gain.connect(audioCtx.destination);
-      source.start(0);
+        audio.play().catch(function(e) {
+          console.log('[Mine] Audio play failed:', e);
+        });
+      } catch(e) {
+        console.log('[Mine] Audio error:', e);
+      }
     }
 
-    // Preload audio immediately
+    // Preload audio pool
     initAudio();
 
     // ========================================
