@@ -643,6 +643,12 @@
       setTimeout(function() {
         closeIframe();
       }, 2000);
+
+      // Trigger rock respawn after 12 seconds (10s cooldown + 2s completion)
+      setTimeout(function() {
+        triggerTask('Mine_C1_Respawn');
+        console.log('[Mine] Sent Mine_C1_Respawn');
+      }, 12000);
     }
 
     // ========================================
