@@ -681,22 +681,48 @@
       console.log('[Mine] Game reset');
     }
 
-    // Reset if the iframe becomes visible again (Portals reuse)
-    document.addEventListener('visibilitychange', function() {
-      if (!document.hidden && done) resetGame();
-    });
+    // ========================================
+    // AUTO-RESET: Polls every 500ms
+    // When done for 3+ seconds, show intro and reset
+    // ========================================
+    var doneTime = 0;
+    var hasAutoReset = false;
 
-    // Also listen for a focus event as backup
-    window.addEventListener('focus', function() {
-      if (done) resetGame();
-    });
+    setInterval(function() {
+      if (done && !hasAutoReset) {
+        if (doneTime === 0) doneTime = Date.now();
+        // Wait 3 seconds after completion (1s after iframe closes)
+        if (Date.now() - doneTime > 3000) {
+          hasAutoReset = true;
+          // Show intro overlay again
+          var overlay = document.getElementById('introOverlay');
+          if (overlay) {
+            overlay.style.display = '';
+            overlay.style.opacity = '1';
+            overlay.style.animation = 'none';
+          }
+          // Reset game behind overlay
+          resetGame();
+          // Fade out overlay after 1.2s
+          setTimeout(function() {
+            if (overlay) {
+              overlay.style.animation = 'introFade 0.6s ease forwards';
+            }
+            setTimeout(function() {
+              if (overlay) overlay.style.display = 'none';
+              // Ready for next round
+              doneTime = 0;
+              hasAutoReset = false;
+            }, 700);
+          }, 1200);
+        }
+      }
+    }, 500);
 
     // ========================================
-    // INIT - reset on every load (intro overlay hides it)
+    // INIT
     // ========================================
-    resetGame();
-
-    // Remove intro overlay after animation finishes
+    // Remove intro overlay after first load animation
     var introOverlay = document.getElementById('introOverlay');
     setTimeout(function() {
       if (introOverlay) introOverlay.style.display = 'none';
@@ -706,4 +732,3 @@
   </script>
 </body>
 </html>
-
