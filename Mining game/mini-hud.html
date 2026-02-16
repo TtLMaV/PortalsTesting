@@ -165,6 +165,19 @@
     }
 
     // ========================================
+    // TRIGGER TASK HELPER
+    // ========================================
+    function triggerTask(taskName) {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: taskName,
+          TaskTargetState: 'SetNotActiveToActive'
+        }));
+        console.log('[MiniHUD] Triggered:', taskName);
+      }
+    }
+
+    // ========================================
     // PORTALS SDK
     // ========================================
     var lastMessageId = '';
@@ -220,6 +233,7 @@
         if (ores.hasOwnProperty(type)) {
           ores[type]++;
           updateOreDisplay(type);
+          saveProgress();
         }
       }
 
@@ -230,6 +244,7 @@
           coins += amount;
           hudCoins.textContent = coins;
           popValue(hudCoins);
+          saveProgress();
         }
       }
 
@@ -240,6 +255,7 @@
           pickLevel = level;
           hudPick.textContent = 'Lv.' + pickLevel;
           popValue(hudPick);
+          saveProgress();
         }
       }
 
@@ -257,6 +273,24 @@
         if (!isNaN(ir)) { ores.iron = ir; hudIron.textContent = ir; }
         if (!isNaN(go)) { ores.gold = go; hudGold.textContent = go; }
         if (!isNaN(di)) { ores.diamond = di; hudDiamond.textContent = di; }
+        saveProgress();
+      }
+
+      // Inventory sync from Portals: inv_copper_iron_gold_diamond_coins_tier
+      if (cmd === 'inv' && parts.length >= 7) {
+        var co = parseInt(parts[1]);
+        var ir = parseInt(parts[2]);
+        var go = parseInt(parts[3]);
+        var di = parseInt(parts[4]);
+        var c = parseInt(parts[5]);
+        var p = parseInt(parts[6]);
+        if (!isNaN(co)) { ores.copper = co; hudCopper.textContent = co; }
+        if (!isNaN(ir)) { ores.iron = ir; hudIron.textContent = ir; }
+        if (!isNaN(go)) { ores.gold = go; hudGold.textContent = go; }
+        if (!isNaN(di)) { ores.diamond = di; hudDiamond.textContent = di; }
+        if (!isNaN(c)) { coins = c; hudCoins.textContent = coins; }
+        if (!isNaN(p)) { pickLevel = p; hudPick.textContent = 'Lv.' + pickLevel; }
+        saveProgress();
       }
 
       // Reset
@@ -285,10 +319,96 @@
     }
 
     // ========================================
+    // SAVE PROGRESS TO LOCALSTORAGE
+    // ========================================
+    function saveProgress() {
+      try {
+        localStorage.setItem('minersim_save', JSON.stringify({
+          copper: ores.copper,
+          iron: ores.iron,
+          gold: ores.gold,
+          diamond: ores.diamond,
+          coins: coins,
+          tier: pickLevel
+        }));
+        console.log('[MiniHUD] Saved progress');
+      } catch(e) {
+        console.log('[MiniHUD] Save error:', e);
+      }
+    }
+
+    // ========================================
+    // LOAD SAVED PROGRESS ON STARTUP
+    // ========================================
+    setTimeout(function() {
+      try {
+        var save = localStorage.getItem('minersim_save');
+        if (!save) {
+          console.log('[MiniHUD] No saved progress found');
+          return;
+        }
+        var data = JSON.parse(save);
+        if (!data) return;
+
+        // Check if there's anything to restore
+        var total = (data.copper || 0) + (data.iron || 0) + (data.gold || 0) +
+                    (data.diamond || 0) + (data.coins || 0);
+        var tier = data.tier || 1;
+        if (total === 0 && tier <= 1) {
+          console.log('[MiniHUD] No progress to restore');
+          return;
+        }
+
+        console.log('[MiniHUD] Loading saved progress:', data);
+
+        // Update HUD display immediately (so player sees their values right away)
+        if (data.copper > 0) { ores.copper = data.copper; hudCopper.textContent = data.copper; }
+        if (data.iron > 0) { ores.iron = data.iron; hudIron.textContent = data.iron; }
+        if (data.gold > 0) { ores.gold = data.gold; hudGold.textContent = data.gold; }
+        if (data.diamond > 0) { ores.diamond = data.diamond; hudDiamond.textContent = data.diamond; }
+        if (data.coins > 0) { coins = data.coins; hudCoins.textContent = data.coins; }
+        if (tier > 1) { pickLevel = tier; hudPick.textContent = 'Lv.' + tier; }
+
+        // Now restore Portals variables by triggering Add tasks
+        var delay = 0;
+        var INTERVAL = 200; // ms between each task trigger
+
+        var items = [
+          { count: data.copper || 0, task: 'AddCopper' },
+          { count: data.iron || 0, task: 'AddIron' },
+          { count: data.gold || 0, task: 'AddGold' },
+          { count: data.diamond || 0, task: 'AddDiamond' },
+          { count: data.coins || 0, task: 'AddCoin' }
+        ];
+
+        for (var j = 0; j < items.length; j++) {
+          for (var i = 0; i < items[j].count; i++) {
+            (function(taskName, d) {
+              setTimeout(function() { triggerTask(taskName); }, d);
+            })(items[j].task, delay);
+            delay += INTERVAL;
+          }
+        }
+
+        // Restore pickaxe tier (single trigger)
+        if (tier >= 2) {
+          (function(t, d) {
+            setTimeout(function() { triggerTask('SetPick' + t); }, d);
+          })(tier, delay);
+          delay += INTERVAL;
+        }
+
+        console.log('[MiniHUD] Restoring ' + total + ' items + tier ' + tier + ' (' + Math.round(delay / 1000) + 's)');
+
+      } catch(e) {
+        console.log('[MiniHUD] Load error:', e);
+      }
+    }, 3000); // 3 second delay for Portals to initialize
+
+    // ========================================
     // INIT
     // ========================================
     console.log('[MiniHUD] Loaded. Waiting for Portals messages.');
   </script>
 </body>
 </html>
-
