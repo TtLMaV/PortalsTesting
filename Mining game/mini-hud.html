@@ -227,6 +227,16 @@
       var parts = msg.split('_');
       var cmd = parts[0];
 
+      // Ore set: oreset_copper_2, ore_iron, ore_gold, ore_diamond
+      if (cmd === 'oreset' && parts.length >= 3) {
+        var type = parts[1];
+        if (ores.hasOwnProperty(type)) {
+          ores[type] = parts[2];
+          updateOreDisplay(type);
+          saveProgress();
+        }
+      }
+      
       // Ore mined: ore_copper, ore_iron, ore_gold, ore_diamond
       if (cmd === 'ore' && parts.length >= 2) {
         var type = parts[1];
