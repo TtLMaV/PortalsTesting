@@ -307,23 +307,6 @@
     });
   }
 
-  // Also listen for postMessage (for task-activated iframes)
-  window.addEventListener('message', function(event) {
-    if (event.data && typeof event.data === 'string') {
-      if (event.data === 'count_up') countUp();
-      else if (event.data === 'count_reset') countReset();
-      else if (event.data.startsWith('set_')) {
-        var val = parseInt(event.data.substring(4));
-        if (!isNaN(val) && val >= 0) {
-          count = val;
-          render();
-          flashEffect('up');
-          bumpEffect();
-        }
-      }
-    }
-  });
-
   // Initial render
   render();
 })();
