@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>HUD</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: 'Chakra Petch', sans-serif;
+  color: #e8dcc8;
+}
+
+.mini-hud {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 38px;
+  background: linear-gradient(180deg, rgba(50,42,34,0.94) 0%, rgba(30,26,22,0.96) 100%);
+  border-bottom: 2px solid #5a4a35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  z-index: 100;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.6);
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+}
+
+.hud-icon { font-size: 16px; line-height: 1; }
+
+.hud-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0d060;
+  min-width: 20px;
+  text-align: center;
+}
+
+.hud-label {
+  font-size: 10px;
+  color: #9a8a6a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hud-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(200,160,74,0.25);
+  margin: 0 2px;
+}
+
+.hud-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hud-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px; height: 20px;
+  background: rgba(200,160,74,0.15);
+  border: 1px solid #5a4a35;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f0d060;
+  line-height: 1;
+}
+
+.hud-hint-text {
+  font-size: 10px;
+  color: #9a8a6a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@keyframes valuePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.pop { animation: valuePop 0.3s ease; }
+</style>
+</head>
+<body>
+
+<div class="mini-hud">
+  <div class="hud-item">
+    <span class="hud-icon">&#x1FA99;</span>
+    <span class="hud-value" id="hudCoins">0</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x1F3A3;</span>
+    <span class="hud-label">Fish</span>
+    <span class="hud-value" id="hudFishing">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x1F373;</span>
+    <span class="hud-label">Cook</span>
+    <span class="hud-value" id="hudCooking">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x1FA93;</span>
+    <span class="hud-label">WC</span>
+    <span class="hud-value" id="hudWoodcut">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x26CF;</span>
+    <span class="hud-label">Mine</span>
+    <span class="hud-value" id="hudMining">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x1F525;</span>
+    <span class="hud-label">Smith</span>
+    <span class="hud-value" id="hudSmithing">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-hint">
+    <span class="hud-key">E</span>
+    <span class="hud-hint-text">Inventory</span>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   STATE
+   ========================================================= */
+var coins = 0;
+var skills = { fishing: 0, cooking: 0, woodcut: 0, mining: 0, smithing: 0 };
+
+/* DOM refs */
+var hudCoins = document.getElementById('hudCoins');
+var hudFishing = document.getElementById('hudFishing');
+var hudCooking = document.getElementById('hudCooking');
+var hudWoodcut = document.getElementById('hudWoodcut');
+var hudMining = document.getElementById('hudMining');
+var hudSmithing = document.getElementById('hudSmithing');
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function xpToLevel(xp) {
+  if (xp <= 0) return 1;
+  var level = 1;
+  var needed = 50;
+  var total = 0;
+  while (total + needed <= xp && level < 99) {
+    total += needed;
+    level++;
+    needed = Math.floor(needed * 1.5);
+  }
+  return level;
+}
+
+function formatNumber(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 10000) return (n / 1000).toFixed(1) + 'K';
+  if (n >= 1000) return n.toLocaleString ? n.toLocaleString() : n;
+  return n;
+}
+
+function popValue(el) {
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+function updateHUD() {
+  hudCoins.textContent = formatNumber(coins);
+  hudFishing.textContent = xpToLevel(skills.fishing);
+  hudCooking.textContent = xpToLevel(skills.cooking);
+  hudWoodcut.textContent = xpToLevel(skills.woodcut);
+  hudMining.textContent = xpToLevel(skills.mining);
+  hudSmithing.textContent = xpToLevel(skills.smithing);
+}
+
+function getSkillHudEl(name) {
+  switch(name) {
+    case 'fishing': return hudFishing;
+    case 'cooking': return hudCooking;
+    case 'woodcut': return hudWoodcut;
+    case 'mining':  return hudMining;
+    case 'smithing':return hudSmithing;
+    default: return null;
+  }
+}
+
+/* =========================================================
+   PORTALS SDK COMMUNICATION
+   ========================================================= */
+var lastMessageId = '';
+var lastMessageTime = 0;
+
+function processMessage(msg, source) {
+  var now = Date.now();
+  var msgId = msg + '_' + Math.floor(now / 100);
+  if (msgId === lastMessageId && now - lastMessageTime < 200) return;
+  lastMessageId = msgId;
+  lastMessageTime = now;
+  console.log('[HUD] Msg (' + source + '):', msg);
+  handleMessage(msg);
+}
+
+if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+  PortalsSdk.setMessageListener(function(msg) {
+    processMessage(msg, 'SDK');
+  });
+  console.log('[HUD] PortalsSdk listener attached');
+}
+
+window.addEventListener('message', function(event) {
+  if (event.data && typeof event.data === 'string') {
+    processMessage(event.data, 'postMessage-string');
+  }
+  else if (event.data && event.data.portalsMessage) {
+    processMessage(event.data.portalsMessage, 'postMessage-portalsMessage');
+  }
+  else if (event.data && event.data.message && typeof event.data.message === 'string') {
+    processMessage(event.data.message, 'postMessage-message');
+  }
+});
+
+/* =========================================================
+   MESSAGE HANDLER
+   ========================================================= */
+function handleMessage(msg) {
+  if (typeof msg !== 'string') return;
+  var parts = msg.split('_');
+  var cmd = parts[0];
+
+  /* coinset_VALUE */
+  if (cmd === 'coinset' && parts.length >= 2) {
+    coins = parseInt(parts[1]) || 0;
+    hudCoins.textContent = formatNumber(coins);
+    popValue(hudCoins);
+  }
+
+  /* skillxp_SKILLNAME_XP */
+  if (cmd === 'skillxp' && parts.length >= 3) {
+    var skillName = parts[1];
+    var xpVal = parseInt(parts[2]) || 0;
+    if (skills.hasOwnProperty(skillName)) {
+      var oldLevel = xpToLevel(skills[skillName]);
+      skills[skillName] = xpVal;
+      var newLevel = xpToLevel(xpVal);
+      updateHUD();
+      if (newLevel > oldLevel) {
+        var hudEl = getSkillHudEl(skillName);
+        if (hudEl) popValue(hudEl);
+        console.log('[HUD] LEVEL UP! ' + skillName + ': ' + oldLevel + ' -> ' + newLevel);
+      }
+    }
+  }
+
+  /* skillsync_FISH_COOK_WC_MINE_SMITH */
+  if (cmd === 'skillsync' && parts.length >= 6) {
+    skills.fishing = parseInt(parts[1]) || 0;
+    skills.cooking = parseInt(parts[2]) || 0;
+    skills.woodcut = parseInt(parts[3]) || 0;
+    skills.mining = parseInt(parts[4]) || 0;
+    skills.smithing = parseInt(parts[5]) || 0;
+    updateHUD();
+    console.log('[HUD] Skills synced');
+  }
+
+  /* reset */
+  if (cmd === 'reset') {
+    coins = 0;
+    skills = { fishing: 0, cooking: 0, woodcut: 0, mining: 0, smithing: 0 };
+    updateHUD();
+    console.log('[HUD] Full reset');
+  }
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+updateHUD();
+console.log('[HUD] Mini-HUD loaded (non-clickable).');
+</script>
+</body>
+</html>

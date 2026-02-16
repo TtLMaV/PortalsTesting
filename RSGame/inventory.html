@@ -15,101 +15,23 @@ html, body {
   width: 100%; height: 100%;
   background: transparent;
   overflow: hidden;
-  pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
   font-family: 'Chakra Petch', sans-serif;
   color: #e8dcc8;
 }
 
-/* ========== MINI HUD BAR ========== */
-.mini-hud {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 38px;
-  background: linear-gradient(180deg, rgba(50,42,34,0.94) 0%, rgba(30,26,22,0.96) 100%);
-  border-bottom: 2px solid #5a4a35;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 10px;
-  pointer-events: auto;
-  z-index: 100;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.6);
-}
-
-.hud-item {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 0 6px;
-}
-
-.hud-icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.hud-value {
-  font-size: 13px;
-  font-weight: 600;
-  color: #f0d060;
-  min-width: 20px;
-  text-align: center;
-}
-
-.hud-label {
-  font-size: 10px;
-  color: #9a8a6a;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.hud-divider {
-  width: 1px;
-  height: 20px;
-  background: rgba(200,160,74,0.25);
-  margin: 0 2px;
-}
-
-/* Backpack toggle button */
-.bag-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px; height: 28px;
-  background: rgba(200,160,74,0.15);
-  border: 1px solid #5a4a35;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 18px;
-  transition: all 0.15s ease;
-  margin-left: 4px;
-}
-.bag-btn:hover {
-  background: rgba(200,160,74,0.3);
-  border-color: #c8a04a;
-}
-.bag-btn.active {
-  background: rgba(200,160,74,0.35);
-  border-color: #f0d060;
-  box-shadow: 0 0 6px rgba(240,208,96,0.3);
-}
-
 /* ========== INVENTORY GRID PANEL ========== */
 .inv-panel {
   position: fixed;
-  top: 44px;
+  top: 8px;
   right: 8px;
   width: 296px;
   background: linear-gradient(180deg, rgba(45,38,30,0.96) 0%, rgba(32,27,22,0.98) 100%);
   border: 2px solid #5a4a35;
   border-radius: 6px;
-  pointer-events: auto;
   z-index: 99;
   box-shadow: 0 6px 24px rgba(0,0,0,0.7);
-  display: none;
   animation: slideDown 0.2s ease;
 }
 
@@ -133,6 +55,23 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 1.5px;
 }
+
+.inv-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inv-coins {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f0d060;
+}
+
+.inv-coins-icon { font-size: 14px; }
 
 .inv-close {
   width: 22px; height: 22px;
@@ -261,63 +200,17 @@ html, body {
 </head>
 <body>
 
-<!-- ========== MINI HUD BAR ========== -->
-<div class="mini-hud">
-  <div class="hud-item">
-    <span class="hud-icon">&#x1FA99;</span>
-    <span class="hud-value" id="hudCoins">0</span>
-  </div>
-
-  <div class="hud-divider"></div>
-
-  <div class="hud-item">
-    <span class="hud-icon">&#x1F3A3;</span>
-    <span class="hud-label">Fish</span>
-    <span class="hud-value" id="hudFishing">1</span>
-  </div>
-
-  <div class="hud-divider"></div>
-
-  <div class="hud-item">
-    <span class="hud-icon">&#x1F373;</span>
-    <span class="hud-label">Cook</span>
-    <span class="hud-value" id="hudCooking">1</span>
-  </div>
-
-  <div class="hud-divider"></div>
-
-  <div class="hud-item">
-    <span class="hud-icon">&#x1FA93;</span>
-    <span class="hud-label">WC</span>
-    <span class="hud-value" id="hudWoodcut">1</span>
-  </div>
-
-  <div class="hud-divider"></div>
-
-  <div class="hud-item">
-    <span class="hud-icon">&#x26CF;</span>
-    <span class="hud-label">Mine</span>
-    <span class="hud-value" id="hudMining">1</span>
-  </div>
-
-  <div class="hud-divider"></div>
-
-  <div class="hud-item">
-    <span class="hud-icon">&#x1F525;</span>
-    <span class="hud-label">Smith</span>
-    <span class="hud-value" id="hudSmithing">1</span>
-  </div>
-
-  <div class="hud-divider"></div>
-
-  <div class="bag-btn" id="bagBtn" title="Inventory">&#x1F392;</div>
-</div>
-
 <!-- ========== INVENTORY PANEL ========== -->
 <div class="inv-panel" id="invPanel">
   <div class="inv-header">
     <span class="inv-title">Inventory</span>
-    <div class="inv-close" id="invClose">&times;</div>
+    <div class="inv-header-right">
+      <div class="inv-coins">
+        <span class="inv-coins-icon">&#x1FA99;</span>
+        <span id="invCoins">0</span>
+      </div>
+      <div class="inv-close" id="invClose">&times;</div>
+    </div>
   </div>
   <div class="inv-grid" id="invGrid"></div>
 </div>
@@ -331,8 +224,7 @@ html, body {
 <script>
 /* =========================================================
    ITEM REGISTRY
-   Each item has a numeric ID. Portals stores encoded values:
-     encoded = (itemID * 10000) + quantity
+   Encoded in Portals: (itemID * 10000) + quantity
    ========================================================= */
 var ITEMS = {
   0:  { name: 'Empty',           icon: '',   cat: 'none' },
@@ -383,9 +275,7 @@ var ITEMS = {
 var NUM_SLOTS = 28;
 var slots = [];
 var coins = 0;
-var skills = { fishing: 0, cooking: 0, woodcut: 0, mining: 0, smithing: 0 };
 
-// Initialise empty slots
 for (var i = 0; i < NUM_SLOTS; i++) { slots.push(0); }
 
 function decodeSlot(val) {
@@ -397,35 +287,11 @@ function encodeSlot(id, qty) {
   return (id * 10000) + qty;
 }
 
-/* XP to level conversion (RS-style simplified) */
-function xpToLevel(xp) {
-  if (xp <= 0) return 1;
-  // Each level needs progressively more XP
-  // Level 2 = 50xp, Level 3 = 150xp, Level 4 = 300xp, etc.
-  var level = 1;
-  var needed = 50;
-  var total = 0;
-  while (total + needed <= xp && level < 99) {
-    total += needed;
-    level++;
-    needed = Math.floor(needed * 1.5);
-  }
-  return level;
-}
-
 /* =========================================================
    DOM REFS
    ========================================================= */
-var hudCoins = document.getElementById('hudCoins');
-var hudFishing = document.getElementById('hudFishing');
-var hudCooking = document.getElementById('hudCooking');
-var hudWoodcut = document.getElementById('hudWoodcut');
-var hudMining = document.getElementById('hudMining');
-var hudSmithing = document.getElementById('hudSmithing');
-var bagBtn = document.getElementById('bagBtn');
-var invPanel = document.getElementById('invPanel');
 var invGrid = document.getElementById('invGrid');
-var invClose = document.getElementById('invClose');
+var invCoins = document.getElementById('invCoins');
 var tooltip = document.getElementById('tooltip');
 var invFullMsg = document.getElementById('invFullMsg');
 
@@ -514,15 +380,6 @@ function flashSlot(idx) {
   slotEl.classList.add('slot-flash');
 }
 
-function updateHUD() {
-  hudCoins.textContent = formatNumber(coins);
-  hudFishing.textContent = xpToLevel(skills.fishing);
-  hudCooking.textContent = xpToLevel(skills.cooking);
-  hudWoodcut.textContent = xpToLevel(skills.woodcut);
-  hudMining.textContent = xpToLevel(skills.mining);
-  hudSmithing.textContent = xpToLevel(skills.smithing);
-}
-
 function formatNumber(n) {
   if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
   if (n >= 10000) return (n / 1000).toFixed(1) + 'K';
@@ -547,8 +404,6 @@ function showInvFull() {
 /* =========================================================
    INVENTORY HELPERS
    ========================================================= */
-
-/* Find a slot that already holds this item (for stacking) */
 function findSlotWithItem(itemId) {
   for (var i = 0; i < NUM_SLOTS; i++) {
     var decoded = decodeSlot(slots[i]);
@@ -557,7 +412,6 @@ function findSlotWithItem(itemId) {
   return -1;
 }
 
-/* Find first empty slot */
 function findEmptySlot() {
   for (var i = 0; i < NUM_SLOTS; i++) {
     if (slots[i] === 0) return i;
@@ -566,28 +420,8 @@ function findEmptySlot() {
 }
 
 /* =========================================================
-   TOGGLE INVENTORY PANEL
-   ========================================================= */
-var gridOpen = false;
-
-bagBtn.addEventListener('click', function() {
-  gridOpen = !gridOpen;
-  invPanel.style.display = gridOpen ? 'block' : 'none';
-  bagBtn.classList.toggle('active', gridOpen);
-  if (gridOpen) renderGrid();
-});
-
-invClose.addEventListener('click', function() {
-  gridOpen = false;
-  invPanel.style.display = 'none';
-  bagBtn.classList.remove('active');
-});
-
-/* =========================================================
    PORTALS SDK COMMUNICATION
    ========================================================= */
-
-/* Deduplication */
 var lastMessageId = '';
 var lastMessageTime = 0;
 
@@ -601,7 +435,6 @@ function processMessage(msg, source) {
   handleMessage(msg);
 }
 
-/* Triple-layer SDK detection */
 if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
   PortalsSdk.setMessageListener(function(msg) {
     processMessage(msg, 'SDK');
@@ -644,23 +477,20 @@ function handleMessage(msg) {
   var parts = msg.split('_');
   var cmd = parts[0];
 
-  /* ---- Full inventory sync ----
-     invsync_SLOT1_SLOT2_..._SLOT28_COINS
-     29 values after the prefix (28 slots + coins) */
+  /* Full inventory sync: invsync_SLOT1_SLOT2_..._SLOT28_COINS */
   if (cmd === 'invsync' && parts.length >= 30) {
     for (var i = 0; i < NUM_SLOTS; i++) {
       slots[i] = parseFloat(parts[i + 1]) || 0;
     }
     coins = parseInt(parts[29]) || 0;
+    invCoins.textContent = formatNumber(coins);
     renderGrid();
-    updateHUD();
     console.log('[Inv] Full sync received. Coins:', coins);
   }
 
-  /* ---- Single slot update ----
-     slotupd_SLOTNUM_ENCODEDVALUE */
+  /* Single slot update: slotupd_SLOTNUM_ENCODEDVALUE */
   if (cmd === 'slotupd' && parts.length >= 3) {
-    var slotIdx = parseInt(parts[1]) - 1; // Convert 1-based to 0-based
+    var slotIdx = parseInt(parts[1]) - 1;
     var encodedVal = parseFloat(parts[2]) || 0;
     if (slotIdx >= 0 && slotIdx < NUM_SLOTS) {
       slots[slotIdx] = encodedVal;
@@ -669,67 +499,20 @@ function handleMessage(msg) {
     }
   }
 
-  /* ---- Coins update ----
-     coinset_VALUE */
+  /* Coins update: coinset_VALUE */
   if (cmd === 'coinset' && parts.length >= 2) {
     coins = parseInt(parts[1]) || 0;
-    hudCoins.textContent = formatNumber(coins);
-    popValue(hudCoins);
+    invCoins.textContent = formatNumber(coins);
+    popValue(invCoins);
   }
 
-  /* ---- Skill XP update ----
-     skillxp_SKILLNAME_XP
-     e.g. skillxp_fishing_250 */
-  if (cmd === 'skillxp' && parts.length >= 3) {
-    var skillName = parts[1];
-    var xpVal = parseInt(parts[2]) || 0;
-    if (skills.hasOwnProperty(skillName)) {
-      var oldLevel = xpToLevel(skills[skillName]);
-      skills[skillName] = xpVal;
-      var newLevel = xpToLevel(xpVal);
-      updateHUD();
-
-      // Level up detection
-      if (newLevel > oldLevel) {
-        var hudEl = getSkillHudEl(skillName);
-        if (hudEl) popValue(hudEl);
-        console.log('[Inv] LEVEL UP! ' + skillName + ': ' + oldLevel + ' -> ' + newLevel);
-      }
-    }
-  }
-
-  /* ---- Skills sync ----
-     skillsync_FISH_COOK_WC_MINE_SMITH */
-  if (cmd === 'skillsync' && parts.length >= 6) {
-    skills.fishing = parseInt(parts[1]) || 0;
-    skills.cooking = parseInt(parts[2]) || 0;
-    skills.woodcut = parseInt(parts[3]) || 0;
-    skills.mining = parseInt(parts[4]) || 0;
-    skills.smithing = parseInt(parts[5]) || 0;
-    updateHUD();
-    console.log('[Inv] Skills synced');
-  }
-
-  /* ---- Reset all ----
-     reset */
+  /* Reset all */
   if (cmd === 'reset') {
     for (var r = 0; r < NUM_SLOTS; r++) { slots[r] = 0; }
     coins = 0;
-    skills = { fishing: 0, cooking: 0, woodcut: 0, mining: 0, smithing: 0 };
+    invCoins.textContent = '0';
     renderGrid();
-    updateHUD();
     console.log('[Inv] Full reset');
-  }
-}
-
-function getSkillHudEl(name) {
-  switch(name) {
-    case 'fishing': return hudFishing;
-    case 'cooking': return hudCooking;
-    case 'woodcut': return hudWoodcut;
-    case 'mining':  return hudMining;
-    case 'smithing':return hudSmithing;
-    default: return null;
   }
 }
 
@@ -737,9 +520,7 @@ function getSkillHudEl(name) {
    INITIAL RENDER
    ========================================================= */
 renderGrid();
-updateHUD();
 console.log('[Inv] Inventory iframe loaded. ' + NUM_SLOTS + ' slots ready.');
-
 </script>
 </body>
 </html>
