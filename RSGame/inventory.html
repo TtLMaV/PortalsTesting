@@ -292,8 +292,16 @@ function encodeSlot(id, qty) {
    ========================================================= */
 var invGrid = document.getElementById('invGrid');
 var invCoins = document.getElementById('invCoins');
+var invClose = document.getElementById('invClose');
 var tooltip = document.getElementById('tooltip');
 var invFullMsg = document.getElementById('invFullMsg');
+
+/* Close button - closes the iframe */
+invClose.addEventListener('click', function() {
+  if (typeof PortalsSdk !== 'undefined' && PortalsSdk.closeIframe) {
+    PortalsSdk.closeIframe();
+  }
+});
 
 /* =========================================================
    BUILD GRID SLOTS
