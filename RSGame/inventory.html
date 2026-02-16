@@ -296,11 +296,20 @@ var invClose = document.getElementById('invClose');
 var tooltip = document.getElementById('tooltip');
 var invFullMsg = document.getElementById('invFullMsg');
 
-/* Close button - closes the iframe */
-invClose.addEventListener('click', function() {
+/* Close iframe */
+function closeIframe() {
+  console.log('[Inv] Attempting to close iframe...');
   if (typeof PortalsSdk !== 'undefined' && PortalsSdk.closeIframe) {
     PortalsSdk.closeIframe();
+    console.log('[Inv] closeIframe() called');
+  } else {
+    console.log('[Inv] PortalsSdk.closeIframe not available');
   }
+}
+
+invClose.addEventListener('click', function() {
+  console.log('[Inv] Close button clicked');
+  closeIframe();
 });
 
 /* =========================================================
