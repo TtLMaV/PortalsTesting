@@ -639,6 +639,8 @@
       triggerTask(TASK_NAME);
       console.log('[Mine] Sent mine_c_done');
 
+      triggerTask('AddCopper');
+      
       // Close iframe after 2 seconds (iframe handles its own close)
       setTimeout(function() {
         closeIframe();
@@ -762,3 +764,4 @@
   </script>
 </body>
 </html>
+
