@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: 'Chakra Petch', sans-serif;
+  color: #e8dcc8;
+}
+
+/* ========== MINI HUD BAR ========== */
+.mini-hud {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 38px;
+  background: linear-gradient(180deg, rgba(50,42,34,0.94) 0%, rgba(30,26,22,0.96) 100%);
+  border-bottom: 2px solid #5a4a35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  pointer-events: auto;
+  z-index: 100;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.6);
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+}
+
+.hud-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.hud-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0d060;
+  min-width: 20px;
+  text-align: center;
+}
+
+.hud-label {
+  font-size: 10px;
+  color: #9a8a6a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hud-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(200,160,74,0.25);
+  margin: 0 2px;
+}
+
+/* Backpack toggle button */
+.bag-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 28px;
+  background: rgba(200,160,74,0.15);
+  border: 1px solid #5a4a35;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.15s ease;
+  margin-left: 4px;
+}
+.bag-btn:hover {
+  background: rgba(200,160,74,0.3);
+  border-color: #c8a04a;
+}
+.bag-btn.active {
+  background: rgba(200,160,74,0.35);
+  border-color: #f0d060;
+  box-shadow: 0 0 6px rgba(240,208,96,0.3);
+}
+
+/* ========== INVENTORY GRID PANEL ========== */
+.inv-panel {
+  position: fixed;
+  top: 44px;
+  right: 8px;
+  width: 296px;
+  background: linear-gradient(180deg, rgba(45,38,30,0.96) 0%, rgba(32,27,22,0.98) 100%);
+  border: 2px solid #5a4a35;
+  border-radius: 6px;
+  pointer-events: auto;
+  z-index: 99;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.7);
+  display: none;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.inv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(200,160,74,0.2);
+}
+
+.inv-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c8a04a;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.inv-close {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(200,80,80,0.2);
+  border: 1px solid rgba(200,80,80,0.4);
+  border-radius: 3px;
+  color: #e08080;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.inv-close:hover {
+  background: rgba(200,80,80,0.4);
+  border-color: #e08080;
+}
+
+/* Grid */
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  padding: 6px;
+}
+
+/* Individual slot */
+.inv-slot {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(25,21,17,0.8);
+  border: 1px solid rgba(90,74,53,0.5);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: all 0.12s ease;
+}
+.inv-slot:hover {
+  border-color: #c8a04a;
+  background: rgba(40,34,26,0.9);
+}
+.inv-slot.has-item {
+  cursor: pointer;
+}
+.inv-slot.has-item:hover {
+  box-shadow: inset 0 0 8px rgba(200,160,74,0.2);
+}
+
+.slot-icon {
+  font-size: 20px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.slot-qty {
+  position: absolute;
+  bottom: 1px;
+  right: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #f0d060;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  pointer-events: none;
+}
+
+/* Tooltip */
+.inv-tooltip {
+  position: fixed;
+  background: rgba(20,17,14,0.95);
+  border: 1px solid #c8a04a;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #f0d060;
+  pointer-events: none;
+  z-index: 200;
+  white-space: nowrap;
+  display: none;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+}
+
+/* Pop animation for value updates */
+@keyframes valuePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.pop { animation: valuePop 0.3s ease; }
+
+/* Item added flash */
+@keyframes slotFlash {
+  0% { box-shadow: inset 0 0 0 rgba(240,208,96,0); }
+  30% { box-shadow: inset 0 0 12px rgba(240,208,96,0.5); }
+  100% { box-shadow: inset 0 0 0 rgba(240,208,96,0); }
+}
+.slot-flash { animation: slotFlash 0.4s ease; }
+
+/* Inventory full warning */
+.inv-full-msg {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(180,50,50,0.9);
+  border: 1px solid #e06060;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  pointer-events: none;
+  z-index: 150;
+  display: none;
+  animation: fadeInOut 2s ease forwards;
+}
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== MINI HUD BAR ========== -->
+<div class="mini-hud">
+  <div class="hud-item">
+    <span class="hud-icon">&#x1FA99;</span>
+    <span class="hud-value" id="hudCoins">0</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x1F3A3;</span>
+    <span class="hud-label">Fish</span>
+    <span class="hud-value" id="hudFishing">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x1F373;</span>
+    <span class="hud-label">Cook</span>
+    <span class="hud-value" id="hudCooking">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x1FA93;</span>
+    <span class="hud-label">WC</span>
+    <span class="hud-value" id="hudWoodcut">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x26CF;</span>
+    <span class="hud-label">Mine</span>
+    <span class="hud-value" id="hudMining">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="hud-item">
+    <span class="hud-icon">&#x1F525;</span>
+    <span class="hud-label">Smith</span>
+    <span class="hud-value" id="hudSmithing">1</span>
+  </div>
+
+  <div class="hud-divider"></div>
+
+  <div class="bag-btn" id="bagBtn" title="Inventory">&#x1F392;</div>
+</div>
+
+<!-- ========== INVENTORY PANEL ========== -->
+<div class="inv-panel" id="invPanel">
+  <div class="inv-header">
+    <span class="inv-title">Inventory</span>
+    <div class="inv-close" id="invClose">&times;</div>
+  </div>
+  <div class="inv-grid" id="invGrid"></div>
+</div>
+
+<!-- ========== TOOLTIP ========== -->
+<div class="inv-tooltip" id="tooltip"></div>
+
+<!-- ========== INVENTORY FULL WARNING ========== -->
+<div class="inv-full-msg" id="invFullMsg">Inventory is full!</div>
+
+<script>
+/* =========================================================
+   ITEM REGISTRY
+   Each item has a numeric ID. Portals stores encoded values:
+     encoded = (itemID * 10000) + quantity
+   ========================================================= */
+var ITEMS = {
+  0:  { name: 'Empty',           icon: '',   cat: 'none' },
+  1:  { name: 'Coins',           icon: '\u{1FA99}', cat: 'general' },
+  2:  { name: 'Bones',           icon: '\u{1F9B4}', cat: 'general' },
+  // Fishing (10-19)
+  10: { name: 'Raw Shrimp',      icon: '\u{1F990}', cat: 'fishing' },
+  11: { name: 'Raw Trout',       icon: '\u{1F41F}', cat: 'fishing' },
+  12: { name: 'Raw Salmon',      icon: '\u{1F41F}', cat: 'fishing' },
+  13: { name: 'Raw Lobster',     icon: '\u{1F99E}', cat: 'fishing' },
+  14: { name: 'Raw Swordfish',   icon: '\u{1F420}', cat: 'fishing' },
+  // Cooking (20-29)
+  20: { name: 'Cooked Shrimp',   icon: '\u{1F364}', cat: 'cooking' },
+  21: { name: 'Cooked Trout',    icon: '\u{1F35D}', cat: 'cooking' },
+  22: { name: 'Cooked Salmon',   icon: '\u{1F363}', cat: 'cooking' },
+  23: { name: 'Cooked Lobster',  icon: '\u{1F99E}', cat: 'cooking' },
+  24: { name: 'Cooked Swordfish',icon: '\u{1F969}', cat: 'cooking' },
+  25: { name: 'Burnt Fish',      icon: '\u{1F480}', cat: 'cooking' },
+  // Woodcutting (30-39)
+  30: { name: 'Logs',            icon: '\u{1FAB5}', cat: 'woodcutting' },
+  31: { name: 'Oak Logs',        icon: '\u{1FAB5}', cat: 'woodcutting' },
+  32: { name: 'Willow Logs',     icon: '\u{1FAB5}', cat: 'woodcutting' },
+  33: { name: 'Yew Logs',        icon: '\u{1FAB5}', cat: 'woodcutting' },
+  // Mining (40-49)
+  40: { name: 'Copper Ore',      icon: '\u{1FAA8}', cat: 'mining' },
+  41: { name: 'Tin Ore',         icon: '\u{1FAA8}', cat: 'mining' },
+  42: { name: 'Iron Ore',        icon: '\u{1FAA8}', cat: 'mining' },
+  43: { name: 'Coal',            icon: '\u{1FAA8}', cat: 'mining' },
+  44: { name: 'Gold Ore',        icon: '\u{1FAA8}', cat: 'mining' },
+  45: { name: 'Mithril Ore',     icon: '\u{1FAA8}', cat: 'mining' },
+  // Smithing (50-59)
+  50: { name: 'Bronze Bar',      icon: '\u{1F7EB}', cat: 'smithing' },
+  51: { name: 'Iron Bar',        icon: '\u2B1C',    cat: 'smithing' },
+  52: { name: 'Steel Bar',       icon: '\u{1F518}', cat: 'smithing' },
+  53: { name: 'Gold Bar',        icon: '\u{1F7E1}', cat: 'smithing' },
+  54: { name: 'Mithril Bar',     icon: '\u{1F535}', cat: 'smithing' },
+  // Tools (60-69)
+  60: { name: 'Fishing Rod',     icon: '\u{1F3A3}', cat: 'tool' },
+  61: { name: 'Fishing Net',     icon: '\u{1F945}', cat: 'tool' },
+  62: { name: 'Hatchet',         icon: '\u{1FA93}', cat: 'tool' },
+  63: { name: 'Pickaxe',         icon: '\u26CF',    cat: 'tool' },
+  64: { name: 'Tinderbox',       icon: '\u{1F525}', cat: 'tool' }
+};
+
+/* =========================================================
+   INVENTORY STATE
+   ========================================================= */
+var NUM_SLOTS = 28;
+var slots = [];
+var coins = 0;
+var skills = { fishing: 0, cooking: 0, woodcut: 0, mining: 0, smithing: 0 };
+
+// Initialise empty slots
+for (var i = 0; i < NUM_SLOTS; i++) { slots.push(0); }
+
+function decodeSlot(val) {
+  var v = Math.floor(val);
+  return { id: Math.floor(v / 10000), qty: v % 10000 };
+}
+
+function encodeSlot(id, qty) {
+  return (id * 10000) + qty;
+}
+
+/* XP to level conversion (RS-style simplified) */
+function xpToLevel(xp) {
+  if (xp <= 0) return 1;
+  // Each level needs progressively more XP
+  // Level 2 = 50xp, Level 3 = 150xp, Level 4 = 300xp, etc.
+  var level = 1;
+  var needed = 50;
+  var total = 0;
+  while (total + needed <= xp && level < 99) {
+    total += needed;
+    level++;
+    needed = Math.floor(needed * 1.5);
+  }
+  return level;
+}
+
+/* =========================================================
+   DOM REFS
+   ========================================================= */
+var hudCoins = document.getElementById('hudCoins');
+var hudFishing = document.getElementById('hudFishing');
+var hudCooking = document.getElementById('hudCooking');
+var hudWoodcut = document.getElementById('hudWoodcut');
+var hudMining = document.getElementById('hudMining');
+var hudSmithing = document.getElementById('hudSmithing');
+var bagBtn = document.getElementById('bagBtn');
+var invPanel = document.getElementById('invPanel');
+var invGrid = document.getElementById('invGrid');
+var invClose = document.getElementById('invClose');
+var tooltip = document.getElementById('tooltip');
+var invFullMsg = document.getElementById('invFullMsg');
+
+/* =========================================================
+   BUILD GRID SLOTS
+   ========================================================= */
+for (var s = 0; s < NUM_SLOTS; s++) {
+  var slotEl = document.createElement('div');
+  slotEl.className = 'inv-slot';
+  slotEl.id = 'slot' + s;
+  slotEl.setAttribute('data-index', s);
+
+  var iconEl = document.createElement('span');
+  iconEl.className = 'slot-icon';
+  iconEl.id = 'slotIcon' + s;
+
+  var qtyEl = document.createElement('span');
+  qtyEl.className = 'slot-qty';
+  qtyEl.id = 'slotQty' + s;
+
+  slotEl.appendChild(iconEl);
+  slotEl.appendChild(qtyEl);
+  invGrid.appendChild(slotEl);
+
+  // Tooltip on hover
+  (function(idx) {
+    slotEl.addEventListener('mouseenter', function(e) {
+      var decoded = decodeSlot(slots[idx]);
+      if (decoded.id === 0) return;
+      var item = ITEMS[decoded.id];
+      if (!item) return;
+      tooltip.textContent = item.name + (decoded.qty > 1 ? ' (' + decoded.qty + ')' : '');
+      tooltip.style.display = 'block';
+      positionTooltip(e);
+    });
+    slotEl.addEventListener('mousemove', function(e) {
+      positionTooltip(e);
+    });
+    slotEl.addEventListener('mouseleave', function() {
+      tooltip.style.display = 'none';
+    });
+  })(s);
+}
+
+function positionTooltip(e) {
+  var tx = e.clientX + 12;
+  var ty = e.clientY - 28;
+  if (tx + 150 > window.innerWidth) tx = e.clientX - 150;
+  if (ty < 0) ty = e.clientY + 16;
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top = ty + 'px';
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function renderGrid() {
+  for (var i = 0; i < NUM_SLOTS; i++) {
+    renderSlot(i);
+  }
+}
+
+function renderSlot(idx) {
+  var decoded = decodeSlot(slots[idx]);
+  var iconEl = document.getElementById('slotIcon' + idx);
+  var qtyEl = document.getElementById('slotQty' + idx);
+  var slotEl = document.getElementById('slot' + idx);
+
+  if (decoded.id === 0 || !ITEMS[decoded.id]) {
+    iconEl.textContent = '';
+    qtyEl.textContent = '';
+    slotEl.classList.remove('has-item');
+  } else {
+    var item = ITEMS[decoded.id];
+    iconEl.textContent = item.icon;
+    qtyEl.textContent = decoded.qty > 1 ? decoded.qty : '';
+    slotEl.classList.add('has-item');
+  }
+}
+
+function flashSlot(idx) {
+  var slotEl = document.getElementById('slot' + idx);
+  if (!slotEl) return;
+  slotEl.classList.remove('slot-flash');
+  void slotEl.offsetWidth;
+  slotEl.classList.add('slot-flash');
+}
+
+function updateHUD() {
+  hudCoins.textContent = formatNumber(coins);
+  hudFishing.textContent = xpToLevel(skills.fishing);
+  hudCooking.textContent = xpToLevel(skills.cooking);
+  hudWoodcut.textContent = xpToLevel(skills.woodcut);
+  hudMining.textContent = xpToLevel(skills.mining);
+  hudSmithing.textContent = xpToLevel(skills.smithing);
+}
+
+function formatNumber(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 10000) return (n / 1000).toFixed(1) + 'K';
+  if (n >= 1000) return n.toLocaleString ? n.toLocaleString() : n;
+  return n;
+}
+
+function popValue(el) {
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+function showInvFull() {
+  invFullMsg.style.display = 'block';
+  invFullMsg.style.animation = 'none';
+  void invFullMsg.offsetWidth;
+  invFullMsg.style.animation = 'fadeInOut 2s ease forwards';
+  setTimeout(function() { invFullMsg.style.display = 'none'; }, 2100);
+}
+
+/* =========================================================
+   INVENTORY HELPERS
+   ========================================================= */
+
+/* Find a slot that already holds this item (for stacking) */
+function findSlotWithItem(itemId) {
+  for (var i = 0; i < NUM_SLOTS; i++) {
+    var decoded = decodeSlot(slots[i]);
+    if (decoded.id === itemId && decoded.qty < 9999) return i;
+  }
+  return -1;
+}
+
+/* Find first empty slot */
+function findEmptySlot() {
+  for (var i = 0; i < NUM_SLOTS; i++) {
+    if (slots[i] === 0) return i;
+  }
+  return -1;
+}
+
+/* =========================================================
+   TOGGLE INVENTORY PANEL
+   ========================================================= */
+var gridOpen = false;
+
+bagBtn.addEventListener('click', function() {
+  gridOpen = !gridOpen;
+  invPanel.style.display = gridOpen ? 'block' : 'none';
+  bagBtn.classList.toggle('active', gridOpen);
+  if (gridOpen) renderGrid();
+});
+
+invClose.addEventListener('click', function() {
+  gridOpen = false;
+  invPanel.style.display = 'none';
+  bagBtn.classList.remove('active');
+});
+
+/* =========================================================
+   PORTALS SDK COMMUNICATION
+   ========================================================= */
+
+/* Deduplication */
+var lastMessageId = '';
+var lastMessageTime = 0;
+
+function processMessage(msg, source) {
+  var now = Date.now();
+  var msgId = msg + '_' + Math.floor(now / 100);
+  if (msgId === lastMessageId && now - lastMessageTime < 200) return;
+  lastMessageId = msgId;
+  lastMessageTime = now;
+  console.log('[Inv] Msg (' + source + '):', msg);
+  handleMessage(msg);
+}
+
+/* Triple-layer SDK detection */
+if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+  PortalsSdk.setMessageListener(function(msg) {
+    processMessage(msg, 'SDK');
+  });
+  console.log('[Inv] PortalsSdk listener attached');
+}
+
+window.addEventListener('message', function(event) {
+  if (event.data && typeof event.data === 'string') {
+    processMessage(event.data, 'postMessage-string');
+  }
+  else if (event.data && event.data.portalsMessage) {
+    processMessage(event.data.portalsMessage, 'postMessage-portalsMessage');
+  }
+  else if (event.data && event.data.message && typeof event.data.message === 'string') {
+    processMessage(event.data.message, 'postMessage-message');
+  }
+});
+
+/* triggerTask helper */
+function triggerTask(taskName) {
+  try {
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+      PortalsSdk.sendMessageToUnity(JSON.stringify({
+        TaskName: taskName,
+        TaskTargetState: 'SetNotActiveToActive'
+      }));
+      console.log('[Inv] Triggered:', taskName);
+    }
+  } catch(e) {
+    console.log('[Inv] triggerTask error:', e);
+  }
+}
+
+/* =========================================================
+   MESSAGE HANDLER
+   ========================================================= */
+function handleMessage(msg) {
+  if (typeof msg !== 'string') return;
+  var parts = msg.split('_');
+  var cmd = parts[0];
+
+  /* ---- Full inventory sync ----
+     invsync_SLOT1_SLOT2_..._SLOT28_COINS
+     29 values after the prefix (28 slots + coins) */
+  if (cmd === 'invsync' && parts.length >= 30) {
+    for (var i = 0; i < NUM_SLOTS; i++) {
+      slots[i] = parseFloat(parts[i + 1]) || 0;
+    }
+    coins = parseInt(parts[29]) || 0;
+    renderGrid();
+    updateHUD();
+    console.log('[Inv] Full sync received. Coins:', coins);
+  }
+
+  /* ---- Single slot update ----
+     slotupd_SLOTNUM_ENCODEDVALUE */
+  if (cmd === 'slotupd' && parts.length >= 3) {
+    var slotIdx = parseInt(parts[1]) - 1; // Convert 1-based to 0-based
+    var encodedVal = parseFloat(parts[2]) || 0;
+    if (slotIdx >= 0 && slotIdx < NUM_SLOTS) {
+      slots[slotIdx] = encodedVal;
+      renderSlot(slotIdx);
+      flashSlot(slotIdx);
+    }
+  }
+
+  /* ---- Coins update ----
+     coinset_VALUE */
+  if (cmd === 'coinset' && parts.length >= 2) {
+    coins = parseInt(parts[1]) || 0;
+    hudCoins.textContent = formatNumber(coins);
+    popValue(hudCoins);
+  }
+
+  /* ---- Skill XP update ----
+     skillxp_SKILLNAME_XP
+     e.g. skillxp_fishing_250 */
+  if (cmd === 'skillxp' && parts.length >= 3) {
+    var skillName = parts[1];
+    var xpVal = parseInt(parts[2]) || 0;
+    if (skills.hasOwnProperty(skillName)) {
+      var oldLevel = xpToLevel(skills[skillName]);
+      skills[skillName] = xpVal;
+      var newLevel = xpToLevel(xpVal);
+      updateHUD();
+
+      // Level up detection
+      if (newLevel > oldLevel) {
+        var hudEl = getSkillHudEl(skillName);
+        if (hudEl) popValue(hudEl);
+        console.log('[Inv] LEVEL UP! ' + skillName + ': ' + oldLevel + ' -> ' + newLevel);
+      }
+    }
+  }
+
+  /* ---- Skills sync ----
+     skillsync_FISH_COOK_WC_MINE_SMITH */
+  if (cmd === 'skillsync' && parts.length >= 6) {
+    skills.fishing = parseInt(parts[1]) || 0;
+    skills.cooking = parseInt(parts[2]) || 0;
+    skills.woodcut = parseInt(parts[3]) || 0;
+    skills.mining = parseInt(parts[4]) || 0;
+    skills.smithing = parseInt(parts[5]) || 0;
+    updateHUD();
+    console.log('[Inv] Skills synced');
+  }
+
+  /* ---- Reset all ----
+     reset */
+  if (cmd === 'reset') {
+    for (var r = 0; r < NUM_SLOTS; r++) { slots[r] = 0; }
+    coins = 0;
+    skills = { fishing: 0, cooking: 0, woodcut: 0, mining: 0, smithing: 0 };
+    renderGrid();
+    updateHUD();
+    console.log('[Inv] Full reset');
+  }
+}
+
+function getSkillHudEl(name) {
+  switch(name) {
+    case 'fishing': return hudFishing;
+    case 'cooking': return hudCooking;
+    case 'woodcut': return hudWoodcut;
+    case 'mining':  return hudMining;
+    case 'smithing':return hudSmithing;
+    default: return null;
+  }
+}
+
+/* =========================================================
+   INITIAL RENDER
+   ========================================================= */
+renderGrid();
+updateHUD();
+console.log('[Inv] Inventory iframe loaded. ' + NUM_SLOTS + ' slots ready.');
+
+</script>
+</body>
+</html>
