@@ -18,11 +18,12 @@
   }
 
   .plate {
-    position: relative;
+    position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 200px;
+    min-width: 100px;
+	max-height: 80px;
     padding: 28px 48px;
     background: linear-gradient(
       165deg,
@@ -105,10 +106,12 @@
     position: relative;
     z-index: 1;
     font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
-    font-size: 80px;
+    font-size: 50px;
     font-weight: 900;
+	padding-top: 0px;
+	padding-bottom: 30px;
     color: #1a1a1a;
-    letter-spacing: 4px;
+    letter-spacing: 0px;
     text-shadow:
       0 2px 1px rgba(0,0,0,0.2),
       0 -1px 0 rgba(255,255,255,0.15);
@@ -195,7 +198,7 @@
   <div class="screw tr"></div>
   <div class="screw bl"></div>
   <div class="screw br"></div>
-  <div class="number" id="number">0</div>
+  <div class="number" id="number">100</div>
   <div class="braille" id="braille"></div>
   <div class="flash" id="flash"></div>
 </div>
@@ -308,6 +311,7 @@
   }
 
   // Initial render
+  //count = 2;
   render();
 })();
 </script>
