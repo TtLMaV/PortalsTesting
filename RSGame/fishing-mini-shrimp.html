@@ -1,203 +1,1114 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Fishing — Shrimp</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Fishing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      margin:0; padding:0; overflow:hidden;
+      background: transparent;
+      font-family: 'Chakra Petch', sans-serif;
+      color:#e0dcd0;
+      user-select:none; -webkit-user-select:none;
+    }
 
-<style>
-:root{
-  --stone:#3b3024;
-  --stone2:#2a221a;
-  --gold:#c8a04a;
-  --line:#5a4a35;
-  --txt:#f4e7c2;
-  --muted:#b7a88a;
-  --water1:#1b7fb5;
-  --water2:#0f5f8d;
-}
+    .mine-panel{
+      width:360px; margin:20px auto;
+      background: linear-gradient(160deg, rgba(22,32,40,0.97) 0%, rgba(12,18,24,0.99) 100%);
+      border:2px solid #2d5c77;
+      border-radius:4px;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+      padding:18px;
+      animation: slideUp 0.3s ease;
+      position:relative;
+    }
+    .mine-panel::before{
+      content:''; position:absolute; top:0; left:0; width:3px; height:100%;
+      background:#2aa7d8;
+    }
+    @keyframes slideUp{ from{ transform:translateY(20px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
 
-html,body{
-  margin:0;
-  height:100%;
-  font-family:system-ui;
-  background:transparent;
-  color:var(--txt);
-  user-select:none;
-}
+    .shake{ animation: shakeIt 0.1s ease; }
+    @keyframes shakeIt{
+      0%{ transform:translate(0,0); }
+      25%{ transform:translate(-3px,1px); }
+      50%{ transform:translate(2px,-2px); }
+      75%{ transform:translate(-1px,2px); }
+      100%{ transform:translate(0,0); }
+    }
 
-.wrap{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+    /* HEADER */
+    .mine-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .mine-title-area{ display:flex; align-items:center; gap:8px; }
+    .mine-title{
+      font-size:16px; font-weight:700; color:#2aa7d8;
+      letter-spacing:2px; text-transform:uppercase;
+    }
+    .mine-sub{ font-size:10px; color:#6d7d88; letter-spacing:1px; }
 
-.panel{
-  width:500px;
-  height:380px;
-  border-radius:14px;
-  background:linear-gradient(180deg,var(--stone),var(--stone2));
-  border:2px solid var(--line);
-  box-shadow:0 20px 60px rgba(0,0,0,0.6);
-  overflow:hidden;
-  position:relative;
-}
+    .click-counter{
+      display:flex; align-items:center; gap:6px;
+      background: rgba(0,0,0,0.25);
+      padding:4px 10px; border-radius:2px;
+      border:1px solid #1f2b33;
+    }
+    .click-count{ font-size:16px; font-weight:700; color:#a6e7ff; letter-spacing:1px; }
+    .click-label{ font-size:8px; color:#6d7d88; text-transform:uppercase; letter-spacing:1px; }
 
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:12px 16px;
-  border-bottom:1px solid var(--line);
-  background:rgba(200,160,74,0.1);
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:0.5px;
-  text-transform:uppercase;
-}
+    /* PLAY AREA */
+    .rock-zone{
+      position:relative;
+      height:170px;
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:14px;
+      cursor:pointer;
+      border:1px solid #16232a;
+      border-radius:3px;
+      background:
+        radial-gradient(ellipse at 50% 30%, rgba(42,167,216,0.18) 0%, rgba(10,18,24,0.1) 65%),
+        linear-gradient(180deg, rgba(8,14,18,0.55) 0%, rgba(10,20,28,0.35) 100%);
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .rock-zone:active{ cursor:crosshair; }
 
-.close{
-  cursor:pointer;
-  color:#ffcccc;
-}
+    .water-wrap{ position:relative; width:150px; height:140px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+    .water-svg{ width:150px; height:140px; }
+    .bobber{
+      position:absolute; left:50%; top:38%;
+      width:18px; height:18px; border-radius:999px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.0) 55%),
+                  linear-gradient(180deg, #ff4a3a 0%, #b4140a 100%);
+      border:1px solid rgba(0,0,0,0.45);
+      opacity:0;
+    }
+    .bobber::after{
+      content:''; position:absolute; left:50%; top:100%;
+      width:2px; height:26px; background: rgba(220,240,255,0.45);
+      transform: translateX(-50%);
+      border-radius:2px;
+    }
+    .bobber.float{ animation: floatBob 1.2s ease-in-out infinite; }
+    @keyframes floatBob{
+      0%,100%{ transform: translate(-50%, -50%) translateY(0); }
+      50%{ transform: translate(-50%, -50%) translateY(3px); }
+    }
+    .bobber.bite{ animation: biteBob 0.18s ease-in-out 6; }
+    @keyframes biteBob{
+      0%{ transform: translate(-50%, -50%) translateY(0); }
+      50%{ transform: translate(-50%, -50%) translateY(10px) scale(0.95); }
+      100%{ transform: translate(-50%, -50%) translateY(0); }
+    }
 
-.content{
-  position:absolute;
-  inset:60px 0 0 0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:16px;
-}
+    .ripple{
+      position:absolute; left:50%; top:55%;
+      width:10px; height:10px; border-radius:999px;
+      border:2px solid rgba(166,231,255,0.55);
+      transform: translate(-50%,-50%) scale(0.2);
+      opacity:0;
+      pointer-events:none;
+    }
+    .ripple.go{ animation: ripple 0.7s ease-out forwards; }
+    @keyframes ripple{
+      0%{ opacity:0.9; transform: translate(-50%,-50%) scale(0.2); }
+      100%{ opacity:0; transform: translate(-50%,-50%) scale(6.5); }
+    }
 
-.lake{
-  width:260px;
-  height:170px;
-  border-radius:14px;
-  border:1px solid var(--gold);
-  background:linear-gradient(180deg,var(--water1),var(--water2));
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-}
+    .tap-hint{
+      position:absolute; bottom:8px; left:0; right:0;
+      text-align:center; font-size:10px; color:#60717d;
+      letter-spacing:2px; text-transform:uppercase;
+      animation: pulseHint 1.5s ease-in-out infinite;
+    }
+    @keyframes pulseHint{
+      0%,100%{ opacity:0.35; }
+      50%{ opacity:0.9; }
+    }
 
-.lake span{
-  font-size:42px;
-}
+    /* DAMAGE NUMBER (reused for +combo feedback) */
+    .dmg-number{
+      position:absolute; pointer-events:none;
+      font-size:16px; font-weight:700; color:#a6e7ff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
+      opacity:0; letter-spacing:1px;
+    }
+    .dmg-number.pop{ animation: dmgPop 0.7s ease-out forwards; }
+    @keyframes dmgPop{
+      0%{ opacity:1; transform: translateY(0) scale(1.15); }
+      60%{ opacity:1; transform: translateY(-28px) scale(1); }
+      100%{ opacity:0; transform: translateY(-48px) scale(0.85); }
+    }
 
-.meter{
-  width:320px;
-  height:14px;
-  border-radius:999px;
-  border:1px solid var(--gold);
-  background:rgba(0,0,0,0.4);
-  overflow:hidden;
-}
+    /* INTRO OVERLAY */
+    .intro-overlay{
+      position:absolute; top:0; left:0; right:0; bottom:0;
+      background: linear-gradient(160deg, rgba(22,32,40,0.99) 0%, rgba(12,18,24,0.99) 100%);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      z-index:50;
+      animation: introFade 0.6s ease 1.2s forwards;
+    }
+    @keyframes introFade{ 0%{ opacity:1; } 100%{ opacity:0; pointer-events:none; } }
+    .intro-pick{ font-size:48px; margin-bottom:10px; animation:introRod 0.45s ease-in-out 3; }
+    @keyframes introRod{
+      0%,100%{ transform: rotate(0deg); }
+      50%{ transform: rotate(-20deg); }
+    }
+    .intro-text{
+      font-size:14px; font-weight:700; color:#a6e7ff;
+      letter-spacing:3px; text-transform:uppercase;
+      animation:introTextPulse 0.6s ease-in-out infinite alternate;
+    }
+    @keyframes introTextPulse{ 0%{ opacity:0.5; } 100%{ opacity:1; } }
 
-.fill{
-  height:100%;
-  width:0%;
-  background:linear-gradient(90deg,#a6e7ff,#1b7fb5);
-  transition:width 0.1s ease;
-}
+    /* PROGRESS BAR */
+    .bar-outer{
+      background:#0e1418; border:1px solid #1f2b33; border-radius:2px;
+      height:24px; position:relative; overflow:hidden;
+      margin-bottom:6px;
+    }
+    .bar-fill{
+      height:100%; width:0%; border-radius:1px;
+      background: linear-gradient(180deg, #2aa7d8 0%, #1a6a8a 100%);
+      transition: width 0.15s ease-out;
+      position:relative;
+    }
+    .bar-fill::after{
+      content:''; position:absolute; top:0; left:0; right:0; height:40%;
+      background: rgba(255,255,255,0.10);
+    }
+    .bar-text{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:700; letter-spacing:1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
+      z-index:2; pointer-events:none;
+    }
 
-.big{
-  font-size:18px;
-  font-weight:800;
-}
+    /* COMBO */
+    .combo-bar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+    .combo-text{ font-size:10px; color:#6d7d88; letter-spacing:1px; }
+    .combo-value{ font-size:12px; font-weight:700; color:#a6e7ff; letter-spacing:1px; }
+    .combo-value.hot{ color:#ffd07a; }
+    .combo-value.fire{ color:#ff7a3c; text-shadow: 0 0 8px rgba(255,122,60,0.45); }
 
-.sub{
-  font-size:12px;
-  color:var(--muted);
-}
-</style>
+    /* Hook timing meter */
+    .meter{
+      margin-top:10px;
+      background:#0e1418;
+      border:1px solid #1f2b33;
+      border-radius:2px;
+      height:18px;
+      position:relative;
+      overflow:hidden;
+      display:none;
+    }
+    .meter .zone{
+      position:absolute; top:0; bottom:0;
+      left: var(--zl); width: var(--zw);
+      background: rgba(42,167,216,0.25);
+      border-left:1px solid rgba(166,231,255,0.35);
+      border-right:1px solid rgba(166,231,255,0.35);
+    }
+    .meter .needle{
+      position:absolute; top:-2px; bottom:-2px;
+      width:2px; background:#a6e7ff;
+      box-shadow: 0 0 10px rgba(166,231,255,0.35);
+      left: 0%;
+    }
+    .meter .label{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:9px; letter-spacing:2px; text-transform:uppercase;
+      color:#6d7d88;
+      pointer-events:none;
+      mix-blend-mode: screen;
+    }
+
+    /* COMPLETE */
+    .complete-panel{
+      text-align:center; display:none;
+      animation: completeIn 0.4s ease;
+    }
+    @keyframes completeIn{
+      0%{ transform:scale(0.8); opacity:0; }
+      50%{ transform:scale(1.05); }
+      100%{ transform:scale(1); opacity:1; }
+    }
+    .complete-icon{ font-size:44px; margin-bottom:8px; }
+    .complete-text{
+      font-size:18px; font-weight:700; color:#2aa7d8;
+      letter-spacing:2px;
+    }
+    .complete-sub{ font-size:10px; color:#6d7d88; letter-spacing:1px; margin-top:4px; }
+    .complete-stats{ display:flex; justify-content:center; gap:20px; margin-top:12px; }
+    .complete-stat{ text-align:center; }
+    .complete-stat-val{ font-size:16px; font-weight:700; color:#a6e7ff; }
+    .complete-stat-lbl{ font-size:8px; color:#6d7d88; text-transform:uppercase; letter-spacing:1px; }
+
+    /* small status chip */
+    .status-chip{
+      display:inline-flex; align-items:center; gap:6px;
+      margin-top:10px;
+      padding:4px 10px;
+      border:1px solid #1f2b33;
+      background: rgba(0,0,0,0.25);
+      border-radius:999px;
+      font-size:9px; letter-spacing:2px; text-transform:uppercase;
+      color:#6d7d88;
+    }
+    .status-dot{ width:7px; height:7px; border-radius:999px; background:#60717d; }
+    .status-dot.on{ background:#2aa7d8; box-shadow: 0 0 10px rgba(42,167,216,0.45); }
+    .status-chip.hot .status-dot{ background:#ffd07a; box-shadow: 0 0 10px rgba(255,208,122,0.35); }
+    .status-chip.fire .status-dot{ background:#ff7a3c; box-shadow: 0 0 10px rgba(255,122,60,0.35); }
+  </style>
 </head>
-
 <body>
-<div class="wrap">
-  <div class="panel">
-    <div class="topbar">
-      <div>🕸️ Net Fishing</div>
-      <div class="close" id="closeBtn">✕</div>
+  <div class="mine-panel" id="minePanel">
+
+    <!-- INTRO OVERLAY - covers reset -->
+    <div class="intro-overlay" id="introOverlay">
+      <div class="intro-pick">🎣</div>
+      <div class="intro-text">Preparing Lake...</div>
     </div>
 
-    <div class="content">
-      <div class="lake" id="lake">
-        <span>🦐</span>
+    <!-- PLAY STATE -->
+    <div id="miningState">
+      <div class="mine-header">
+        <div>
+          <div class="mine-title-area">
+            <span style="font-size:20px;">🎣</span>
+            <span class="mine-title">Fishing</span>
+          </div>
+          <div class="mine-sub" id="subText">Click the water to cast!</div>
+        </div>
+        <div class="click-counter">
+          <div>
+            <div class="click-count" id="clickCount">0</div>
+            <div class="click-label" id="clickLabel">Reels</div>
+          </div>
+        </div>
       </div>
 
-      <div class="big" id="bigText">Click rapidly to pull the net!</div>
-      <div class="sub">Fill the bar to catch shrimp.</div>
+      <!-- Water click area -->
+      <div class="rock-zone" id="rockZone">
+        <div class="water-wrap" id="waterWrap">
+          <svg class="water-svg" viewBox="0 0 150 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#2aa7d8" stop-opacity="0.25"/>
+                <stop offset="1" stop-color="#0b1a22" stop-opacity="0.05"/>
+              </linearGradient>
+              <radialGradient id="g2" cx="50%" cy="40%" r="70%">
+                <stop offset="0" stop-color="#a6e7ff" stop-opacity="0.18"/>
+                <stop offset="1" stop-color="#0b1a22" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <path d="M10,88 C28,70 40,76 56,84 C70,91 86,92 100,84 C116,75 128,73 140,85
+                     C134,104 120,120 100,130 C80,138 60,138 42,130 C24,121 14,107 10,88Z"
+                  fill="url(#g1)" stroke="#1f2b33" stroke-width="2" opacity="0.95"/>
+            <ellipse cx="75" cy="70" rx="55" ry="35" fill="url(#g2)"/>
+            <path d="M30,92 C48,82 64,86 78,92 C92,98 108,98 120,92"
+                  fill="none" stroke="rgba(166,231,255,0.18)" stroke-width="3" stroke-linecap="round"/>
+            <path d="M38,104 C54,98 66,100 75,104 C84,108 98,108 112,104"
+                  fill="none" stroke="rgba(166,231,255,0.12)" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <div class="bobber" id="bobber"></div>
+          <div class="ripple" id="ripple"></div>
+        </div>
+        <div class="tap-hint" id="tapHint">▲ CLICK TO CAST ▲</div>
+      </div>
 
-      <div class="meter">
-        <div class="fill" id="fill"></div>
+      <!-- Combo -->
+      <div class="combo-bar">
+        <span class="combo-text" id="comboLabel">COMBO</span>
+        <span class="combo-value" id="comboText">x1</span>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="bar-outer">
+        <div class="bar-fill" id="barFill"></div>
+        <div class="bar-text" id="barText">0%</div>
+      </div>
+
+      <!-- Hook timing meter -->
+      <div class="meter" id="meter">
+        <div class="zone" id="meterZone"></div>
+        <div class="needle" id="meterNeedle"></div>
+        <div class="label" id="meterLabel">CLICK TO HOOK</div>
+      </div>
+
+      <div class="status-chip" id="statusChip">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">READY</span>
       </div>
     </div>
+
+    <!-- COMPLETE STATE -->
+    <div class="complete-panel" id="completeState">
+      <div class="complete-icon">🐟✨</div>
+      <div class="complete-text">+1 Fish!</div>
+      <div class="complete-sub">Added to inventory</div>
+      <div class="complete-stats">
+        <div class="complete-stat">
+          <div class="complete-stat-val" id="finalClicks">0</div>
+          <div class="complete-stat-lbl">Reels</div>
+        </div>
+        <div class="complete-stat">
+          <div class="complete-stat-val" id="finalTime">0s</div>
+          <div class="complete-stat-lbl">Time</div>
+        </div>
+        <div class="complete-stat">
+          <div class="complete-stat-val" id="finalCombo">x1</div>
+          <div class="complete-stat-lbl">Best Combo</div>
+        </div>
+      </div>
+    </div>
+
   </div>
-</div>
 
-<script>
-/* =========================
-   CONFIG
-   ========================= */
-var TOTAL_CLICKS = 14;
-var TASK_NAME = 'Fish_Shrimp_Complete';
+  <!-- Portals SDK -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js"></script>
 
-/* =========================
-   Portals Helpers
-   ========================= */
-function triggerTask(name){
-  if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity){
-    PortalsSdk.sendMessageToUnity(JSON.stringify({
-      TaskName:name,
-      TaskTargetState:'SetNotActiveToActive'
-    }));
+  <script>
+    // ========================================
+    // CONFIG (mirrors chop-tree structure)
+    // ========================================
+    var TOTAL_REELS = 14;                 // reels needed after hook
+    var TASK_NAME = 'Fishing_Catch_done'; // sent on success
+    var RESPAWN_TASK = 'Fishing_Respawn'; // sent after cooldown
+    var ADD_ITEM_TASK = 'AddItem_10';
+// Combo window for rapid reeling clicks
+    var COMBO_WINDOW = 600; // ms
+
+    // Bite timing
+    var BITE_MIN = 900;   // ms
+    var BITE_MAX = 2400;  // ms
+    var HOOK_WINDOW = 850; // ms - time allowed to hook after bite appears
+
+    // Hook meter speed
+    var NEEDLE_SPEED = 1.9; // percentage per frame-ish (scaled in RAF)
+    // ========================================
+    // STATE
+    // ========================================
+    var phase = 'ready'; // ready -> waiting -> bite -> hooked -> reeling -> complete
+    var reels = 0;
+    var done = false;
+
+    var combo = 0;
+    var bestCombo = 0;
+    var lastClickTime = 0;
+
+    var startTime = Date.now();
+    var biteTimer = null;
+    var hookExpireTimer = null;
+
+    // Hook meter state
+    var meterActive = false;
+    var needlePos = 0;
+    var needleDir = 1;
+    var zoneL = 0.42; // 0..1
+    var zoneW = 0.18; // 0..1
+    var lastFrame = 0;
+
+
+// ========================================
+// INVENTORY + HUD HOOKS (listens for the same messages as inventory.html + mini-hud.html)
+// ========================================
+var NUM_SLOTS = 28;
+var slots = [];
+for (var si = 0; si < NUM_SLOTS; si++) slots.push(0);
+var coins = 0;
+
+// Skills are XP amounts (same as mini-hud.html)
+var skills = { fishing: 0, cooking: 0, woodcut: 0, mining: 0, smithing: 0 };
+
+function decodeSlot(val) {
+  var v = Math.floor(val || 0);
+  return { id: Math.floor(v / 10000), qty: v % 10000 };
+}
+
+function hasItem(itemId) {
+  for (var i = 0; i < NUM_SLOTS; i++) {
+    var d = decodeSlot(slots[i]);
+    if (d.id === itemId && d.qty > 0) return true;
+  }
+  return false;
+}
+
+function xpToLevel(xp) {
+  if (xp <= 0) return 1;
+  var level = 1;
+  var needed = 50;
+  var total = 0;
+  while (total + needed <= xp && level < 99) {
+    total += needed;
+    level++;
+    needed = Math.floor(needed * 1.5);
+  }
+  return level;
+}
+
+function fishingLevel() { return xpToLevel(skills.fishing); }
+
+// Require a fishing tool (Rod=60 or Net=61) to play
+var requireTool = true;
+function canFishNow() {
+  if (!requireTool) return true;
+  return hasItem(60) || hasItem(61);
+}
+
+function updateRequirementUI() {
+  var lvl = fishingLevel();
+  if (clickLabel) clickLabel.textContent = 'Reels (Lv ' + lvl + ')';
+
+  if (!canFishNow()) {
+    tapHint.style.display = '';
+    tapHint.textContent = '▲ NEED A FISHING ROD/NET ▲';
+    subText.textContent = 'Open inventory (E) and equip a Rod or Net.';
+    setStatus('LOCKED', '');
+    bobber.style.opacity = '0';
+  } else {
+    if (tapHint.textContent.indexOf('NEED A FISHING') >= 0) {
+      tapHint.textContent = '▲ CLICK WATER TO CAST ▲';
+      subText.textContent = 'Cast → wait for a bite → hook → reel!';
+      setStatus('READY', '');
+    }
   }
 }
 
-function closeIframe(){
-  if (typeof PortalsSdk !== 'undefined' && PortalsSdk.closeIframe){
-    PortalsSdk.closeIframe();
-  }
+// Same de-dupe pattern used by inventory/hud iframes
+var lastMessageId = '';
+var lastMessageTime = 0;
+
+function processMessage(msg, source) {
+  var now = Date.now();
+  var msgId = msg + '_' + Math.floor(now / 100);
+  if (msgId === lastMessageId && now - lastMessageTime < 200) return;
+  lastMessageId = msgId;
+  lastMessageTime = now;
+  handleMessage(msg);
 }
 
-/* =========================
-   Game Logic
-   ========================= */
-var lake = document.getElementById('lake');
-var fill = document.getElementById('fill');
-var bigText = document.getElementById('bigText');
-var closeBtn = document.getElementById('closeBtn');
+if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+  PortalsSdk.setMessageListener(function(msg) { processMessage(msg, 'SDK'); });
+  console.log('[Fish] PortalsSdk listener attached (hooks inventory/hud messages)');
+}
 
-var clicks = 0;
-var finished = false;
-
-lake.addEventListener('click', function(){
-  if (finished) return;
-
-  clicks++;
-  var percent = Math.min(100, (clicks / TOTAL_CLICKS) * 100);
-  fill.style.width = percent + '%';
-
-  if (clicks >= TOTAL_CLICKS){
-    finished = true;
-    bigText.textContent = 'Success! You caught shrimp.';
-    triggerTask(TASK_NAME);
-
-    setTimeout(function(){
-      closeIframe();
-    },1200);
+window.addEventListener('message', function(event) {
+  if (event.data && typeof event.data === 'string') {
+    processMessage(event.data, 'postMessage-string');
+  }
+  else if (event.data && event.data.portalsMessage) {
+    processMessage(event.data.portalsMessage, 'postMessage-portalsMessage');
+  }
+  else if (event.data && event.data.message && typeof event.data.message === 'string') {
+    processMessage(event.data.message, 'postMessage-message');
   }
 });
 
-closeBtn.addEventListener('click', closeIframe);
-</script>
+function handleMessage(msg) {
+  if (typeof msg !== 'string') return;
+  var parts = msg.split('_');
+  var cmd = parts[0];
 
-</body>
-</html>
+  // Inventory: invsync_SLOT1_..._SLOT28_COINS
+  if (cmd === 'invsync' && parts.length >= 30) {
+    for (var i = 0; i < NUM_SLOTS; i++) slots[i] = parseFloat(parts[i + 1]) || 0;
+    coins = parseInt(parts[29]) || 0;
+    updateRequirementUI();
+    return;
+  }
 
+  // Inventory: slotupd_SLOTNUM_ENCODEDVALUE
+  if (cmd === 'slotupd' && parts.length >= 3) {
+    var slotIdx = parseInt(parts[1]) - 1;
+    var encodedVal = parseFloat(parts[2]) || 0;
+    if (slotIdx >= 0 && slotIdx < NUM_SLOTS) slots[slotIdx] = encodedVal;
+    updateRequirementUI();
+    return;
+  }
+
+  // HUD skills: skillsync_FISH_COOK_WC_MINE_SMITH
+  if (cmd === 'skillsync' && parts.length >= 6) {
+    skills.fishing = parseInt(parts[1]) || 0;
+    skills.cooking = parseInt(parts[2]) || 0;
+    skills.woodcut = parseInt(parts[3]) || 0;
+    skills.mining = parseInt(parts[4]) || 0;
+    skills.smithing = parseInt(parts[5]) || 0;
+    updateRequirementUI();
+    return;
+  }
+
+  // HUD skills: skillxp_SKILLNAME_XP
+  if (cmd === 'skillxp' && parts.length >= 3) {
+    var skillName = parts[1];
+    var xpVal = parseInt(parts[2]) || 0;
+    if (skills.hasOwnProperty(skillName)) skills[skillName] = xpVal;
+    updateRequirementUI();
+    return;
+  }
+
+  // Coins: coinset_VALUE
+  if (cmd === 'coinset' && parts.length >= 2) {
+    coins = parseInt(parts[1]) || 0;
+    return;
+  }
+
+  if (cmd === 'reset') {
+    for (var r = 0; r < NUM_SLOTS; r++) slots[r] = 0;
+    coins = 0;
+    skills = { fishing: 0, cooking: 0, woodcut: 0, mining: 0, smithing: 0 };
+    updateRequirementUI();
+  }
+}
+
+    // ========================================
+    // ELEMENTS
+    // ========================================
+    var rockZone = document.getElementById('rockZone');
+    var minePanel = document.getElementById('minePanel');
+
+    var clickCount = document.getElementById('clickCount');
+    var clickLabel = document.getElementById('clickLabel');
+    var subText = document.getElementById('subText');
+
+    var barFill = document.getElementById('barFill');
+    var barText = document.getElementById('barText');
+
+    var comboText = document.getElementById('comboText');
+    var comboLabel = document.getElementById('comboLabel');
+
+    var tapHint = document.getElementById('tapHint');
+    var bobber = document.getElementById('bobber');
+    var ripple = document.getElementById('ripple');
+
+    var meter = document.getElementById('meter');
+    var meterZone = document.getElementById('meterZone');
+    var meterNeedle = document.getElementById('meterNeedle');
+    var meterLabel = document.getElementById('meterLabel');
+
+    var statusChip = document.getElementById('statusChip');
+    var statusText = document.getElementById('statusText');
+    var statusDot = document.getElementById('statusDot');
+
+    var miningState = document.getElementById('miningState');
+    var completeState = document.getElementById('completeState');
+
+    // ========================================
+    // AUDIO (no external assets)
+    // ========================================
+    var audioCtx = null;
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (e) { audioCtx = null; }
+      }
+    }
+
+    function beep(freq, dur, type, gain) {
+      ensureAudio();
+      if (!audioCtx) return;
+      var t0 = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator();
+      var g = audioCtx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.value = freq;
+      g.gain.value = 0.0001;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start(t0);
+      g.gain.exponentialRampToValueAtTime((gain || 0.08), t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + (dur || 0.08));
+      osc.stop(t0 + (dur || 0.08) + 0.02);
+    }
+
+    function clickSfx() { beep(520, 0.06, 'square', 0.045); }
+    function castSfx() { beep(240, 0.10, 'sine', 0.06); setTimeout(function(){ beep(320, 0.08, 'sine', 0.05); }, 60); }
+    function biteSfx() { beep(880, 0.07, 'triangle', 0.07); setTimeout(function(){ beep(980, 0.07, 'triangle', 0.06); }, 70); }
+    function failSfx() { beep(180, 0.18, 'sawtooth', 0.05); }
+    function winSfx()  { beep(740, 0.09, 'triangle', 0.07); setTimeout(function(){ beep(980, 0.11, 'triangle', 0.075); }, 90); }
+
+    // ========================================
+    // UI HELPERS
+    // ========================================
+    function setStatus(text, mode) {
+      statusText.textContent = text;
+      statusDot.className = 'status-dot' + ((mode === 'on' || mode === 'hot' || mode === 'fire') ? ' on' : '');
+      statusChip.className = 'status-chip';
+      if (mode === 'hot') statusChip.classList.add('hot');
+      if (mode === 'fire') statusChip.classList.add('fire');
+      if (mode === 'on') statusChip.classList.add('on');
+    }
+
+    function popTextAt(e, txt, color, fontSize) {
+      var rect = rockZone.getBoundingClientRect();
+      var x = (e && e.clientX != null) ? (e.clientX - rect.left) : rect.width/2;
+      var y = (e && e.clientY != null) ? (e.clientY - rect.top) : rect.height/2;
+
+      var dmg = document.createElement('div');
+      dmg.className = 'dmg-number';
+      dmg.textContent = txt;
+      dmg.style.left = (x - 10) + 'px';
+      dmg.style.top = (y - 10) + 'px';
+      if (color) dmg.style.color = color;
+      if (fontSize) dmg.style.fontSize = fontSize;
+
+      rockZone.appendChild(dmg);
+      requestAnimationFrame(function(){ dmg.classList.add('pop'); });
+      setTimeout(function(){ dmg.remove(); }, 800);
+    }
+
+    function rippleOnce() {
+      ripple.classList.remove('go');
+      // force reflow
+      void ripple.offsetWidth;
+      ripple.classList.add('go');
+    }
+
+    function setHint(text) { tapHint.textContent = text; }
+
+    function updateComboUI() {
+      comboText.textContent = 'x' + Math.max(1, combo);
+      comboText.className = 'combo-value';
+      if (combo >= 7) comboText.classList.add('fire');
+      else if (combo >= 4) comboText.classList.add('hot');
+    }
+
+    function updateProgress() {
+      var pct = 0;
+      if (phase === 'reeling' || phase === 'hooked') {
+        pct = Math.min(100, Math.round((reels / TOTAL_REELS) * 100));
+      } else if (phase === 'waiting') {
+        pct = 10;
+      } else if (phase === 'bite') {
+        pct = 25;
+      } else if (phase === 'ready') {
+        pct = 0;
+      }
+      barFill.style.width = pct + '%';
+      barText.textContent = pct + '%';
+    }
+
+    function shakePanel() {
+      minePanel.classList.remove('shake');
+      void minePanel.offsetWidth;
+      minePanel.classList.add('shake');
+      setTimeout(function(){ minePanel.classList.remove('shake'); }, 120);
+    }
+
+    // ========================================
+    // GAME FLOW
+    // ========================================
+    function setPhase(p) {
+      phase = p;
+
+      if (p === 'ready') {
+        clickLabel.textContent = 'Reels';
+        clickCount.textContent = '0';
+        subText.textContent = 'Click the water to cast!';
+        setHint('▲ CLICK TO CAST ▲');
+        tapHint.style.display = '';
+        bobber.style.opacity = '0';
+        bobber.className = 'bobber';
+        meter.style.display = 'none';
+        setStatus('READY', '');
+        updateComboUI();
+        updateProgress();
+      }
+
+      if (p === 'waiting') {
+        clickLabel.textContent = 'Reels';
+        clickCount.textContent = '0';
+        subText.textContent = 'Waiting for a bite...';
+        setHint('... WAIT ...');
+        tapHint.style.display = '';
+        bobber.style.opacity = '1';
+        bobber.className = 'bobber float';
+        meter.style.display = 'none';
+        setStatus('WAITING', 'on');
+        updateProgress();
+      }
+
+      if (p === 'bite') {
+        subText.textContent = 'BITE! Click to hook!';
+        setHint('▲ CLICK TO HOOK ▲');
+        tapHint.style.display = '';
+        bobber.style.opacity = '1';
+        bobber.className = 'bobber bite';
+        setStatus('BITE!', 'hot');
+        updateProgress();
+      }
+
+      if (p === 'hooked') {
+        subText.textContent = 'Hooked! Reel it in!';
+        setHint('▲ CLICK TO REEL ▲');
+        tapHint.style.display = '';
+        clickLabel.textContent = 'Reels';
+        setStatus('HOOKED', 'on');
+        updateProgress();
+      }
+
+      if (p === 'reeling') {
+        subText.textContent = 'Reel fast to land the fish!';
+        setHint('▲ CLICK TO REEL ▲');
+        tapHint.style.display = '';
+        setStatus('REELING', combo >= 7 ? 'fire' : (combo >= 4 ? 'hot' : 'on'));
+        updateProgress();
+      }
+    }
+
+    function scheduleBite() {
+      clearTimeout(biteTimer);
+      clearTimeout(hookExpireTimer);
+      var delay = Math.floor(BITE_MIN + Math.random() * (BITE_MAX - BITE_MIN));
+      biteTimer = setTimeout(function(){
+        if (phase !== 'waiting' || done) return;
+        biteSfx();
+        rippleOnce();
+        setPhase('bite');
+        // If the player doesn't click in time, lose the bite
+        hookExpireTimer = setTimeout(function(){
+          if (phase === 'bite' && !done) {
+            failSfx();
+            shakePanel();
+            setStatus('MISS', '');
+            setHint('▲ CLICK TO CAST ▲');
+            subText.textContent = 'Missed it... cast again!';
+            bobber.style.opacity = '0';
+            bobber.className = 'bobber';
+            setTimeout(function(){ if(!done) setPhase('ready'); }, 700);
+          }
+        }, HOOK_WINDOW);
+      }, delay);
+    }
+
+    function startHookMeter() {
+      // Make a random success zone each bite (keeps it gamey)
+      zoneW = 0.14 + Math.random() * 0.14;  // 14% - 28%
+      zoneL = 0.10 + Math.random() * (0.80 - zoneW);
+      meterZone.style.setProperty('--zl', Math.round(zoneL * 100) + '%');
+      meterZone.style.setProperty('--zw', Math.round(zoneW * 100) + '%');
+
+      needlePos = Math.random() * 100;
+      needleDir = (Math.random() < 0.5) ? -1 : 1;
+      lastFrame = 0;
+      meterActive = true;
+
+      meter.style.display = 'block';
+      meterLabel.textContent = 'CLICK TO HOOK';
+      // Show meter for a short window
+      setTimeout(function(){
+        if (meterActive) meterLabel.textContent = 'NOW!';
+      }, 120);
+
+      requestAnimationFrame(tickMeter);
+    }
+
+    function stopHookMeter() {
+      meterActive = false;
+      meter.style.display = 'none';
+    }
+
+    function tickMeter(ts) {
+      if (!meterActive) return;
+      if (!lastFrame) lastFrame = ts;
+      var dt = Math.min(40, ts - lastFrame);
+      lastFrame = ts;
+
+      // move needle
+      needlePos += needleDir * NEEDLE_SPEED * (dt / 16.67);
+      if (needlePos <= 0) { needlePos = 0; needleDir = 1; }
+      if (needlePos >= 100) { needlePos = 100; needleDir = -1; }
+
+      meterNeedle.style.left = needlePos + '%';
+      requestAnimationFrame(tickMeter);
+    }
+
+    function inHookZone() {
+      var p = needlePos / 100;
+      return (p >= zoneL && p <= (zoneL + zoneW));
+    }
+
+    function beginReeling() {
+      reels = 0;
+      combo = 0;
+      bestCombo = 0;
+      lastClickTime = 0;
+      startTime = Date.now();
+      clickCount.textContent = '0';
+      updateComboUI();
+      setPhase('hooked');
+      // small delay then start real reeling
+      setTimeout(function(){
+        if (done) return;
+        setPhase('reeling');
+      }, 250);
+    }
+
+    function reelOnce(e) {
+      // Combo logic (same spirit as chop-tree)
+      var now = Date.now();
+      if (now - lastClickTime <= COMBO_WINDOW) {
+        combo += 1;
+      } else {
+        combo = 1;
+      }
+      lastClickTime = now;
+      bestCombo = Math.max(bestCombo, combo);
+
+      // Reels per click increases with combo slightly (feels snappy)
+      var gain = 1;
+      if (combo >= 7) gain = 2;
+      else if (combo >= 4) gain = 1.5;
+
+      reels += gain;
+      if (reels > TOTAL_REELS) reels = TOTAL_REELS;
+
+      clickCount.textContent = Math.floor(reels);
+      updateComboUI();
+      updateProgress();
+
+      // feedback
+      clickSfx();
+      rippleOnce();
+      setStatus('REELING', combo >= 7 ? 'fire' : (combo >= 4 ? 'hot' : 'on'));
+      if (combo >= 7) popTextAt(e, '+' + gain, '#ff7a3c', '18px');
+      else if (combo >= 4) popTextAt(e, '+' + gain, '#ffd07a', '18px');
+      else popTextAt(e, '+1', '#a6e7ff', '16px');
+
+      if (reels >= TOTAL_REELS) {
+        completeFishing();
+      }
+    }
+
+    function cast(e) {
+      castSfx();
+      rippleOnce();
+      shakePanel();
+      bobber.style.opacity = '1';
+      bobber.className = 'bobber float';
+      setPhase('waiting');
+      scheduleBite();
+    }
+
+    function hookAttempt(e) {
+      // Hook meter mini-game: start meter on bite; click while needle is in zone to succeed
+      // If meter isn't running yet, start it the first time they click during bite.
+      if (!meterActive) {
+        startHookMeter();
+        // give them a small window to click after meter appears
+        clearTimeout(hookExpireTimer);
+        hookExpireTimer = setTimeout(function(){
+          if (phase === 'bite' && !done) {
+            stopHookMeter();
+            failSfx();
+            shakePanel();
+            setStatus('MISS', '');
+            subText.textContent = 'Too slow... cast again!';
+            bobber.style.opacity = '0';
+            bobber.className = 'bobber';
+            setTimeout(function(){ if(!done) setPhase('ready'); }, 700);
+          }
+        }, 1100);
+        return;
+      }
+
+      // meter active: evaluate
+      if (inHookZone()) {
+        stopHookMeter();
+        winSfx();
+        setStatus('HOOK!', 'on');
+        popTextAt(e, 'HOOK!', '#a6e7ff', '18px');
+        clearTimeout(hookExpireTimer);
+        beginReeling();
+      } else {
+        // one miss is harsh; allow a single retry within remaining window
+        failSfx();
+        shakePanel();
+        popTextAt(e, 'MISS', '#ffd07a', '18px');
+      }
+    }
+
+    function onClick(e) {
+      if (done) return;
+
+      // Block play if the player doesn't have a fishing tool
+      if (!canFishNow()) {
+        failSfx();
+        shakePanel();
+        updateRequirementUI();
+        return;
+      }
+
+      // resume audio on user gesture for mobile
+      ensureAudio();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+      if (phase === 'ready') return cast(e);
+      if (phase === 'waiting') {
+        // clicking while waiting just splashes (no penalty)
+        clickSfx();
+        rippleOnce();
+        popTextAt(e, '...', '#6d7d88', '14px');
+        return;
+      }
+      if (phase === 'bite') return hookAttempt(e);
+      if (phase === 'hooked' || phase === 'reeling') return reelOnce(e);
+    }
+
+    rockZone.addEventListener('click', onClick);
+
+    // ========================================
+    // COMPLETE
+    // ========================================
+    function completeFishing() {
+      done = true;
+      var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+      miningState.style.display = 'none';
+      completeState.style.display = 'block';
+
+      document.getElementById('finalClicks').textContent = Math.floor(reels);
+      document.getElementById('finalTime').textContent = elapsed + 's';
+      document.getElementById('finalCombo').textContent = 'x' + bestCombo;
+
+      // Decide what fish was caught based on Fishing level (from HUD skill messages)
+var lvl = fishingLevel();
+var fishId = 10; // Raw Shrimp
+var fishName = 'Raw Shrimp';
+var fishIcon = '\u{1F990}';
+
+// Update completion UI text/icon
+var ct = completeState.querySelector('.complete-text');
+var ci = completeState.querySelector('.complete-icon');
+if (ct) ct.textContent = '+1 ' + fishName + '!';
+if (ci) ci.textContent = fishIcon;
+
+// Tell Portals - fishing complete (mirrors chop-tree)
+triggerTask(TASK_NAME);
+
+// Reward task (shrimp only)
+triggerTask(ADD_ITEM_TASK);
+console.log('[Fish] Sent', TASK_NAME, 'caught', fishId);
+
+      // Tell Portals to respawn the fishing spot (Portals handles the cooldown delay)
+      triggerTask(RESPAWN_TASK);
+      console.log('[Fish] Sent', RESPAWN_TASK);
+
+      // Close iframe after 2 seconds
+      setTimeout(function(){ closeIframe(); }, 2000);
+    }
+
+    // ========================================
+    // PORTALS SDK
+    // ========================================
+    function triggerTask(taskName) {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: taskName,
+          TaskTargetState: 'SetNotActiveToActive'
+        }));
+        console.log('[Fish] Sent:', taskName);
+      }
+    }
+
+    function closeIframe() {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.focusGameKeyboard) {
+        PortalsSdk.focusGameKeyboard();
+        console.log('[Fish] focusGameKeyboard() called');
+      }
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.closeIframe) {
+        PortalsSdk.closeIframe();
+        console.log('[Fish] Closed iframe');
+      }
+    }
+
+    // ========================================
+    // RESET (for iframe reuse)
+    // ========================================
+    function resetGame() {
+      clearTimeout(biteTimer);
+      clearTimeout(hookExpireTimer);
+      stopHookMeter();
+
+      reels = 0;
+      done = false;
+      combo = 0;
+      bestCombo = 0;
+      lastClickTime = 0;
+      startTime = Date.now();
+
+      clickCount.textContent = '0';
+      barFill.style.width = '0%';
+      barText.textContent = '0%';
+      comboText.textContent = 'x1';
+      comboText.className = 'combo-value';
+
+      bobber.style.opacity = '0';
+      bobber.className = 'bobber';
+      tapHint.style.display = '';
+
+      miningState.style.display = 'block';
+      completeState.style.display = 'none';
+
+      setPhase('ready');
+      console.log('[Fish] Game reset');
+    }
+
+    // ========================================
+    // AUTO-RESET: Polls every 500ms
+    // When done for 3+ seconds, show intro and reset
+    // Works for unlimited game loops
+    // ========================================
+    var doneTime = 0;
+    var resetState = 0; // 0=idle, 1=waiting, 2=resetting
+    setInterval(function(){
+      if (done && resetState === 0) {
+        doneTime = Date.now();
+        resetState = 1;
+        console.log('[Fish] Completion detected, waiting 3s to reset');
+      }
+      if (resetState === 1 && Date.now() - doneTime > 3000) {
+        resetState = 2;
+        console.log('[Fish] Starting auto-reset');
+
+        var overlay = document.getElementById('introOverlay');
+        if (overlay) {
+          overlay.style.display = '';
+          overlay.style.opacity = '1';
+          overlay.style.animation = 'none';
+        }
+
+        resetGame();
+
+        setTimeout(function(){
+          var ov = document.getElementById('introOverlay');
+          if (ov) ov.style.animation = 'introFade 0.6s ease forwards';
+          setTimeout(function(){
+            var ov2 = document.getElementById('introOverlay');
+            if (ov2) ov2.style.display = 'none';
+            resetState = 0;
+            doneTime = 0;
+            console.log('[Fish] Reset complete, ready for next round');
+          }, 700);
+        }, 1200);
+      }
+    }, 500);
+
+    // ========================================
+    // INIT
+    // ========================================
+    var introOverlay = document.getElementById('introOverlay');
+    setTimeout(function(){ if (introOverlay) introOverlay.style.display = 'none'; }, 1900);
+    updateRequirementUI();
+    setPhase('ready');
+    console.log('[Fish] Ready - click water to cast.');
+  </script>
 </body>
 </html>
