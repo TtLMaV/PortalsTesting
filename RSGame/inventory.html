@@ -327,6 +327,13 @@ document.addEventListener('click', function() {
   setTimeout(refocusGame, 50);
 });
 
+/* Continuously return keyboard focus to the game every 500ms.
+   Portals iframes steal focus on every interaction - this keeps
+   WASD movement working while inventory stays open. */
+setInterval(function() {
+  refocusGame();
+}, 500);
+
 /* =========================================================
    BUILD GRID SLOTS
    ========================================================= */
