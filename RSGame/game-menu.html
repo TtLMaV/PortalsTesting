@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>RSGame Menu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; background:transparent;
+      font-family:'Chakra Petch',sans-serif; color:#e8dcc8; user-select:none; }
+
+    /* ── OVERLAY & CONTAINER ── */
+    .overlay {
+      display:flex; align-items:center; justify-content:center;
+      width:100vw; height:100vh; padding:16px;
+      animation:fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+    .menu-container {
+      width:100%; max-width:1100px; height:90vh; max-height:760px;
+      background:linear-gradient(155deg, rgba(45,38,30,0.97) 0%, rgba(28,23,18,0.99) 100%);
+      border:2px solid #c8a04a;
+      border-radius:4px;
+      clip-path:polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+      box-shadow:0 12px 48px rgba(0,0,0,0.85), 0 0 0 1px #3a2e22;
+      display:flex; flex-direction:column; overflow:hidden;
+      position:relative;
+      animation:slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(24px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+    .menu-container::before {
+      content:''; position:absolute; top:0; left:0; width:3px; height:100%;
+      background:linear-gradient(180deg,#c8a04a,#7a5a28);
+    }
+
+    /* ── HEADER ── */
+    .menu-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 20px 12px 24px;
+      background:linear-gradient(180deg,rgba(60,48,32,0.95),rgba(38,30,20,0.95));
+      border-bottom:2px solid #5a4a35;
+      flex-shrink:0;
+    }
+    .header-left { display:flex; align-items:center; gap:14px; }
+    .menu-title {
+      font-size:20px; font-weight:700; color:#f0d060;
+      letter-spacing:3px; text-transform:uppercase;
+      text-shadow:0 0 12px rgba(240,208,96,0.25);
+    }
+    .header-coins {
+      display:flex; align-items:center; gap:6px;
+      background:rgba(0,0,0,0.3); padding:5px 12px;
+      border:1px solid #5a4a35; border-radius:2px;
+    }
+    .header-coins-icon { font-size:16px; }
+    .header-coins-val { font-size:15px; font-weight:700; color:#f0d060; }
+    .header-close {
+      width:34px; height:34px; border-radius:2px;
+      background:linear-gradient(180deg,rgba(180,50,50,0.8),rgba(120,30,30,0.9));
+      border:1px solid rgba(220,80,80,0.5);
+      color:#fff; font-size:18px; font-weight:700;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:all 0.15s; flex-shrink:0;
+    }
+    .header-close:hover { background:linear-gradient(180deg,rgba(220,70,70,0.9),rgba(160,40,40,0.9)); }
+
+    /* ── NAV TABS ── */
+    .nav-tabs {
+      display:flex; background:rgba(0,0,0,0.25);
+      border-bottom:2px solid #5a4a35; flex-shrink:0;
+    }
+    .nav-tab {
+      flex:1; padding:12px 8px; text-align:center; cursor:pointer;
+      border-right:1px solid #3a2e22; transition:background 0.2s;
+      display:flex; flex-direction:column; align-items:center; gap:3px;
+    }
+    .nav-tab:last-child { border-right:none; }
+    .nav-tab:hover { background:rgba(200,160,74,0.1); }
+    .nav-tab.active {
+      background:linear-gradient(180deg,rgba(90,74,50,0.8),rgba(45,36,24,0.8));
+      border-bottom:2px solid #c8a04a; margin-bottom:-2px;
+    }
+    .nav-tab-icon { font-size:20px; }
+    .nav-tab-label {
+      font-size:10px; font-weight:700; letter-spacing:1px;
+      text-transform:uppercase; color:#9a8a6a;
+    }
+    .nav-tab.active .nav-tab-label { color:#c8a04a; }
+
+    /* ── CONTENT AREA ── */
+    .content-area {
+      flex:1; overflow-y:auto; padding:20px 22px; min-height:0;
+    }
+    .content-area::-webkit-scrollbar { width:8px; }
+    .content-area::-webkit-scrollbar-track { background:rgba(0,0,0,0.2); }
+    .content-area::-webkit-scrollbar-thumb { background:#5a4a35; border-radius:2px; }
+
+    .tab-content { display:none; animation:tabFade 0.2s ease; }
+    .tab-content.active { display:block; }
+    @keyframes tabFade { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+
+    .section-title {
+      font-size:13px; font-weight:700; color:#c8a04a;
+      letter-spacing:2px; text-transform:uppercase;
+      margin-bottom:12px; display:flex; align-items:center; gap:10px;
+    }
+    .section-title::after {
+      content:''; flex:1; height:1px;
+      background:linear-gradient(90deg,#5a4a35,transparent);
+    }
+
+    /* ── INVENTORY TAB ── */
+    .inv-grid {
+      display:grid; grid-template-columns:repeat(7, 1fr); gap:6px;
+      margin-bottom:8px;
+    }
+    .inv-slot {
+      aspect-ratio:1; border:1px solid #5a4a35; border-radius:2px;
+      background:rgba(0,0,0,0.3);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      position:relative; transition:border-color 0.15s;
+      overflow:hidden;
+    }
+    .inv-slot.has-item { border-color:rgba(200,160,74,0.35); }
+    .inv-slot.has-item:hover { border-color:#c8a04a; background:rgba(200,160,74,0.08); }
+    .slot-icon { font-size:22px; line-height:1; }
+    .slot-qty {
+      position:absolute; bottom:2px; right:4px;
+      font-size:9px; font-weight:700; color:#f0d060;
+      text-shadow:1px 1px 1px rgba(0,0,0,0.9);
+    }
+    .slot-name {
+      position:absolute; bottom:2px; left:0; right:0; text-align:center;
+      font-size:7px; color:#9a8a6a; letter-spacing:0.5px;
+      display:none;
+    }
+    .inv-slot.has-item:hover .slot-name { display:block; bottom:12px; }
+
+    /* flash */
+    @keyframes slotFlash {
+      0%{background:rgba(200,160,74,0.35);}
+      100%{background:rgba(0,0,0,0.3);}
+    }
+    .inv-slot.flash { animation:slotFlash 0.4s ease; }
+
+    /* ── SKILLS TAB ── */
+    .skills-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px;
+    }
+    .skill-card {
+      background:rgba(0,0,0,0.25); border:1px solid #5a4a35; border-radius:3px;
+      padding:14px 16px;
+    }
+    .skill-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .skill-icon { font-size:28px; }
+    .skill-info { flex:1; }
+    .skill-name { font-size:13px; font-weight:700; color:#e8dcc8; letter-spacing:1px; }
+    .skill-level-row { display:flex; align-items:baseline; gap:5px; margin-top:2px; }
+    .skill-level-num { font-size:28px; font-weight:700; color:#f0d060; line-height:1; }
+    .skill-level-max { font-size:11px; color:#9a8a6a; }
+    .skill-xp-bar-bg {
+      height:6px; background:rgba(0,0,0,0.4);
+      border:1px solid #3a2e22; border-radius:1px; overflow:hidden; margin-bottom:4px;
+    }
+    .skill-xp-bar-fill {
+      height:100%; width:0%;
+      background:linear-gradient(90deg,#c8a04a,#f0d060);
+      transition:width 0.5s ease;
+    }
+    .skill-xp-text { font-size:9px; color:#9a8a6a; letter-spacing:0.5px; }
+    .skill-next { font-size:9px; color:#7a6a4a; margin-top:2px; }
+
+    /* ── GUIDE TAB ── */
+    .guide-skill-section {
+      background:rgba(0,0,0,0.2); border:1px solid #5a4a35; border-radius:3px;
+      margin-bottom:14px; overflow:hidden;
+    }
+    .guide-skill-header {
+      display:flex; align-items:center; gap:10px; padding:12px 16px;
+      background:rgba(200,160,74,0.07); border-bottom:1px solid #5a4a35;
+      cursor:pointer;
+    }
+    .guide-skill-icon { font-size:24px; }
+    .guide-skill-title { font-size:13px; font-weight:700; color:#c8a04a; letter-spacing:1.5px; text-transform:uppercase; }
+    .guide-skill-chevron { margin-left:auto; font-size:12px; color:#9a8a6a; transition:transform 0.2s; }
+    .guide-skill-section.open .guide-skill-chevron { transform:rotate(180deg); }
+    .guide-skill-body { display:none; padding:14px 16px; }
+    .guide-skill-section.open .guide-skill-body { display:block; }
+
+    .guide-intro { font-size:12px; color:#9a8a6a; line-height:1.6; margin-bottom:12px; }
+    .guide-levels { display:flex; flex-direction:column; gap:6px; }
+    .guide-level-row {
+      display:flex; align-items:center; gap:10px; padding:7px 10px;
+      background:rgba(0,0,0,0.2); border-radius:2px; border-left:2px solid #5a4a35;
+    }
+    .guide-level-row.unlocked { border-left-color:#c8a04a; }
+    .guide-lvl-badge {
+      min-width:32px; text-align:center; font-size:11px; font-weight:700;
+      color:#9a8a6a; background:rgba(0,0,0,0.3); padding:2px 5px; border-radius:2px;
+    }
+    .guide-level-row.unlocked .guide-lvl-badge { color:#f0d060; }
+    .guide-lvl-icon { font-size:16px; }
+    .guide-lvl-text { font-size:11px; color:#9a8a6a; flex:1; }
+    .guide-level-row.unlocked .guide-lvl-text { color:#e8dcc8; }
+
+    /* ── FOOTER ── */
+    .menu-footer {
+      padding:8px 22px; border-top:1px solid #5a4a35;
+      background:rgba(0,0,0,0.25); flex-shrink:0;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .footer-hint { font-size:9px; color:#6a5a3a; letter-spacing:1.5px; text-transform:uppercase; }
+    .footer-key {
+      display:inline-flex; align-items:center; justify-content:center;
+      background:rgba(200,160,74,0.12); border:1px solid #5a4a35;
+      border-radius:2px; padding:2px 7px; font-size:10px; font-weight:700;
+      color:#c8a04a; margin-right:4px;
+    }
+  </style>
+</head>
+<body>
+<div class="overlay">
+  <div class="menu-container">
+
+    <!-- HEADER -->
+    <div class="menu-header">
+      <div class="header-left">
+        <div class="menu-title">⚔ RSGame</div>
+        <div class="header-coins">
+          <span class="header-coins-icon">🪙</span>
+          <span class="header-coins-val" id="headerCoins">0</span>
+        </div>
+      </div>
+      <div class="header-close" id="btnClose" onclick="closeMenu()">✕</div>
+    </div>
+
+    <!-- NAV TABS -->
+    <div class="nav-tabs">
+      <div class="nav-tab active" data-tab="inventory" onclick="switchTab('inventory',this)">
+        <span class="nav-tab-icon">🎒</span>
+        <span class="nav-tab-label">Inventory</span>
+      </div>
+      <div class="nav-tab" data-tab="skills" onclick="switchTab('skills',this)">
+        <span class="nav-tab-icon">⭐</span>
+        <span class="nav-tab-label">Skills</span>
+      </div>
+      <div class="nav-tab" data-tab="guide" onclick="switchTab('guide',this)">
+        <span class="nav-tab-icon">📖</span>
+        <span class="nav-tab-label">Guide</span>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+
+      <!-- INVENTORY TAB -->
+      <div class="tab-content active" id="tab-inventory">
+        <div class="section-title">Inventory</div>
+        <div class="inv-grid" id="invGrid"></div>
+        <div style="font-size:9px;color:#6a5a3a;text-align:right;margin-top:4px;letter-spacing:1px;">28 SLOTS</div>
+      </div>
+
+      <!-- SKILLS TAB -->
+      <div class="tab-content" id="tab-skills">
+        <div class="section-title">Skills</div>
+        <div class="skills-grid" id="skillsGrid"></div>
+      </div>
+
+      <!-- GUIDE TAB -->
+      <div class="tab-content" id="tab-guide">
+        <div class="section-title">Skill Guide</div>
+        <div id="guideContent"></div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="menu-footer">
+      <div class="footer-hint"><span class="footer-key">E</span> Close Menu</div>
+      <div class="footer-hint" id="footerStatus">READY</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js"></script>
+<script>
+// ============================================================
+// ITEM REGISTRY
+// ============================================================
+var ITEMS = {
+  0:  { name:'Empty',           icon:'',     cat:'none'       },
+  1:  { name:'Coins',           icon:'🪙',   cat:'general'    },
+  2:  { name:'Bones',           icon:'🦴',   cat:'general'    },
+  10: { name:'Raw Shrimp',      icon:'🦐',   cat:'fishing'    },
+  11: { name:'Raw Trout',       icon:'🐟',   cat:'fishing'    },
+  12: { name:'Raw Salmon',      icon:'🐟',   cat:'fishing'    },
+  13: { name:'Raw Lobster',     icon:'🦞',   cat:'fishing'    },
+  14: { name:'Raw Swordfish',   icon:'🐡',   cat:'fishing'    },
+  20: { name:'Cooked Shrimp',   icon:'🍤',   cat:'cooking'    },
+  21: { name:'Cooked Trout',    icon:'🍝',   cat:'cooking'    },
+  22: { name:'Cooked Salmon',   icon:'🍣',   cat:'cooking'    },
+  23: { name:'Cooked Lobster',  icon:'🦞',   cat:'cooking'    },
+  24: { name:'Cooked Swordfish',icon:'🥩',   cat:'cooking'    },
+  25: { name:'Burnt Fish',      icon:'💀',   cat:'cooking'    },
+  30: { name:'Logs',            icon:'🪵',   cat:'woodcut'    },
+  31: { name:'Oak Logs',        icon:'🪵',   cat:'woodcut'    },
+  32: { name:'Willow Logs',     icon:'🪵',   cat:'woodcut'    },
+  33: { name:'Yew Logs',        icon:'🪵',   cat:'woodcut'    },
+  40: { name:'Copper Ore',      icon:'🪨',   cat:'mining'     },
+  41: { name:'Tin Ore',         icon:'🪨',   cat:'mining'     },
+  42: { name:'Iron Ore',        icon:'🪨',   cat:'mining'     },
+  43: { name:'Coal',            icon:'🪨',   cat:'mining'     },
+  44: { name:'Gold Ore',        icon:'🪨',   cat:'mining'     },
+  45: { name:'Mithril Ore',     icon:'🪨',   cat:'mining'     },
+  50: { name:'Bronze Bar',      icon:'🟫',   cat:'smithing'   },
+  51: { name:'Iron Bar',        icon:'⬜',   cat:'smithing'   },
+  52: { name:'Steel Bar',       icon:'🔘',   cat:'smithing'   },
+  53: { name:'Gold Bar',        icon:'🟡',   cat:'smithing'   },
+  54: { name:'Mithril Bar',     icon:'🔵',   cat:'smithing'   },
+  60: { name:'Fishing Rod',     icon:'🎣',   cat:'tool'       },
+  61: { name:'Fishing Net',     icon:'🥅',   cat:'tool'       },
+  62: { name:'Hatchet',         icon:'🪓',   cat:'tool'       },
+  63: { name:'Pickaxe',         icon:'⛏',   cat:'tool'       },
+  64: { name:'Tinderbox',       icon:'🔥',   cat:'tool'       },
+};
+
+// ============================================================
+// SKILL CONFIG
+// ============================================================
+var SKILL_CONFIG = {
+  fishing:  { name:'Fishing',    icon:'🎣', color:'#2aa7d8' },
+  cooking:  { name:'Cooking',    icon:'🍳', color:'#e08040' },
+  woodcut:  { name:'Woodcutting',icon:'🪓', color:'#6aaa44' },
+  mining:   { name:'Mining',     icon:'⛏', color:'#a08060' },
+  smithing: { name:'Smithing',   icon:'🔨', color:'#c0a050' },
+};
+
+var SKILL_GUIDE = {
+  fishing: {
+    intro: 'Catch fish from the lakes and rivers. Higher Fishing level unlocks better fish.',
+    levels: [
+      { lvl:1,  icon:'🦐', text:'Catch Shrimps with a Fishing Net' },
+      { lvl:5,  icon:'🐟', text:'Catch Trout with a Fishing Rod' },
+      { lvl:20, icon:'🐟', text:'Catch Salmon with a Fishing Rod' },
+      { lvl:40, icon:'🦞', text:'Catch Lobsters in deeper waters' },
+      { lvl:65, icon:'🐡', text:'Catch Swordfish — rare and valuable' },
+    ]
+  },
+  cooking: {
+    intro: 'Cook raw fish and food to restore health and earn XP. Burn less as your level rises.',
+    levels: [
+      { lvl:1,  icon:'🍤', text:'Cook Shrimps on a fire or range' },
+      { lvl:15, icon:'🍝', text:'Cook Trout — decent XP source' },
+      { lvl:25, icon:'🍣', text:'Cook Salmon for good XP' },
+      { lvl:40, icon:'🦞', text:'Cook Lobsters — high value food' },
+      { lvl:60, icon:'🥩', text:'Cook Swordfish — best food in game' },
+    ]
+  },
+  woodcut: {
+    intro: 'Chop trees around the world for logs used in Firemaking and Fletching.',
+    levels: [
+      { lvl:1,  icon:'🪵', text:'Chop regular Trees for Logs' },
+      { lvl:15, icon:'🪵', text:'Chop Oak Trees for Oak Logs' },
+      { lvl:30, icon:'🪵', text:'Chop Willow Trees for Willow Logs' },
+      { lvl:60, icon:'🪵', text:'Chop Yew Trees — best logs, high XP' },
+    ]
+  },
+  mining: {
+    intro: 'Mine ore from rocks and smelt them into bars with Smithing.',
+    levels: [
+      { lvl:1,  icon:'🪨', text:'Mine Copper and Tin Ore' },
+      { lvl:15, icon:'🪨', text:'Mine Iron Ore' },
+      { lvl:30, icon:'🪨', text:'Mine Coal — needed for Steel' },
+      { lvl:40, icon:'🪨', text:'Mine Gold Ore' },
+      { lvl:55, icon:'🪨', text:'Mine Mithril Ore — rare and valuable' },
+    ]
+  },
+  smithing: {
+    intro: 'Smelt ore into metal bars and forge them into weapons and armour.',
+    levels: [
+      { lvl:1,  icon:'🟫', text:'Smelt Bronze Bars from Copper + Tin' },
+      { lvl:15, icon:'⬜', text:'Smelt Iron Bars' },
+      { lvl:30, icon:'🔘', text:'Smelt Steel Bars from Iron + Coal' },
+      { lvl:40, icon:'🟡', text:'Smelt Gold Bars' },
+      { lvl:55, icon:'🔵', text:'Smelt Mithril Bars' },
+    ]
+  },
+};
+
+// ============================================================
+// STATE
+// ============================================================
+var NUM_SLOTS = 28;
+var slots = [];
+for (var i = 0; i < NUM_SLOTS; i++) slots.push(0);
+var coins = 0;
+var skills = { fishing:0, cooking:0, woodcut:0, mining:0, smithing:0 };
+
+// ============================================================
+// XP / LEVEL
+// ============================================================
+function xpToLevel(xp) {
+  if (xp <= 0) return 1;
+  var level = 1, needed = 50, total = 0;
+  while (total + needed <= xp && level < 99) {
+    total += needed;
+    level++;
+    needed = Math.floor(needed * 1.5);
+  }
+  return level;
+}
+
+function xpForLevel(lvl) {
+  // total XP needed to reach this level
+  var total = 0, needed = 50;
+  for (var l = 2; l <= lvl; l++) {
+    total += needed;
+    needed = Math.floor(needed * 1.5);
+  }
+  return total;
+}
+
+function decodeSlot(val) {
+  var v = Math.floor(val || 0);
+  return { id: Math.floor(v / 10000), qty: v % 10000 };
+}
+
+// ============================================================
+// PORTALS SDK — refocus game keyboard after every interaction
+// ============================================================
+function refocusGame() {
+  if (typeof PortalsSdk !== 'undefined' && PortalsSdk.focusGameKeyboard) {
+    PortalsSdk.focusGameKeyboard();
+  }
+}
+
+function closeMenu() {
+  refocusGame();
+  if (typeof PortalsSdk !== 'undefined' && PortalsSdk.closeIframe) {
+    PortalsSdk.closeIframe();
+  }
+}
+
+// Refocus every 400ms so player can always move while menu is open
+setInterval(refocusGame, 400);
+
+// Refocus after any click anywhere in the menu
+document.addEventListener('click', function() { setTimeout(refocusGame, 30); });
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tabId, el) {
+  document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+  var tc = document.getElementById('tab-' + tabId);
+  if (tc) tc.classList.add('active');
+  if (el) el.classList.add('active');
+  setTimeout(refocusGame, 30);
+}
+
+// ============================================================
+// RENDER — INVENTORY
+// ============================================================
+function buildGrid() {
+  var grid = document.getElementById('invGrid');
+  grid.innerHTML = '';
+  for (var s = 0; s < NUM_SLOTS; s++) {
+    var el = document.createElement('div');
+    el.className = 'inv-slot';
+    el.id = 'slot' + s;
+    var iconEl = document.createElement('span');
+    iconEl.className = 'slot-icon';
+    iconEl.id = 'sIcon' + s;
+    var qtyEl = document.createElement('span');
+    qtyEl.className = 'slot-qty';
+    qtyEl.id = 'sQty' + s;
+    var nameEl = document.createElement('span');
+    nameEl.className = 'slot-name';
+    nameEl.id = 'sName' + s;
+    el.appendChild(iconEl);
+    el.appendChild(qtyEl);
+    el.appendChild(nameEl);
+    grid.appendChild(el);
+  }
+}
+
+function renderSlot(idx) {
+  var d = decodeSlot(slots[idx]);
+  var el = document.getElementById('slot' + idx);
+  var iconEl = document.getElementById('sIcon' + idx);
+  var qtyEl = document.getElementById('sQty' + idx);
+  var nameEl = document.getElementById('sName' + idx);
+  if (!el) return;
+  if (d.id === 0) {
+    el.className = 'inv-slot';
+    iconEl.textContent = '';
+    qtyEl.textContent = '';
+    nameEl.textContent = '';
+  } else {
+    el.className = 'inv-slot has-item';
+    var item = ITEMS[d.id] || { name:'Item '+d.id, icon:'?' };
+    iconEl.textContent = item.icon;
+    qtyEl.textContent = d.qty > 1 ? d.qty : '';
+    nameEl.textContent = item.name;
+  }
+}
+
+function renderGrid() {
+  for (var i = 0; i < NUM_SLOTS; i++) renderSlot(i);
+}
+
+function flashSlot(idx) {
+  var el = document.getElementById('slot' + idx);
+  if (!el) return;
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+}
+
+// ============================================================
+// RENDER — SKILLS
+// ============================================================
+function buildSkillsGrid() {
+  var grid = document.getElementById('skillsGrid');
+  grid.innerHTML = '';
+  Object.keys(SKILL_CONFIG).forEach(function(key) {
+    var sc = SKILL_CONFIG[key];
+    var card = document.createElement('div');
+    card.className = 'skill-card';
+    card.id = 'skillCard_' + key;
+    card.innerHTML =
+      '<div class="skill-header">' +
+        '<div class="skill-icon">' + sc.icon + '</div>' +
+        '<div class="skill-info">' +
+          '<div class="skill-name">' + sc.name + '</div>' +
+          '<div class="skill-level-row">' +
+            '<span class="skill-level-num" id="sLvl_' + key + '">1</span>' +
+            '<span class="skill-level-max">/ 99</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="skill-xp-bar-bg"><div class="skill-xp-bar-fill" id="sBar_' + key + '" style="background:linear-gradient(90deg,' + sc.color + ',#f0d060)"></div></div>' +
+      '<div class="skill-xp-text" id="sXpTxt_' + key + '">0 / 50 XP</div>' +
+      '<div class="skill-next" id="sNext_' + key + '">Next level: 50 XP</div>';
+    grid.appendChild(card);
+  });
+}
+
+function updateSkillCard(key) {
+  var xp = skills[key] || 0;
+  var lvl = xpToLevel(xp);
+  var lvlXp = xpForLevel(lvl);
+  var nextXp = lvl < 99 ? xpForLevel(lvl + 1) : lvlXp;
+  var progress = lvl >= 99 ? 100 : Math.min(100, Math.round(((xp - lvlXp) / (nextXp - lvlXp)) * 100));
+
+  var lvlEl = document.getElementById('sLvl_' + key);
+  var barEl = document.getElementById('sBar_' + key);
+  var txtEl = document.getElementById('sXpTxt_' + key);
+  var nxtEl = document.getElementById('sNext_' + key);
+
+  if (lvlEl) lvlEl.textContent = lvl;
+  if (barEl) barEl.style.width = progress + '%';
+  if (txtEl) txtEl.textContent = (lvl >= 99 ? 'MAX' : (xp - lvlXp) + ' / ' + (nextXp - lvlXp) + ' XP this level');
+  if (nxtEl) nxtEl.textContent = lvl >= 99 ? 'Skill maxed!' : 'Total XP: ' + xp;
+}
+
+function updateAllSkills() {
+  Object.keys(SKILL_CONFIG).forEach(updateSkillCard);
+}
+
+// ============================================================
+// RENDER — GUIDE
+// ============================================================
+function buildGuide() {
+  var container = document.getElementById('guideContent');
+  container.innerHTML = '';
+  Object.keys(SKILL_GUIDE).forEach(function(key) {
+    var sc = SKILL_CONFIG[key];
+    var gd = SKILL_GUIDE[key];
+    var section = document.createElement('div');
+    section.className = 'guide-skill-section open';
+
+    var header = document.createElement('div');
+    header.className = 'guide-skill-header';
+    header.innerHTML =
+      '<span class="guide-skill-icon">' + sc.icon + '</span>' +
+      '<span class="guide-skill-title">' + sc.name + '</span>' +
+      '<span class="guide-skill-chevron">▲</span>';
+    header.addEventListener('click', function() {
+      section.classList.toggle('open');
+      setTimeout(refocusGame, 30);
+    });
+
+    var body = document.createElement('div');
+    body.className = 'guide-skill-body';
+
+    var intro = document.createElement('p');
+    intro.className = 'guide-intro';
+    intro.textContent = gd.intro;
+    body.appendChild(intro);
+
+    var levels = document.createElement('div');
+    levels.className = 'guide-levels';
+    levels.id = 'guideRows_' + key;
+
+    gd.levels.forEach(function(entry) {
+      var row = document.createElement('div');
+      row.className = 'guide-level-row';
+      row.setAttribute('data-skill', key);
+      row.setAttribute('data-lvl', entry.lvl);
+      row.innerHTML =
+        '<span class="guide-lvl-badge">Lv ' + entry.lvl + '</span>' +
+        '<span class="guide-lvl-icon">' + entry.icon + '</span>' +
+        '<span class="guide-lvl-text">' + entry.text + '</span>';
+      levels.appendChild(row);
+    });
+
+    body.appendChild(levels);
+    section.appendChild(header);
+    section.appendChild(body);
+    container.appendChild(section);
+  });
+}
+
+function updateGuideUnlocks() {
+  // highlight rows where player meets the level requirement
+  document.querySelectorAll('.guide-level-row').forEach(function(row) {
+    var key = row.getAttribute('data-skill');
+    var reqLvl = parseInt(row.getAttribute('data-lvl'));
+    var playerLvl = xpToLevel(skills[key] || 0);
+    if (playerLvl >= reqLvl) {
+      row.classList.add('unlocked');
+    } else {
+      row.classList.remove('unlocked');
+    }
+  });
+}
+
+// ============================================================
+// MESSAGE HANDLING
+// ============================================================
+var lastMessageId = '';
+var lastMessageTime = 0;
+
+function processMessage(msg) {
+  var now = Date.now();
+  var msgId = msg + '_' + Math.floor(now / 100);
+  if (msgId === lastMessageId && now - lastMessageTime < 200) return;
+  lastMessageId = msgId;
+  lastMessageTime = now;
+  handleMessage(msg);
+}
+
+function handleMessage(msg) {
+  if (typeof msg !== 'string') return;
+  var parts = msg.split('_');
+  var cmd = parts[0];
+
+  // Full inventory sync: invsync_SLOT1..SLOT28_COINS
+  if (cmd === 'invsync' && parts.length >= 30) {
+    var changed = [];
+    for (var i = 0; i < NUM_SLOTS; i++) {
+      var nv = parseFloat(parts[i + 1]) || 0;
+      if (slots[i] !== nv) { slots[i] = nv; changed.push(i); }
+    }
+    coins = parseInt(parts[29]) || 0;
+    changed.forEach(function(idx) { renderSlot(idx); flashSlot(idx); });
+    document.getElementById('headerCoins').textContent = coins.toLocaleString();
+    return;
+  }
+
+  // Single slot: slotupd_NUM_VALUE
+  if (cmd === 'slotupd' && parts.length >= 3) {
+    var idx = parseInt(parts[1]) - 1;
+    var nv = parseFloat(parts[2]) || 0;
+    if (idx >= 0 && idx < NUM_SLOTS && slots[idx] !== nv) {
+      slots[idx] = nv;
+      renderSlot(idx);
+      flashSlot(idx);
+    }
+    return;
+  }
+
+  // Coins: coinset_VALUE
+  if (cmd === 'coinset' && parts.length >= 2) {
+    coins = parseInt(parts[1]) || 0;
+    document.getElementById('headerCoins').textContent = coins.toLocaleString();
+    return;
+  }
+
+  // Single skill XP: skillxp_NAME_XP
+  if (cmd === 'skillxp' && parts.length >= 3) {
+    var sName = parts[1];
+    if (skills.hasOwnProperty(sName)) {
+      skills[sName] = parseInt(parts[2]) || 0;
+      updateSkillCard(sName);
+      updateGuideUnlocks();
+    }
+    return;
+  }
+
+  // All skills: skillsync_FISH_COOK_WC_MINE_SMITH
+  if (cmd === 'skillsync' && parts.length >= 6) {
+    var keys = ['fishing','cooking','woodcut','mining','smithing'];
+    keys.forEach(function(k, i) { skills[k] = parseInt(parts[i + 1]) || 0; });
+    updateAllSkills();
+    updateGuideUnlocks();
+    return;
+  }
+
+  // Reset
+  if (cmd === 'reset') {
+    for (var r = 0; r < NUM_SLOTS; r++) slots[r] = 0;
+    coins = 0;
+    skills = { fishing:0, cooking:0, woodcut:0, mining:0, smithing:0 };
+    renderGrid();
+    document.getElementById('headerCoins').textContent = '0';
+    updateAllSkills();
+    updateGuideUnlocks();
+  }
+}
+
+// Triple-layer SDK detection
+if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+  PortalsSdk.setMessageListener(function(msg) { processMessage(msg); });
+}
+window.addEventListener('message', function(e) {
+  if (e.data && typeof e.data === 'string') processMessage(e.data);
+  else if (e.data && e.data.portalsMessage) processMessage(e.data.portalsMessage);
+  else if (e.data && e.data.message && typeof e.data.message === 'string') processMessage(e.data.message);
+});
+
+// ============================================================
+// INIT
+// ============================================================
+buildGrid();
+renderGrid();
+buildSkillsGrid();
+updateAllSkills();
+buildGuide();
+updateGuideUnlocks();
+refocusGame();
+
+console.log('[Menu] RSGame menu ready.');
+</script>
+</body>
+</html>
