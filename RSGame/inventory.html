@@ -296,9 +296,18 @@ var invClose = document.getElementById('invClose');
 var tooltip = document.getElementById('tooltip');
 var invFullMsg = document.getElementById('invFullMsg');
 
+/* Return keyboard focus to game so player can move with WASD */
+function refocusGame() {
+  if (typeof PortalsSdk !== 'undefined' && PortalsSdk.focusGameKeyboard) {
+    PortalsSdk.focusGameKeyboard();
+    console.log('[Inv] focusGameKeyboard() called');
+  }
+}
+
 /* Close iframe */
 function closeIframe() {
   console.log('[Inv] Attempting to close iframe...');
+  refocusGame();
   if (typeof PortalsSdk !== 'undefined' && PortalsSdk.closeIframe) {
     PortalsSdk.closeIframe();
     console.log('[Inv] closeIframe() called');
@@ -310,6 +319,12 @@ function closeIframe() {
 invClose.addEventListener('click', function() {
   console.log('[Inv] Close button clicked');
   closeIframe();
+});
+
+/* After any click on the inventory panel, return focus to game
+   so WASD movement works without needing to close inventory */
+document.addEventListener('click', function() {
+  setTimeout(refocusGame, 50);
 });
 
 /* =========================================================

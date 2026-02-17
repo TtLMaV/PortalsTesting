@@ -554,6 +554,12 @@ function handleMessage(msg) {
     return;
   }
 
+  // Coins: coinset_VALUE
+  if (cmd === 'coinset' && parts.length >= 2) {
+    coins = parseInt(parts[1]) || 0;
+    return;
+  }
+
   if (cmd === 'reset') {
     for (var r = 0; r < NUM_SLOTS; r++) slots[r] = 0;
     coins = 0;
@@ -991,14 +997,12 @@ triggerTask(TASK_NAME);
 triggerTask(ADD_ITEM_TASK);
 console.log('[Fish] Sent', TASK_NAME, 'caught', fishId);
 
+      // Tell Portals to respawn the fishing spot (Portals handles the cooldown delay)
+      triggerTask(RESPAWN_TASK);
+      console.log('[Fish] Sent', RESPAWN_TASK);
+
       // Close iframe after 2 seconds
       setTimeout(function(){ closeIframe(); }, 2000);
-
-      // Respawn after 12 seconds (10s cooldown + 2s completion)
-      setTimeout(function(){
-        triggerTask(RESPAWN_TASK);
-        console.log('[Fish] Sent', RESPAWN_TASK);
-      }, 12000);
     }
 
     // ========================================
@@ -1015,6 +1019,10 @@ console.log('[Fish] Sent', TASK_NAME, 'caught', fishId);
     }
 
     function closeIframe() {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.focusGameKeyboard) {
+        PortalsSdk.focusGameKeyboard();
+        console.log('[Fish] focusGameKeyboard() called');
+      }
       if (typeof PortalsSdk !== 'undefined' && PortalsSdk.closeIframe) {
         PortalsSdk.closeIframe();
         console.log('[Fish] Closed iframe');
