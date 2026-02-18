@@ -1,190 +1,235 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Transparent Horror Shader</title>
-
-<style>
-html, body {
-  height: 100%;
-  margin: 0;
-  background: transparent !important;
-  overflow: hidden;
-}
-
-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  background: transparent !important;
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LC-ish Overlay Filter (Transparent)</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: transparent !important;
+      overflow: hidden;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: transparent !important;
+    }
+  </style>
 </head>
 <body>
-
 <canvas id="c" tabindex="0"></canvas>
 
 <script>
 (() => {
+  const canvas = document.getElementById("c");
 
-const canvas = document.getElementById('c');
-const gl = canvas.getContext('webgl', {
-  antialias:false,
-  preserveDrawingBuffer:false,
-  alpha:true
-});
+  // Transparent WebGL overlay
+  const gl = canvas.getContext("webgl", {
+    alpha: true,
+    premultipliedAlpha: false,
+    antialias: false,
+    preserveDrawingBuffer: false
+  });
+  if (!gl) { document.body.textContent = "WebGL not supported"; return; }
 
-if (!gl) return;
-
-gl.clearColor(0,0,0,0);
-
-// --- Portals keyboard focus ---
-function focusPortalsKeyboard(){
-  try{
-    if(window.PortalsSdk && typeof window.PortalsSdk.focusGameKeyboard === "function"){
-      window.PortalsSdk.focusGameKeyboard();
-    }
-  }catch(e){}
-}
-
-canvas.addEventListener('pointerdown', () => {
-  canvas.focus();
+  // ---- Portals focus ----
+  function focusPortalsKeyboard(){
+    try{
+      if (window.PortalsSdk && typeof window.PortalsSdk.focusGameKeyboard === "function"){
+        window.PortalsSdk.focusGameKeyboard();
+      }
+    }catch(_){}
+  }
   focusPortalsKeyboard();
-});
+  window.addEventListener("focus", focusPortalsKeyboard);
+  canvas.addEventListener("pointerdown", () => { canvas.focus(); focusPortalsKeyboard(); });
 
-focusPortalsKeyboard();
+  const VERT = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main(){
+      vUv = aPos * 0.5 + 0.5;
+      gl_Position = vec4(aPos, 0.0, 1.0);
+    }
+  `;
 
-// =========================
-// SHADERS
-// =========================
+  // Overlay-only shader:
+  // - vignette darkening
+  // - scanlines
+  // - film grain
+  // - subtle color tint in shadows
+  // - dithery “low-light” crunch
+  // Outputs mostly-transparent black/tinted overlay so the world beneath looks processed.
+  const FRAG = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform vec2  uRes;
+    uniform float uTime;
 
-const VERT = `
-attribute vec2 aPos;
-varying vec2 vUv;
-void main(){
-  vUv = aPos * 0.5 + 0.5;
-  gl_Position = vec4(aPos,0.0,1.0);
-}
-`;
+    // hash noise
+    float hash21(vec2 p){
+      p = fract(p*vec2(123.34, 345.45));
+      p += dot(p, p+34.345);
+      return fract(p.x*p.y);
+    }
 
-const FRAG = `
-precision highp float;
-varying vec2 vUv;
-uniform vec2 uRes;
-uniform float uTime;
-uniform vec2 uMouse;
+    float noise(vec2 p){
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      float a = hash21(i);
+      float b = hash21(i+vec2(1.0,0.0));
+      float c = hash21(i+vec2(0.0,1.0));
+      float d = hash21(i+vec2(1.0,1.0));
+      vec2 u = f*f*(3.0-2.0*f);
+      return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+    }
 
-float hash(vec2 p){
-  return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);
-}
+    // Bayer 4x4 dither
+    float bayer4(vec2 p){
+      int x = int(mod(p.x, 4.0));
+      int y = int(mod(p.y, 4.0));
+      int idx = x + y*4;
+      float m = 0.0;
+      if(idx==0)  m=0.0;
+      if(idx==1)  m=8.0;
+      if(idx==2)  m=2.0;
+      if(idx==3)  m=10.0;
+      if(idx==4)  m=12.0;
+      if(idx==5)  m=4.0;
+      if(idx==6)  m=14.0;
+      if(idx==7)  m=6.0;
+      if(idx==8)  m=3.0;
+      if(idx==9)  m=11.0;
+      if(idx==10) m=1.0;
+      if(idx==11) m=9.0;
+      if(idx==12) m=15.0;
+      if(idx==13) m=7.0;
+      if(idx==14) m=13.0;
+      if(idx==15) m=5.0;
+      return m/16.0;
+    }
 
-float noise(vec2 p){
-  vec2 i=floor(p);
-  vec2 f=fract(p);
-  float a=hash(i);
-  float b=hash(i+vec2(1,0));
-  float c=hash(i+vec2(0,1));
-  float d=hash(i+vec2(1,1));
-  vec2 u=f*f*(3.0-2.0*f);
-  return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);
-}
+    void main(){
+      vec2 uv = vUv;
+      vec2 px = uv * uRes;
 
-void main(){
+      // vignette (stronger corners)
+      vec2 p = uv * 2.0 - 1.0;
+      float r2 = dot(p,p);
+      float vign = smoothstep(0.65, 1.25, r2);          // 0 center -> 1 corners
 
-  vec2 uv = vUv;
-  vec2 p = uv*2.0-1.0;
+      // scanlines (subtle)
+      float scan = 0.5 + 0.5*sin(px.y * 3.14159);
+      float scanAmt = (0.04 + 0.02*sin(uTime*0.7)) * (0.5 + 0.5*scan);
 
-  float vign = smoothstep(1.2,0.2,dot(p,p));
+      // rolling band (occasional “camera” artifact)
+      float roll = fract(uTime * 0.28);
+      float band = smoothstep(0.020, 0.0, abs(uv.y - roll));
+      float bandAmt = band * 0.10;
 
-  float fog = noise(uv*6.0 + uTime*0.1);
-  float grain = hash(uv*uRes + uTime*50.0)*0.1;
+      // film grain (animated)
+      float g = hash21(px + vec2(uTime*60.0, uTime*23.0));
+      g = (g - 0.5);
 
-  vec3 col = vec3(0.05 + fog*0.2);
-  col *= vec3(0.7,0.9,0.75);
-  col += grain;
+      // low-light “crunch” via dithered grain
+      float d = bayer4(px) - 0.5;
+      float grainAmt = (0.10 + 0.05*sin(uTime*1.3)) * (g + d);
 
-  vec2 m = vec2(uMouse.x,1.0-uMouse.y);
-  float d = distance(uv,m);
-  float beam = smoothstep(0.5,0.05,d);
-  col += beam*vec3(1.1,1.05,0.95)*0.8;
+      // subtle green/gray “LC-ish” tint in shadows
+      vec3 tint = vec3(0.02, 0.05, 0.03);
 
-  col *= vign;
+      // This is an OVERLAY layer: darken using alpha with near-black color.
+      // Build alpha from vignette + scanlines + grain + rolling band.
+      float a = 0.0;
+      a += vign * 0.38;                 // corner darkening
+      a += scanAmt;                     // scanline dim
+      a += abs(grainAmt) * 0.35;        // grain intensity
+      a += bandAmt;                     // occasional band
+      a = clamp(a, 0.0, 0.72);          // keep it overlay, not full black
 
-  float alpha = vign;   // transparency mask
-  gl_FragColor = vec4(col, alpha);
-}
-`;
+      // add tiny chroma-ish tint via colored overlay (still mostly dark)
+      vec3 col = tint;
 
-// =========================
-// WEBGL SETUP
-// =========================
+      // extra: subtle “lens dirt” specks (very faint)
+      float speck = smoothstep(0.995, 1.0, hash21(floor(px/2.0) + 100.0));
+      col += speck * vec3(0.05, 0.06, 0.05);
+      a += speck * 0.06;
 
-function compile(type, src){
-  const s = gl.createShader(type);
-  gl.shaderSource(s, src);
-  gl.compileShader(s);
-  return s;
-}
+      gl_FragColor = vec4(col, a);
+    }
+  `;
 
-const prog = gl.createProgram();
-gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
-gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
-gl.linkProgram(prog);
-gl.useProgram(prog);
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      throw new Error(gl.getShaderInfoLog(s) || "Shader compile failed");
+    }
+    return s;
+  }
 
-const buf = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
--1,-1,1,-1,-1,1,
--1,1,1,-1,1,1
-]), gl.STATIC_DRAW);
+  function makeProgram(vsSrc, fsSrc){
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vsSrc));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fsSrc));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)){
+      throw new Error(gl.getProgramInfoLog(p) || "Program link failed");
+    }
+    return p;
+  }
 
-const aPos = gl.getAttribLocation(prog,"aPos");
-gl.enableVertexAttribArray(aPos);
-gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
+  const prog = makeProgram(VERT, FRAG);
+  gl.useProgram(prog);
 
-const uRes = gl.getUniformLocation(prog,"uRes");
-const uTime = gl.getUniformLocation(prog,"uTime");
-const uMouse = gl.getUniformLocation(prog,"uMouse");
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1,-1,  1,-1, -1, 1,
+    -1, 1,  1,-1,  1, 1
+  ]), gl.STATIC_DRAW);
 
-let mouse = {x:0.5,y:0.5};
+  const aPos = gl.getAttribLocation(prog, "aPos");
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-window.addEventListener("mousemove",(e)=>{
-  const r = canvas.getBoundingClientRect();
-  mouse.x = (e.clientX-r.left)/r.width;
-  mouse.y = (e.clientY-r.top)/r.height;
-});
+  const uRes  = gl.getUniformLocation(prog, "uRes");
+  const uTime = gl.getUniformLocation(prog, "uTime");
 
-function resize(){
-  const dpr = window.devicePixelRatio||1;
-  canvas.width = canvas.clientWidth*dpr;
-  canvas.height = canvas.clientHeight*dpr;
-  gl.viewport(0,0,canvas.width,canvas.height);
-}
+  function resize(){
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.floor(canvas.clientWidth * dpr);
+    const h = Math.floor(canvas.clientHeight * dpr);
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+      gl.viewport(0, 0, w, h);
+    }
+  }
+  window.addEventListener("resize", resize);
 
-window.addEventListener("resize",resize);
+  // Make sure canvas stays transparent
+  gl.disable(gl.DEPTH_TEST);
+  gl.disable(gl.CULL_FACE);
+  gl.clearColor(0,0,0,0);
 
-const start = performance.now();
+  const t0 = performance.now();
+  function frame(){
+    resize();
+    const t = (performance.now() - t0) / 1000;
 
-function frame(){
-  resize();
-  gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, t);
 
-  const t = (performance.now()-start)/1000;
-
-  gl.uniform2f(uRes,canvas.width,canvas.height);
-  gl.uniform1f(uTime,t);
-  gl.uniform2f(uMouse,mouse.x,mouse.y);
-
-  gl.drawArrays(gl.TRIANGLES,0,6);
-  requestAnimationFrame(frame);
-}
-
-frame();
-
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    requestAnimationFrame(frame);
+  }
+  frame();
 })();
 </script>
-
 </body>
 </html>
