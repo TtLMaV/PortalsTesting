@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Counter</title>
-<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -110,7 +109,7 @@
     font-size: 35px;
     font-weight: 900;
 	padding-top: 0px;
-	padding-bottom: 0px;
+	padding-bottom: 25px;
     color: #1a1a1a;
     letter-spacing: 0px;
     text-shadow:
@@ -119,6 +118,14 @@
     /* Raised/embossed look */
     -webkit-text-stroke: 0.5px rgba(0,0,0,0.1);
     transition: transform 0.15s ease;
+  }
+
+  .number.bump {
+    transform: scale(1.08);
+  }
+
+  .number.shake {
+    animation: shakeAnim 0.4s ease;
   }
 
   @keyframes shakeAnim {
@@ -192,53 +199,121 @@
   <div class="screw bl"></div>
   <div class="screw br"></div>
   <div class="number" id="number">100</div>
+  <div class="braille" id="braille"></div>
   <div class="flash" id="flash"></div>
 </div>
 
 <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
 <script>
-	// Get Elements
-	const display = document.getElementById("number");
-	var startTime = Date.now();
-	
-	function updateTimer() {
-		// Calculate total time elapsed in milliseconds
-		const elapsed = Date.now() - startTime;
-	
-		// Convert milliseconds into units
-		const hours = Math.floor(elapsed / 3600000);
-		const minutes = Math.floor((elapsed % 3600000) / 60000);
-		const seconds = Math.floor((elapsed % 60000) / 1000);
-		const hundredths = Math.floor((elapsed % 1000) / 10);
-	
-		// Pad with leading zeros
-		const h = String(hours).padStart(2, '0');
-		const m = String(minutes).padStart(2, '0');
-		const s = String(seconds).padStart(2, '0');
-		const ms = String(hundredths).padStart(2, '0');
-	
-		display.innerText = `${h}:${m}:${s}.${ms}`;
-	}
-	
-	// Run every 10 milliseconds for smooth updates
-	function startTimer () {
-		clearInterval(updateTimer);
-		startTime = Date.now();
-		setInterval(updateTimer, 10);
-	}
-	
-	PortalsSdk.setMessageListener((message) => {
-		if(message == "Start Timer") {
-			//
-			startTimer ();	
-		} else if(message == "Stop Timer") {
-			// 
-			clearInterval(updateTimer);
-		} else {
-			//
-			display.innerText = `message`;
-		}
-	});
+(function() {
+  var count = 0;
+  var numberEl = document.getElementById('number');
+  var flashEl = document.getElementById('flash');
+  var brailleEl = document.getElementById('braille');
+
+  // Braille digit patterns (dots 1-6 in 2x3 grid)
+  // Standard Braille numbers: ⠼ prefix then letters a-j
+  // Simplified: visual dot patterns for 0-9
+  var BRAILLE = {
+    0: [0,1,1,1,0,0],
+    1: [1,0,0,0,0,0],
+    2: [1,0,1,0,0,0],
+    3: [1,1,0,0,0,0],
+    4: [1,1,0,1,0,0],
+    5: [1,0,0,1,0,0],
+    6: [1,1,1,0,0,0],
+    7: [1,1,1,1,0,0],
+    8: [1,0,1,1,0,0],
+    9: [0,1,1,0,0,0]
+  };
+
+  function renderBraille(num) {
+    var digits = String(num).split('');
+    var html = '';
+    for (var i = 0; i < digits.length; i++) {
+      var d = parseInt(digits[i]);
+      var pattern = BRAILLE[d] || BRAILLE[0];
+      html += '<div class="braille-char">';
+      for (var j = 0; j < 6; j++) {
+        html += '<div class="dot' + (pattern[j] ? ' raised' : '') + '"></div>';
+      }
+      html += '</div>';
+    }
+    brailleEl.innerHTML = html;
+  }
+
+  function render() {
+    numberEl.textContent = count;
+    renderBraille(count);
+  }
+
+  function flashEffect(type) {
+    flashEl.className = 'flash active' + (type === 'reset' ? ' reset' : '');
+    setTimeout(function() { flashEl.className = 'flash'; }, 200);
+  }
+
+  function bumpEffect() {
+    numberEl.classList.add('bump');
+    setTimeout(function() { numberEl.classList.remove('bump'); }, 150);
+  }
+
+  function shakeEffect() {
+    numberEl.classList.remove('shake');
+    void numberEl.offsetWidth; // force reflow
+    numberEl.classList.add('shake');
+    setTimeout(function() { numberEl.classList.remove('shake'); }, 400);
+  }
+
+  function countUp() {
+    count++;
+    render();
+    flashEffect('up');
+    bumpEffect();
+  }
+
+  function countReset() {
+    if (count > 0) {
+      count = 0;
+      render();
+      flashEffect('reset');
+      shakeEffect();
+    }
+  }
+
+  // Listen for Portals tasks
+  function handleTaskMessage(taskName) {
+    if (taskName === 'count_up') {
+      countUp();
+    } else if (taskName === 'count_reset') {
+      countReset();
+    }
+  }
+
+  // Set up message listener for Portals
+  if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+    PortalsSdk.setMessageListener(function(message) {
+      // Could receive task names as plain strings or as messages
+      if (typeof message === 'string') {
+        if (message === 'count_up') countUp();
+        else if (message === 'count_reset') countReset();
+        else if (message.startsWith('set_')) {
+          // Direct set: set_5 → set count to 5
+          var val = parseInt(message.substring(4));
+          if (!isNaN(val) && val >= 0) {
+            count = val;
+            render();
+            flashEffect('up');
+            bumpEffect();
+          }
+        }
+      }
+    });
+  }
+
+  // Initial render
+  //count = 2;
+  render();
+})();
 </script>
 </body>
 </html>
