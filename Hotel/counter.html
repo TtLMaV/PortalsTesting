@@ -280,31 +280,20 @@
     }
   }
 
-  // Listen for Portals tasks
-  function handleTaskMessage(taskName) {
-    if (taskName === 'count_up') {
-      countUp();
-    } else if (taskName === 'count_reset') {
-      countReset();
-    }
-  }
-
   // Set up message listener for Portals
   if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
     PortalsSdk.setMessageListener(function(message) {
       // Could receive task names as plain strings or as messages
       if (typeof message === 'string') {
-        if (message === 'count_up') countUp();
-        else if (message === 'count_reset') countReset();
-        else if (message.startsWith('set_')) {
-          // Direct set: set_5 → set count to 5
-          var val = parseInt(message.substring(4));
-          if (!isNaN(val) && val >= 0) {
-            count = val;
-            render();
-            flashEffect('up');
-            bumpEffect();
-          }
+		if (message.startsWith('set_')) {
+        // Direct set: set_5 → set count to 5
+        var val = parseInt(message.substring(4));
+        if (!isNaN(val) && val >= 0) {
+			count = val;
+			render();
+			flashEffect('up');
+			bumpEffect();
+        }
         }
       }
     });
