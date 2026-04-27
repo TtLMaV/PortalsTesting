@@ -234,9 +234,9 @@
 		} else if(message == "Stop Timer") {
 			// 
 			clearInterval(updateTimer);
-		} else {
+		} else if(message.startsWith('time_')) {
 			//
-			display.innerText = message;
+			display.innerText = parseInt(message.substring(5));;
 		}
 	});
 </script>
