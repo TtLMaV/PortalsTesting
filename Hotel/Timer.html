@@ -229,11 +229,16 @@
 	
 	PortalsSdk.setMessageListener((message) => {
 		if(message == "Start Timer") {
+			//
 			startTimer ();	
+		} else if(message == "Stop Timer") {
+			// 
+			clearInterval(updateTimer);
+		} else {
+			//
+			display.innerText = message;
 		}
 	});
-	
-	//startTimer ();
 </script>
 </body>
 </html>
