@@ -222,24 +222,24 @@
 	
 	// Run every 10 milliseconds for smooth updates
 	function startTimer () {
-		clearInterval(updateTimer);
+		clearInterval(newTimer);
 		startTime = Date.now();
-		setInterval(updateTimer, 10);
+		let newTimer = setInterval(updateTimer, 10);
 	}
 
-	// Run every 10 milliseconds for smooth updates
+	// Try And Stop The Timer
 	function stopTimer () {
-		clearInterval(updateTimer);
+		clearInterval(newTimer);
 	}
 	
 	PortalsSdk.setMessageListener((message) => {
-		if(message == "Start Timer") {
+		if (message == "Start Timer") {
 			//
-			startTimer ();	
-		} else if(message == "Stop Timer") {
+			startTimer ();
+		} else if (message == "Stop Timer") {
 			// 
 			stopTimer ();
-		} else if(message.startsWith('time_')) {
+		} else if (message.startsWith('time_')) {
 			//
 			display.innerText = parseInt(message.substring(5));;
 		}
