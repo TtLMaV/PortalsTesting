@@ -226,6 +226,11 @@
 		startTime = Date.now();
 		setInterval(updateTimer, 10);
 	}
+
+	// Run every 10 milliseconds for smooth updates
+	function stopTimer () {
+		clearInterval(updateTimer);
+	}
 	
 	PortalsSdk.setMessageListener((message) => {
 		if(message == "Start Timer") {
@@ -233,7 +238,7 @@
 			startTimer ();	
 		} else if(message == "Stop Timer") {
 			// 
-			clearInterval(updateTimer);
+			stopTimer ();
 		} else if(message.startsWith('time_')) {
 			//
 			display.innerText = parseInt(message.substring(5));;
