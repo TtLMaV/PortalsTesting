@@ -43,9 +43,27 @@
 
   .top-row{
     display:flex;
-    justify-content:flex-end;
+    justify-content:space-between;
+    align-items:center;
     margin-bottom:14px;
   }
+
+  .close-btn{
+    background:transparent;
+    border:1px solid #b88878;
+    color:#5a1f10;
+    width:28px;height:28px;
+    border-radius:50%;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:12px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .15s ease;
+  }
+  .close-btn:hover{background:#e8d4c4}
 
   .info-btn{
     background:transparent;
@@ -302,6 +320,7 @@
 
   <div class="top-row">
     <button class="info-btn" id="infoBtn" aria-label="About the modes">i</button>
+    <button class="close-btn" id="closeBtn" aria-label="Close menu">X</button>
   </div>
 
   <div class="header">
@@ -384,6 +403,7 @@
   const infoBtn = document.getElementById("infoBtn");
   const overlay = document.getElementById("overlay");
   const closeInfo = document.getElementById("closeInfo");
+  const closeBtn = document.getElementById("closeBtn");
 
   let selectedMode = null;
   let clockedIn = false;
@@ -449,6 +469,13 @@
   infoBtn.addEventListener("click", () => overlay.classList.add("show"));
   closeInfo.addEventListener("click", () => overlay.classList.remove("show"));
 
+  /* Close menu */
+  closeBtn.addEventListener("click", () => {
+    if(typeof PortalsSdk !== "undefined" && PortalsSdk.closeIframe){
+      PortalsSdk.closeIframe();
+    }
+  });
+
   /* Keyboard shortcuts */
   window.addEventListener("keydown", (e) => {
     if(e.key === "1") endlessBtn.click();
@@ -457,6 +484,8 @@
     if(e.key === "Escape"){
       if(overlay.classList.contains("show")){
         overlay.classList.remove("show");
+      } else {
+        closeBtn.click();
       }
     }
   });
