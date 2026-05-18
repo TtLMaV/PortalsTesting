@@ -1,70 +1,357 @@
-<div style="padding: 24px 0; display: flex; align-items: center; justify-content: center; position: relative;">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hotel Night Shift - Time Clock Menu</title>
+<script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
 
-  <div id="terminal" style="width: 100%; max-width: 520px; background: #f0e6d2; border-radius: 4px; padding: 24px; border: 1px solid #c9b896; box-shadow: inset 0 0 30px rgba(120, 90, 50, 0.08); font-family: 'Courier New', ui-monospace, monospace; color: #6a4a28; position: relative;">
+  body{
+    background:transparent;
+    display:grid;
+    place-items:center;
+    padding:24px 0;
+    font-family:'Courier New', ui-monospace, monospace;
+  }
 
-    <div style="position: absolute; top: 8px; left: 8px; width: 6px; height: 6px; background: #c9b896; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.2);"></div>
-    <div style="position: absolute; top: 8px; right: 8px; width: 6px; height: 6px; background: #c9b896; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.2);"></div>
-    <div style="position: absolute; bottom: 8px; left: 8px; width: 6px; height: 6px; background: #c9b896; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.2);"></div>
-    <div style="position: absolute; bottom: 8px; right: 8px; width: 6px; height: 6px; background: #c9b896; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.2);"></div>
+  .terminal{
+    width:100%;
+    max-width:520px;
+    background:#f0e6d2;
+    border-radius:4px;
+    padding:24px;
+    border:1px solid #c9b896;
+    box-shadow:inset 0 0 30px rgba(120, 90, 50, 0.08);
+    color:#6a4a28;
+    position:relative;
+  }
 
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 14px;">
-      <button id="info-btn" aria-label="About the modes" style="background: transparent; border: 1px solid #b8a378; color: #6a4a28; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-family: 'Courier New', monospace; font-size: 14px; padding: 0; display: flex; align-items: center; justify-content: center;">i</button>
-    </div>
+  .rivet{
+    position:absolute;
+    width:6px;height:6px;
+    background:#c9b896;
+    border-radius:50%;
+    box-shadow:inset 0 1px 1px rgba(0,0,0,.2);
+  }
+  .rivet.tl{top:8px;left:8px}
+  .rivet.tr{top:8px;right:8px}
+  .rivet.bl{bottom:8px;left:8px}
+  .rivet.br{bottom:8px;right:8px}
 
-    <div style="text-align: center; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px dashed #b8a378;">
-      <div style="font-size: 11px; letter-spacing: 3px; color: #8a6a3a; margin-bottom: 6px;">HOTEL EMPLOYEE TIMECARD</div>
-      <div style="font-size: 24px; letter-spacing: 5px; font-weight: 500; color: #3a2818;">NIGHT SHIFT</div>
-    </div>
+  .top-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:14px;
+  }
 
-    <div style="font-size: 11px; letter-spacing: 2px; color: #8a6a3a; margin-bottom: 12px; text-align: center;">&gt; SELECT CLOCK-IN MODE</div>
+  .info-btn{
+    background:transparent;
+    border:1px solid #b8a378;
+    color:#6a4a28;
+    width:28px;height:28px;
+    border-radius:50%;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:14px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .15s ease;
+  }
+  .info-btn:hover{background:#e6dabf}
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+  .header{
+    text-align:center;
+    margin-bottom:22px;
+    padding-bottom:18px;
+    border-bottom:1px dashed #b8a378;
+  }
+  .header .sub{
+    font-size:11px;
+    letter-spacing:3px;
+    color:#8a6a3a;
+    margin-bottom:6px;
+  }
+  .header .title{
+    font-size:24px;
+    letter-spacing:5px;
+    font-weight:500;
+    color:#3a2818;
+  }
 
-      <button class="mode-btn" data-mode="endless" style="background: #e6dabf; border: 1px solid #b8a378; border-radius: 3px; padding: 16px 12px; cursor: pointer; font-family: 'Courier New', monospace; color: #6a4a28; text-align: left; transition: all 0.15s;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-          <i class="ti ti-infinity" aria-hidden="true" style="font-size: 20px; color: #3a2818;"></i>
-          <span style="font-size: 9px; letter-spacing: 1px; color: #a08858;">MODE 01</span>
-        </div>
-        <div style="font-size: 14px; letter-spacing: 2px; font-weight: 500; color: #3a2818; margin-bottom: 4px;">ENDLESS</div>
-        <div style="font-size: 10px; color: #8a6a3a; letter-spacing: 1px;">PLAY AT YOUR OWN PACE</div>
-      </button>
+  .section-label{
+    font-size:11px;
+    letter-spacing:2px;
+    color:#8a6a3a;
+    margin-bottom:12px;
+    text-align:center;
+  }
 
-      <button class="mode-btn" data-mode="speedrun" style="background: #e8d4c4; border: 1px solid #b88878; border-radius: 3px; padding: 16px 12px; cursor: pointer; font-family: 'Courier New', monospace; color: #8a3a28; text-align: left; transition: all 0.15s;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-          <i class="ti ti-clock-bolt" aria-hidden="true" style="font-size: 20px; color: #5a1f10;"></i>
-          <span style="font-size: 9px; letter-spacing: 1px; color: #a07868;">MODE 02</span>
-        </div>
-        <div style="font-size: 14px; letter-spacing: 2px; font-weight: 500; color: #5a1f10; margin-bottom: 4px;">SPEED RUN</div>
-        <div style="font-size: 10px; color: #8a3a28; letter-spacing: 1px;">RACE AGAINST TIME</div>
-      </button>
+  .modes{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:14px;
+  }
 
-    </div>
+  .mode-btn{
+    background:#e6dabf;
+    border:1px solid #b8a378;
+    border-radius:3px;
+    padding:16px 12px;
+    cursor:pointer;
+    font-family:inherit;
+    color:#6a4a28;
+    text-align:left;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .mode-btn:hover{background:#dccdab}
 
-    <button id="punch-btn" style="width: 100%; background: #d9c8a0; border: 1px solid #8a6a3a; border-radius: 3px; padding: 16px; cursor: pointer; font-family: 'Courier New', monospace; color: #3a2818; font-size: 14px; letter-spacing: 5px; font-weight: 500;">
-      [ CLOCK IN ]
-    </button>
+  .mode-btn-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
 
-    <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed #b8a378; font-size: 10px; letter-spacing: 1px; color: #8a6a3a; display: flex; justify-content: space-between;">
-      <span>v1.0.3</span>
-      <span id="status-msg">AWAITING SELECTION_</span>
-      <span>BYF</span>
-    </div>
+  .mode-icon{
+    font-size:20px;
+    color:#3a2818;
+  }
 
+  .mode-num{
+    font-size:9px;
+    letter-spacing:1px;
+    color:#a08858;
+  }
+
+  .mode-title{
+    font-size:14px;
+    letter-spacing:2px;
+    font-weight:500;
+    color:#3a2818;
+    margin-bottom:4px;
+  }
+
+  .mode-sub{
+    font-size:10px;
+    color:#8a6a3a;
+    letter-spacing:1px;
+  }
+
+  /* Speedrun variant */
+  .mode-btn.speedrun{
+    background:#e8d4c4;
+    border-color:#b88878;
+  }
+  .mode-btn.speedrun:hover{background:#dcc4b0}
+  .mode-btn.speedrun .mode-icon,
+  .mode-btn.speedrun .mode-title{color:#5a1f10}
+  .mode-btn.speedrun .mode-sub{color:#8a3a28}
+  .mode-btn.speedrun .mode-num{color:#a07868}
+
+  /* Selected state */
+  .mode-btn.selected{
+    background:#3a2818;
+    border-color:#1a0e04;
+  }
+  .mode-btn.selected .mode-icon,
+  .mode-btn.selected .mode-title{color:#f0e6d2}
+  .mode-btn.selected .mode-sub,
+  .mode-btn.selected .mode-num{color:rgba(240,230,210,.7)}
+
+  .mode-btn.speedrun.selected{
+    background:#5a1f10;
+    border-color:#2a0a04;
+  }
+  .mode-btn.speedrun.selected .mode-icon,
+  .mode-btn.speedrun.selected .mode-title{color:#ffd4c0}
+  .mode-btn.speedrun.selected .mode-sub,
+  .mode-btn.speedrun.selected .mode-num{color:rgba(255,212,192,.7)}
+
+  /* Clock in button */
+  .clock-in-btn{
+    width:100%;
+    background:#d9c8a0;
+    border:1px solid #8a6a3a;
+    border-radius:3px;
+    padding:16px;
+    cursor:pointer;
+    font-family:inherit;
+    color:#3a2818;
+    font-size:14px;
+    letter-spacing:5px;
+    font-weight:500;
+    transition:background .15s ease;
+  }
+  .clock-in-btn:hover{background:#cdb98e}
+  .clock-in-btn:disabled{
+    cursor:not-allowed;
+    opacity:0.6;
+  }
+  .clock-in-btn:disabled:hover{background:#d9c8a0}
+
+  /* Footer */
+  .footer{
+    margin-top:16px;
+    padding-top:12px;
+    border-top:1px dashed #b8a378;
+    font-size:10px;
+    letter-spacing:1px;
+    color:#8a6a3a;
+    display:flex;
+    justify-content:space-between;
+  }
+
+  /* Info overlay */
+  .overlay{
+    display:none;
+    position:absolute;
+    inset:0;
+    background:rgba(40,28,16,.55);
+    border-radius:4px;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+  }
+  .overlay.show{display:flex}
+
+  .overlay-panel{
+    width:100%;
+    max-width:460px;
+    background:#f0e6d2;
+    border:1px solid #c9b896;
+    border-radius:4px;
+    padding:22px;
+    color:#6a4a28;
+  }
+
+  .overlay-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-bottom:12px;
+    border-bottom:1px dashed #b8a378;
+    margin-bottom:16px;
+  }
+
+  .overlay-title{
+    font-size:12px;
+    letter-spacing:2px;
+    color:#3a2818;
+  }
+
+  .close-info{
+    background:transparent;
+    border:1px solid #b8a378;
+    color:#6a4a28;
+    width:26px;height:26px;
+    border-radius:50%;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:12px;
+    padding:0;
+  }
+
+  .overlay-section{margin-bottom:18px}
+  .overlay-section:last-child{margin-bottom:0}
+
+  .overlay-section-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+  }
+
+  .overlay-section-head .icon{font-size:16px}
+  .overlay-section-head .label{
+    font-size:13px;
+    letter-spacing:2px;
+    font-weight:500;
+  }
+
+  .overlay-section.endless .icon,
+  .overlay-section.endless .label{color:#3a2818}
+
+  .overlay-section.speedrun .icon,
+  .overlay-section.speedrun .label{color:#5a1f10}
+
+  .overlay-list{
+    font-size:11px;
+    letter-spacing:0.5px;
+    line-height:1.8;
+    padding-left:4px;
+  }
+  .overlay-section.endless .overlay-list{color:#8a6a3a}
+  .overlay-section.speedrun .overlay-list{color:#8a3a28}
+</style>
+</head>
+
+<body>
+<div class="terminal" role="application" aria-label="Hotel Night Shift menu">
+
+  <div class="rivet tl"></div>
+  <div class="rivet tr"></div>
+  <div class="rivet bl"></div>
+  <div class="rivet br"></div>
+
+  <div class="top-row">
+    <button class="info-btn" id="infoBtn" aria-label="About the modes">i</button>
   </div>
 
-  <div id="info-overlay" style="display: none; position: absolute; inset: 0; background: rgba(40, 28, 16, 0.55); border-radius: var(--border-radius-lg); align-items: center; justify-content: center; padding: 20px;">
-    <div style="width: 100%; max-width: 460px; background: #f0e6d2; border: 1px solid #c9b896; border-radius: 4px; padding: 22px; font-family: 'Courier New', monospace; color: #6a4a28;">
-      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px dashed #b8a378; margin-bottom: 16px;">
-        <span style="font-size: 12px; letter-spacing: 2px; color: #3a2818;">&gt; MODE INFO</span>
-        <button id="close-info" aria-label="Close" style="background: transparent; border: 1px solid #b8a378; color: #6a4a28; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-family: inherit; font-size: 12px; padding: 0;">X</button>
+  <div class="header">
+    <div class="sub">HOTEL EMPLOYEE TIMECARD</div>
+    <div class="title">NIGHT SHIFT</div>
+  </div>
+
+  <div class="section-label">&gt; SELECT CLOCK-IN MODE</div>
+
+  <div class="modes">
+    <button class="mode-btn" id="endlessBtn" data-mode="endless">
+      <div class="mode-btn-top">
+        <span class="mode-icon">&#8734;</span>
+        <span class="mode-num">MODE 01</span>
+      </div>
+      <div class="mode-title">ENDLESS</div>
+      <div class="mode-sub">PLAY AT YOUR OWN PACE</div>
+    </button>
+
+    <button class="mode-btn speedrun" id="speedrunBtn" data-mode="speedrun">
+      <div class="mode-btn-top">
+        <span class="mode-icon">&#9203;</span>
+        <span class="mode-num">MODE 02</span>
+      </div>
+      <div class="mode-title">SPEED RUN</div>
+      <div class="mode-sub">RACE AGAINST TIME</div>
+    </button>
+  </div>
+
+  <button class="clock-in-btn" id="clockInBtn" disabled>[ CLOCK IN ]</button>
+
+  <div class="footer">
+    <span>v1.0.3</span>
+    <span id="statusMsg">AWAITING SELECTION_</span>
+    <span>BYF</span>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="overlay-panel">
+      <div class="overlay-top">
+        <span class="overlay-title">&gt; MODE INFO</span>
+        <button class="close-info" id="closeInfo" aria-label="Close">X</button>
       </div>
 
-      <div style="margin-bottom: 18px;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-          <i class="ti ti-infinity" aria-hidden="true" style="font-size: 16px; color: #3a2818;"></i>
-          <span style="font-size: 13px; letter-spacing: 2px; color: #3a2818; font-weight: 500;">ENDLESS MODE</span>
+      <div class="overlay-section endless">
+        <div class="overlay-section-head">
+          <span class="icon">&#8734;</span>
+          <span class="label">ENDLESS MODE</span>
         </div>
-        <div style="font-size: 11px; color: #8a6a3a; letter-spacing: 0.5px; line-height: 1.8; padding-left: 4px;">
+        <div class="overlay-list">
           &gt; NO TIMER PRESSURE, TAKE YOUR TIME TO STRATEGIZE<br>
           &gt; PERFECT FOR LEARNING AND EXPERIMENTATION<br>
           &gt; FOCUS ON ACCURACY AND COMPLETION<br>
@@ -72,12 +359,12 @@
         </div>
       </div>
 
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-          <i class="ti ti-clock-bolt" aria-hidden="true" style="font-size: 16px; color: #5a1f10;"></i>
-          <span style="font-size: 13px; letter-spacing: 2px; color: #5a1f10; font-weight: 500;">SPEED RUN</span>
+      <div class="overlay-section speedrun">
+        <div class="overlay-section-head">
+          <span class="icon">&#9203;</span>
+          <span class="label">SPEED RUN</span>
         </div>
-        <div style="font-size: 11px; color: #8a3a28; letter-spacing: 0.5px; line-height: 1.8; padding-left: 4px;">
+        <div class="overlay-list">
           &gt; TIMER COUNTS DOWN, COMPLETE BEFORE TIME RUNS OUT<br>
           &gt; BONUS POINTS FOR FINISHING EARLY<br>
           &gt; HIGH-INTENSITY, FAST-PACED GAMEPLAY<br>
@@ -90,39 +377,89 @@
 </div>
 
 <script>
-(function() {
-  const buttons = document.querySelectorAll('.mode-btn');
-  const status = document.getElementById('status-msg');
-  let selected = null;
+  const endlessBtn = document.getElementById("endlessBtn");
+  const speedrunBtn = document.getElementById("speedrunBtn");
+  const clockInBtn = document.getElementById("clockInBtn");
+  const statusMsg = document.getElementById("statusMsg");
+  const infoBtn = document.getElementById("infoBtn");
+  const overlay = document.getElementById("overlay");
+  const closeInfo = document.getElementById("closeInfo");
 
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      buttons.forEach(b => {
-        const isRed = b.dataset.mode === 'speedrun';
-        b.style.background = isRed ? '#e8d4c4' : '#e6dabf';
-        b.style.borderColor = isRed ? '#b88878' : '#b8a378';
-      });
-      const isRed = btn.dataset.mode === 'speedrun';
-      btn.style.background = isRed ? '#dcb8a0' : '#d9c8a0';
-      btn.style.borderColor = isRed ? '#5a1f10' : '#3a2818';
-      selected = btn.dataset.mode;
-      if (status) status.textContent = selected === 'endless' ? 'ENDLESS SELECTED_' : 'SPEED RUN SELECTED_';
-    });
-  });
+  let selectedMode = null;
+  let clockedIn = false;
 
-  const overlay = document.getElementById('info-overlay');
-  document.getElementById('info-btn').addEventListener('click', () => {
-    overlay.style.display = 'flex';
-  });
-  document.getElementById('close-info').addEventListener('click', () => {
-    overlay.style.display = 'none';
-  });
+  /* Portals Task messages */
+  const LoadEndless = {
+    TaskName: "LoadEndless",
+    TaskTargetState: "SetNotActiveToActive"
+  };
+  const LoadSpeedrun = {
+    TaskName: "LoadSpeedrun",
+    TaskTargetState: "SetNotActiveToActive"
+  };
 
-  document.getElementById('punch-btn').addEventListener('click', () => {
-    if (!selected) {
-      if (status) status.textContent = 'SELECT A MODE FIRST_';
-      return;
+  function selectMode(mode){
+    if(clockedIn) return;
+
+    endlessBtn.classList.remove("selected");
+    speedrunBtn.classList.remove("selected");
+
+    if(mode === "endless"){
+      endlessBtn.classList.add("selected");
+      statusMsg.textContent = "ENDLESS SELECTED_";
+    } else {
+      speedrunBtn.classList.add("selected");
+      statusMsg.textContent = "SPEED RUN SELECTED_";
     }
-    if (status) status.textContent = 'CLOCKED IN · GOOD LUCK_';
-  });})();
+
+    selectedMode = mode;
+    clockInBtn.disabled = false;
+  }
+
+  endlessBtn.addEventListener("click", () => selectMode("endless"));
+  speedrunBtn.addEventListener("click", () => selectMode("speedrun"));
+
+  clockInBtn.addEventListener("click", () => {
+    if(!selectedMode || clockedIn) return;
+
+    clockedIn = true;
+    statusMsg.textContent = "CLOCKED IN_";
+    clockInBtn.textContent = "[ CLOCKED IN ]";
+    clockInBtn.disabled = true;
+
+    setTimeout(() => {
+      if(typeof PortalsSdk !== "undefined" && PortalsSdk.sendMessageToUnity){
+        if(selectedMode === "endless"){
+          PortalsSdk.sendMessageToUnity(JSON.stringify(LoadEndless));
+        }
+        if(selectedMode === "speedrun"){
+          PortalsSdk.sendMessageToUnity(JSON.stringify(LoadSpeedrun));
+        }
+      }
+    }, 600);
+
+    setTimeout(() => {
+      if(typeof PortalsSdk !== "undefined" && PortalsSdk.closeIframe){
+        PortalsSdk.closeIframe();
+      }
+    }, 2500);
+  });
+
+  /* Info overlay */
+  infoBtn.addEventListener("click", () => overlay.classList.add("show"));
+  closeInfo.addEventListener("click", () => overlay.classList.remove("show"));
+
+  /* Keyboard shortcuts */
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "1") endlessBtn.click();
+    if(e.key === "2") speedrunBtn.click();
+    if(e.key === "Enter" && selectedMode && !clockedIn) clockInBtn.click();
+    if(e.key === "Escape"){
+      if(overlay.classList.contains("show")){
+        overlay.classList.remove("show");
+      }
+    }
+  });
 </script>
+</body>
+</html>
