@@ -1,0 +1,130 @@
+<h2 class="sr-only">Hotel Night Shift main menu styled as a cream paper clock-in timecard with Endless Mode and Speed Run options.</h2>
+
+<div style="padding: 24px 0; display: flex; align-items: center; justify-content: center; position: relative;">
+
+  <div id="terminal" style="width: 100%; max-width: 520px; background: #f0e6d2; border-radius: 4px; padding: 24px; border: 1px solid #c9b896; box-shadow: inset 0 0 30px rgba(120, 90, 50, 0.08); font-family: 'Courier New', ui-monospace, monospace; color: #6a4a28; position: relative;">
+
+    <div style="position: absolute; top: 8px; left: 8px; width: 6px; height: 6px; background: #c9b896; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.2);"></div>
+    <div style="position: absolute; top: 8px; right: 8px; width: 6px; height: 6px; background: #c9b896; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.2);"></div>
+    <div style="position: absolute; bottom: 8px; left: 8px; width: 6px; height: 6px; background: #c9b896; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.2);"></div>
+    <div style="position: absolute; bottom: 8px; right: 8px; width: 6px; height: 6px; background: #c9b896; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.2);"></div>
+
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 14px;">
+      <button id="info-btn" aria-label="About the modes" style="background: transparent; border: 1px solid #b8a378; color: #6a4a28; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-family: 'Courier New', monospace; font-size: 14px; padding: 0; display: flex; align-items: center; justify-content: center;">i</button>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px dashed #b8a378;">
+      <div style="font-size: 11px; letter-spacing: 3px; color: #8a6a3a; margin-bottom: 6px;">HOTEL EMPLOYEE TIMECARD</div>
+      <div style="font-size: 24px; letter-spacing: 5px; font-weight: 500; color: #3a2818;">NIGHT SHIFT</div>
+    </div>
+
+    <div style="font-size: 11px; letter-spacing: 2px; color: #8a6a3a; margin-bottom: 12px; text-align: center;">&gt; SELECT CLOCK-IN MODE</div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+
+      <button class="mode-btn" data-mode="endless" style="background: #e6dabf; border: 1px solid #b8a378; border-radius: 3px; padding: 16px 12px; cursor: pointer; font-family: 'Courier New', monospace; color: #6a4a28; text-align: left; transition: all 0.15s;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <i class="ti ti-infinity" aria-hidden="true" style="font-size: 20px; color: #3a2818;"></i>
+          <span style="font-size: 9px; letter-spacing: 1px; color: #a08858;">MODE 01</span>
+        </div>
+        <div style="font-size: 14px; letter-spacing: 2px; font-weight: 500; color: #3a2818; margin-bottom: 4px;">ENDLESS</div>
+        <div style="font-size: 10px; color: #8a6a3a; letter-spacing: 1px;">PLAY AT YOUR OWN PACE</div>
+      </button>
+
+      <button class="mode-btn" data-mode="speedrun" style="background: #e8d4c4; border: 1px solid #b88878; border-radius: 3px; padding: 16px 12px; cursor: pointer; font-family: 'Courier New', monospace; color: #8a3a28; text-align: left; transition: all 0.15s;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <i class="ti ti-clock-bolt" aria-hidden="true" style="font-size: 20px; color: #5a1f10;"></i>
+          <span style="font-size: 9px; letter-spacing: 1px; color: #a07868;">MODE 02</span>
+        </div>
+        <div style="font-size: 14px; letter-spacing: 2px; font-weight: 500; color: #5a1f10; margin-bottom: 4px;">SPEED RUN</div>
+        <div style="font-size: 10px; color: #8a3a28; letter-spacing: 1px;">RACE AGAINST TIME</div>
+      </button>
+
+    </div>
+
+    <button id="punch-btn" style="width: 100%; background: #d9c8a0; border: 1px solid #8a6a3a; border-radius: 3px; padding: 16px; cursor: pointer; font-family: 'Courier New', monospace; color: #3a2818; font-size: 14px; letter-spacing: 5px; font-weight: 500;">
+      [ CLOCK IN ]
+    </button>
+
+    <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed #b8a378; font-size: 10px; letter-spacing: 1px; color: #8a6a3a; display: flex; justify-content: space-between;">
+      <span>v1.0.3</span>
+      <span id="status-msg">AWAITING SELECTION_</span>
+      <span>BYF</span>
+    </div>
+
+  </div>
+
+  <div id="info-overlay" style="display: none; position: absolute; inset: 0; background: rgba(40, 28, 16, 0.55); border-radius: var(--border-radius-lg); align-items: center; justify-content: center; padding: 20px;">
+    <div style="width: 100%; max-width: 460px; background: #f0e6d2; border: 1px solid #c9b896; border-radius: 4px; padding: 22px; font-family: 'Courier New', monospace; color: #6a4a28;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px dashed #b8a378; margin-bottom: 16px;">
+        <span style="font-size: 12px; letter-spacing: 2px; color: #3a2818;">&gt; MODE INFO</span>
+        <button id="close-info" aria-label="Close" style="background: transparent; border: 1px solid #b8a378; color: #6a4a28; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-family: inherit; font-size: 12px; padding: 0;">X</button>
+      </div>
+
+      <div style="margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <i class="ti ti-infinity" aria-hidden="true" style="font-size: 16px; color: #3a2818;"></i>
+          <span style="font-size: 13px; letter-spacing: 2px; color: #3a2818; font-weight: 500;">ENDLESS MODE</span>
+        </div>
+        <div style="font-size: 11px; color: #8a6a3a; letter-spacing: 0.5px; line-height: 1.8; padding-left: 4px;">
+          &gt; NO TIMER PRESSURE, TAKE YOUR TIME TO STRATEGIZE<br>
+          &gt; PERFECT FOR LEARNING AND EXPERIMENTATION<br>
+          &gt; FOCUS ON ACCURACY AND COMPLETION<br>
+          &gt; IDEAL FOR RELAXED GAMEPLAY SESSIONS
+        </div>
+      </div>
+
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <i class="ti ti-clock-bolt" aria-hidden="true" style="font-size: 16px; color: #5a1f10;"></i>
+          <span style="font-size: 13px; letter-spacing: 2px; color: #5a1f10; font-weight: 500;">SPEED RUN</span>
+        </div>
+        <div style="font-size: 11px; color: #8a3a28; letter-spacing: 0.5px; line-height: 1.8; padding-left: 4px;">
+          &gt; TIMER COUNTS DOWN, COMPLETE BEFORE TIME RUNS OUT<br>
+          &gt; BONUS POINTS FOR FINISHING EARLY<br>
+          &gt; HIGH-INTENSITY, FAST-PACED GAMEPLAY<br>
+          &gt; COMPETE FOR BEST TIMES AND HIGH SCORES
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const buttons = document.querySelectorAll('.mode-btn');
+  const status = document.getElementById('status-msg');
+  let selected = null;
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => {
+        const isRed = b.dataset.mode === 'speedrun';
+        b.style.background = isRed ? '#e8d4c4' : '#e6dabf';
+        b.style.borderColor = isRed ? '#b88878' : '#b8a378';
+      });
+      const isRed = btn.dataset.mode === 'speedrun';
+      btn.style.background = isRed ? '#dcb8a0' : '#d9c8a0';
+      btn.style.borderColor = isRed ? '#5a1f10' : '#3a2818';
+      selected = btn.dataset.mode;
+      if (status) status.textContent = selected === 'endless' ? 'ENDLESS SELECTED_' : 'SPEED RUN SELECTED_';
+    });
+  });
+
+  const overlay = document.getElementById('info-overlay');
+  document.getElementById('info-btn').addEventListener('click', () => {
+    overlay.style.display = 'flex';
+  });
+  document.getElementById('close-info').addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+  document.getElementById('punch-btn').addEventListener('click', () => {
+    if (!selected) {
+      if (status) status.textContent = 'SELECT A MODE FIRST_';
+      return;
+    }
+    if (status) status.textContent = 'CLOCKED IN · GOOD LUCK_';
+  });})();
+</script>
