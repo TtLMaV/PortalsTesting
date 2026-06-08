@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAJOR ONE // Pod Fault Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/nasalization" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b0c; --bg2:#0c1214; --panel:#0f1719; --panel2:#13201f;
+  --line:#22332f; --line2:#2c4540;
+  --ink:#cfe3da; --ink-dim:#7d9389; --ink-faint:#4f635c;
+  --amber:#ffb524; --amber-dim:#b07d18;
+  --crit:#ff4d3d; --high:#ff8a2b; --med:#ffd23f; --low:#5fd6a0;
+  --glow:0 0 0 1px var(--line2), 0 0 24px -8px #000;
+  --display:'Nasalization','Saira Condensed',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;font-size:15px;line-height:1.5;}
+body{
+  background:
+    radial-gradient(120% 80% at 50% -10%, #11201d 0%, transparent 55%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px),
+    var(--bg);
+  min-height:100vh;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+  background:
+    radial-gradient(130% 100% at 50% 50%, transparent 60%, rgba(0,0,0,.55) 100%),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 2px, transparent 2px 4px);
+  mix-blend-mode:multiply;opacity:.5;
+}
+::selection{background:var(--amber);color:#0b0f10}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px 100px}
+
+/* ---- console header ---- */
+header{position:relative;padding:30px 0 18px;border-bottom:1px solid var(--line)}
+.brand-row{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.sysid{line-height:.95}
+.sysid .k{display:block;font-size:13px;letter-spacing:.5em;color:var(--amber);font-weight:600;margin-bottom:10px;font-family:'IBM Plex Mono'}
+.sysid .t{font-family:var(--display);font-weight:700;font-size:clamp(26px,4.6vw,48px);
+  color:var(--ink);text-transform:uppercase;letter-spacing:.01em;line-height:1.04}
+.sysid .t b{color:var(--amber);font-weight:700}
+.sysid .sub{font-size:13px;color:var(--ink-dim);letter-spacing:.18em;margin-top:12px;font-family:'IBM Plex Mono'}
+.stamp{font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-faint);text-align:right;line-height:1.7;letter-spacing:.1em}
+.stamp .lamp{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--low);box-shadow:0 0 8px var(--low);margin-right:6px;animation:blink 2.4s steps(1) infinite}
+@keyframes blink{0%,92%{opacity:1}93%,100%{opacity:.25}}
+
+/* ---- filter rail ---- */
+.filters{display:flex;flex-wrap:wrap;gap:8px 6px;align-items:center;margin:22px 0 6px}
+.flabel{font-size:11px;letter-spacing:.26em;color:var(--ink-faint);margin-right:6px;text-transform:uppercase}
+.chip{font-family:'IBM Plex Mono';font-size:12px;letter-spacing:.06em;color:var(--ink-dim);
+  background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:5px 11px;
+  cursor:pointer;transition:.12s;text-transform:uppercase;white-space:nowrap}
+.chip:hover{border-color:var(--line2);color:var(--ink)}
+.chip.on{background:var(--amber);border-color:var(--amber);color:#0b0f10;font-weight:600}
+.chip.sev.on[data-sev="Critical"]{background:var(--crit);border-color:var(--crit);color:#180605}
+.chip.sev.on[data-sev="High"]{background:var(--high);border-color:var(--high);color:#1a0c02}
+.chip.sev.on[data-sev="Medium"]{background:var(--med);border-color:var(--med);color:#1a1500}
+.chip.sev.on[data-sev="Low"]{background:var(--low);border-color:var(--low);color:#04150d}
+
+.statusbar{display:flex;justify-content:space-between;align-items:baseline;
+  margin:18px 0 14px;padding-bottom:8px;border-bottom:1px dashed var(--line);
+  font-size:12px;letter-spacing:.14em;color:var(--ink-faint);text-transform:uppercase}
+.statusbar b{color:var(--amber);font-weight:600}
+
+/* ---- entries ---- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.card{position:relative;background:linear-gradient(180deg,var(--panel),var(--bg2));
+  border:1px solid var(--line);border-left-width:3px;border-radius:3px;padding:0;
+  overflow:hidden;transition:border-color .15s}
+.card:hover{border-color:var(--line2)}
+.card[data-sev="Critical"]{border-left-color:var(--crit)}
+.card[data-sev="High"]{border-left-color:var(--high)}
+.card[data-sev="Medium"]{border-left-color:var(--med)}
+.card[data-sev="Low"]{border-left-color:var(--low)}
+
+.chead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+  padding:13px 15px 11px;border-bottom:1px solid var(--line)}
+.code{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.01em;line-height:1;color:var(--ink)}
+.code .pfx{color:var(--amber)}
+.sysname{font-size:10.5px;letter-spacing:.18em;color:var(--ink-dim);text-transform:uppercase;margin-top:7px}
+.sevtag{flex:none;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  padding:4px 8px;border-radius:2px;border:1px solid;white-space:nowrap}
+.sevtag[data-sev="Critical"]{color:var(--crit);border-color:var(--crit);background:rgba(255,77,61,.08)}
+.sevtag[data-sev="High"]{color:var(--high);border-color:var(--high);background:rgba(255,138,43,.08)}
+.sevtag[data-sev="Medium"]{color:var(--med);border-color:var(--med);background:rgba(255,210,63,.08)}
+.sevtag[data-sev="Low"]{color:var(--low);border-color:var(--low);background:rgba(95,214,160,.08)}
+
+.msg{padding:13px 15px 4px;font-size:14.5px;color:var(--ink);font-weight:500;letter-spacing:.01em;line-height:1.4}
+
+.cbody{padding:10px 15px 4px}
+.fld{margin:11px 0}
+.fld .lab{font-size:10px;letter-spacing:.24em;color:var(--ink-faint);text-transform:uppercase;display:block;margin-bottom:4px}
+.fld .val{font-size:13.5px;color:var(--ink-dim);line-height:1.45}
+.symptom .val{color:var(--ink)}
+ol.steps{list-style:none;counter-reset:s;margin:0;padding:0}
+ol.steps li{counter-increment:s;position:relative;padding:5px 0 5px 30px;font-size:13.5px;color:var(--ink);border-bottom:1px dotted var(--line)}
+ol.steps li:last-child{border-bottom:none}
+ol.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:5px;
+  color:var(--amber);font-weight:600;font-size:12px;font-family:'IBM Plex Mono'}
+
+.meta{display:flex;flex-wrap:wrap;gap:1px;background:var(--line);margin-top:8px;border-top:1px solid var(--line)}
+.meta div{flex:1;min-width:90px;background:var(--bg2);padding:8px 12px}
+.meta .lab{font-size:9.5px;letter-spacing:.2em;color:var(--ink-faint);text-transform:uppercase;display:block;margin-bottom:3px}
+.meta .v{font-size:12.5px;color:var(--ink);letter-spacing:.02em}
+.meta .v.act{color:var(--amber)}
+
+.empty{padding:60px 20px;text-align:center;color:var(--ink-faint);grid-column:1/-1;letter-spacing:.1em}
+
+/* ---- reference key ---- */
+.refkey{margin-top:46px;border-top:1px solid var(--line);padding-top:30px}
+.refkey h2{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.03em;
+  text-transform:uppercase;color:var(--ink);margin:0 0 8px}
+.refkey h2 span{color:var(--amber)}
+.refkey .note{font-size:12px;color:var(--ink-faint);letter-spacing:.1em;margin-bottom:22px}
+.refcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.refbox{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:16px 17px}
+.refbox h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--amber-dim);margin:0 0 12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.refrow{display:flex;gap:12px;padding:5px 0;font-size:12.5px;align-items:baseline}
+.refrow .key{flex:none;min-width:78px;color:var(--ink);font-weight:600;letter-spacing:.04em}
+.refrow .def{color:var(--ink-dim);line-height:1.4}
+.refrow .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:2px;vertical-align:middle}
+.scols{columns:2;column-gap:18px}
+@media(max-width:560px){.scols{columns:1}.meta div{min-width:46%}}
+
+footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:11px;letter-spacing:.14em;color:var(--ink-faint);display:flex;
+  justify-content:space-between;flex-wrap:wrap;gap:8px;text-transform:uppercase}
+
+/* ---- close button ---- */
+.closebtn{position:fixed;top:16px;right:16px;z-index:60;width:38px;height:38px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:var(--panel);border:1px solid var(--line2);border-radius:3px;
+  color:var(--ink-dim);box-shadow:var(--glow);transition:.13s;padding:0}
+.closebtn svg{width:18px;height:18px}
+.closebtn:hover{color:var(--crit);border-color:var(--crit);background:rgba(255,77,61,.1)}
+.closebtn:active{transform:scale(.94)}
+@media(max-width:560px){.closebtn{top:12px;right:12px;width:34px;height:34px}}
+</style>
+</head>
+<body>
+<button class="closebtn" id="closeManual" title="Close manual" aria-label="Close manual">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+</button>
+<div class="wrap">
+
+  <header>
+    <div class="brand-row">
+      <div class="sysid">
+        <span class="k">MAJOR&nbsp;ONE</span>
+        <span class="t">Fault <b>Reference</b></span>
+        <span class="sub">ESCAPE POD // ONBOARD TECHNICAL MANUAL // REV 1.0</span>
+      </div>
+      <div class="stamp">
+        <span class="lamp"></span>MANUAL TERMINAL ONLINE<br>
+        70 LOGGED FAULT CODES<br>
+        17 MONITORED SYSTEMS<br>
+        CLASSIFICATION: CREW USE
+      </div>
+    </div>
+  </header>
+
+  <div class="filters" id="sysFilters">
+    <span class="flabel">System</span>
+    <span class="chip on" data-sys="ALL">All</span>
+  </div>
+  <div class="filters" id="sevFilters">
+    <span class="flabel">Severity</span>
+  </div>
+
+  <div class="statusbar">
+    <div>SHOWING <b id="count">0</b> OF 70 FAULTS</div>
+    <div id="activeNote">PRIORITISE BY SEVERITY, RESOLVE CRITICAL FIRST</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <section class="refkey">
+    <h2>Reference <span>Key</span></h2>
+    <div class="note">HOW TO READ A FAULT CODE AND WHAT EACH INSTRUCTION MEANS</div>
+    <div class="refcols">
+      <div class="refbox">
+        <h3>Code Format</h3>
+        <div class="refrow"><span class="key">SYS-NNN</span><span class="def">Three letter system code, then a three digit number.</span></div>
+        <div class="refrow"><span class="key">1xx</span><span class="def">Root cause. A specific sub-component has failed.</span></div>
+        <div class="refrow"><span class="key">2xx</span><span class="def">Resource symptom. The consequence you feel in the cabin. Fix the upstream 1xx cause.</span></div>
+        <div class="refrow"><span class="key">9xx</span><span class="def">Catastrophic, cascading, or multi-system event.</span></div>
+      </div>
+      <div class="refbox">
+        <h3>Severity</h3>
+        <div class="refrow"><span class="key"><span class="dot" style="background:var(--crit)"></span>Critical</span><span class="def">Immediate threat to life. Resolve first.</span></div>
+        <div class="refrow"><span class="key"><span class="dot" style="background:var(--high)"></span>High</span><span class="def">Active degradation. Resolve within minutes.</span></div>
+        <div class="refrow"><span class="key"><span class="dot" style="background:var(--med)"></span>Medium</span><span class="def">Notable problem. Resolve before it cascades.</span></div>
+        <div class="refrow"><span class="key"><span class="dot" style="background:var(--low)"></span>Low</span><span class="def">Minor or quality of life. Fix when free.</span></div>
+      </div>
+      <div class="refbox">
+        <h3>Action Types</h3>
+        <div class="scols" id="actionList"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>MAJOR ONE // POD FAULT REFERENCE</span>
+    <span>GROUND CONTROL CANNOT HEAR YOU NOW</span>
+  </footer>
+</div>
+
+<script>
+const DB = {"codes": [{"code": "BAT-101", "system": "Battery Storage", "message": "Battery cell degraded", "severity": "Medium", "symptoms": "Reduced capacity on cell", "cause": "Cell aged beyond service life", "repair": "Remove degraded cell, install replacement from storage", "part": "Battery", "action": "Replace", "trigger": "Wear", "sys": "BAT", "steps": ["Remove degraded cell", "install replacement from storage"]}, {"code": "BAT-102", "system": "Battery Storage", "message": "Battery bank low", "severity": "High", "symptoms": "All cells at low charge", "cause": "Solar input insufficient or prolonged drain", "repair": "Restore solar input or reduce load by powering down non-essentials", "part": "None", "action": "Diagnose", "trigger": "Solar outage", "sys": "BAT", "steps": ["Restore solar input or reduce load by powering down non-essentials"]}, {"code": "BAT-103", "system": "Battery Storage", "message": "Battery overtemperature", "severity": "High", "symptoms": "Cell venting risk", "cause": "Cabin temperature too high or cell fault", "repair": "Power down bank, allow cooling, replace faulted cell", "part": "Battery", "action": "Replace", "trigger": "Stellar proximity", "sys": "BAT", "steps": ["Power down bank, allow cooling", "replace faulted cell"]}, {"code": "BAT-104", "system": "Battery Storage", "message": "Battery contact corrosion", "severity": "Low", "symptoms": "Intermittent connection on cell slot", "cause": "Oxidation on terminals", "repair": "Remove cell, clean contacts at workbench, reinstall", "part": "None", "action": "Repair", "trigger": "Wear", "sys": "BAT", "steps": ["Remove cell, clean contacts at workbench, reinstall"]}, {"code": "CO2-101", "system": "CO2 Scrubber", "message": "Power loss to scrubber", "severity": "Critical", "symptoms": "CO2 not being removed from cabin", "cause": "Blown fuse on scrubber circuit", "repair": "Replace scrubber fuse from spares", "part": "Fuse", "action": "Replace", "trigger": "Electrical storm", "sys": "CO2", "steps": ["Replace scrubber fuse from spares"]}, {"code": "CO2-102", "system": "CO2 Scrubber", "message": "Battery feed undervolt", "severity": "High", "symptoms": "Scrubber operating at reduced cycle rate", "cause": "Battery cell depleted", "repair": "Swap battery for charged unit", "part": "Battery", "action": "Replace", "trigger": "Power shortage", "sys": "CO2", "steps": ["Swap battery for charged unit"]}, {"code": "CO2-103", "system": "CO2 Scrubber", "message": "Air filter saturated", "severity": "High", "symptoms": "Scrubber bypassing CO2, ineffective filtering", "cause": "Filter media spent", "repair": "Open scrubber housing, remove old filter, install fresh filter", "part": "Air Filter", "action": "Replace", "trigger": "Routine depletion", "sys": "CO2", "steps": ["Open scrubber housing", "remove old filter", "install fresh filter"]}, {"code": "CO2-104", "system": "CO2 Scrubber", "message": "Canister full", "severity": "High", "symptoms": "Captured CO2 reservoir at capacity", "cause": "CO2 collection canister at 100%", "repair": "Remove full canister, install empty replacement", "part": "CO2 Canister", "action": "Replace", "trigger": "Routine depletion", "sys": "CO2", "steps": ["Remove full canister", "install empty replacement"]}, {"code": "CO2-105", "system": "CO2 Scrubber", "message": "Filter housing leak", "severity": "Medium", "symptoms": "Unfiltered air bypassing scrubber", "cause": "Damaged housing seal", "repair": "Reseat filter housing, replace gasket if available", "part": "Housing Gasket", "action": "Replace", "trigger": "Wear", "sys": "CO2", "steps": ["Reseat filter housing", "replace gasket if available"]}, {"code": "CO2-201", "system": "CO2 Scrubber", "message": "Cabin CO2 high (hypercapnia)", "severity": "Critical", "symptoms": "Headache, sluggish controls, confusion", "cause": "Downstream of CO2-101/103/104", "repair": "Resolve underlying scrubber fault; ventilate if hull intact", "part": "None", "action": "Diagnose", "trigger": "Cascade", "sys": "CO2", "steps": ["Resolve underlying scrubber fault", "ventilate if hull intact"]}, {"code": "COM-101", "system": "Communications", "message": "Ground Control signal lost", "severity": "Medium", "symptoms": "No incoming or outgoing transmission", "cause": "Gravitational anomaly blocking signal", "repair": "Wait for transit through anomaly; no repair possible", "part": "None", "action": "Wait", "trigger": "Gravital lens, black hole", "sys": "COM", "steps": ["Wait for transit through anomaly", "no repair possible"]}, {"code": "COM-102", "system": "Communications", "message": "Transmitter fuse blown", "severity": "Medium", "symptoms": "Outgoing comms offline", "cause": "Surge from electrical storm", "repair": "Replace comms fuse from spares", "part": "Fuse", "action": "Replace", "trigger": "Electrical storm", "sys": "COM", "steps": ["Replace comms fuse from spares"]}, {"code": "COM-103", "system": "Communications", "message": "Antenna alignment lost", "severity": "Low", "symptoms": "Weak signal to Ground Control", "cause": "Asteroid impact knocked alignment", "repair": "Trigger antenna realign cycle from main computer", "part": "None", "action": "Reset", "trigger": "Asteroid field", "sys": "COM", "steps": ["Trigger antenna realign cycle from main computer"]}, {"code": "DOR-101", "system": "Airlock Door", "message": "Door seal alert", "severity": "Medium", "symptoms": "Possible micro-leak at door", "cause": "Door gasket compressed unevenly", "repair": "Apply sealing canister around door rim", "part": "Sealing Canister", "action": "Apply", "trigger": "Wear, impact", "sys": "DOR", "steps": ["Apply sealing canister around door rim"]}, {"code": "HUB-101", "system": "Main Computer", "message": "Terminal unresponsive", "severity": "High", "symptoms": "Computer screen frozen", "cause": "Software lockup", "repair": "Hard reboot from rear of terminal", "part": "None", "action": "Reset", "trigger": "Surge, radiation", "sys": "HUB", "steps": ["Hard reboot from rear of terminal"]}, {"code": "HUB-102", "system": "Main Computer", "message": "Data corruption flag", "severity": "Medium", "symptoms": "Some error codes displaying garbled", "cause": "Memory bank parity fault", "repair": "Run integrity check from terminal menu, replace memory module if flagged", "part": "Memory Module", "action": "Replace", "trigger": "Radiation", "sys": "HUB", "steps": ["Run integrity check from terminal menu", "replace memory module if flagged"]}, {"code": "HUB-103", "system": "Main Computer", "message": "Navigation sensors blind", "severity": "Medium", "symptoms": "Computer unable to plot trajectory", "cause": "Gravitational lensing or black hole proximity", "repair": "Wait for transit through anomaly; no repair possible", "part": "None", "action": "Wait", "trigger": "Gravital lens, black hole", "sys": "HUB", "steps": ["Wait for transit through anomaly", "no repair possible"]}, {"code": "LGT-101", "system": "Lighting", "message": "Cabin lighting failure", "severity": "Medium", "symptoms": "Pod plunged into emergency lighting", "cause": "Lighting circuit fuse blown", "repair": "Replace lighting fuse from spares", "part": "Fuse", "action": "Replace", "trigger": "Surge", "sys": "LGT", "steps": ["Replace lighting fuse from spares"]}, {"code": "LGT-102", "system": "Lighting", "message": "Lighting flicker", "severity": "Low", "symptoms": "Lights pulsing intermittently", "cause": "Loose wiring or surge aftermath", "repair": "Reset lighting breaker on main fuse board", "part": "None", "action": "Reset", "trigger": "Electrical storm", "sys": "LGT", "steps": ["Reset lighting breaker on main fuse board"]}, {"code": "OXY-101", "system": "Oxygen Generator", "message": "Power loss to O2 generator", "severity": "Critical", "symptoms": "O2 generation halted, levels falling", "cause": "Blown fuse on O2 circuit", "repair": "Open engineering bay panel, pull fuse from O2 slot, install replacement fuse from storage", "part": "Fuse", "action": "Replace", "trigger": "Electrical storm, surge", "sys": "OXY", "steps": ["Open engineering bay panel", "pull fuse from O2 slot", "install replacement fuse from storage"]}, {"code": "OXY-102", "system": "Oxygen Generator", "message": "Battery feed undervolt", "severity": "High", "symptoms": "O2 generator running at reduced output", "cause": "Battery cell depleted", "repair": "Swap depleted battery for charged unit from battery storage", "part": "Battery", "action": "Replace", "trigger": "Prolonged solar outage", "sys": "OXY", "steps": ["Swap depleted battery for charged unit from battery storage"]}, {"code": "OXY-103", "system": "Oxygen Generator", "message": "Canister empty", "severity": "Critical", "symptoms": "Generator cycling but producing no O2", "cause": "O2 feedstock canister depleted", "repair": "Remove empty canister from generator housing, install full canister", "part": "O2 Canister", "action": "Replace", "trigger": "Routine depletion", "sys": "OXY", "steps": ["Remove empty canister from generator housing", "install full canister"]}, {"code": "OXY-104", "system": "Oxygen Generator", "message": "Canister seal fault", "severity": "High", "symptoms": "O2 leak detected at generator coupling", "cause": "Damaged canister gasket", "repair": "Remove canister, replace gasket, reseat canister", "part": "Canister Gasket", "action": "Replace", "trigger": "Wear, debris impact", "sys": "OXY", "steps": ["Remove canister, replace gasket, reseat canister"]}, {"code": "OXY-105", "system": "Oxygen Generator", "message": "Generator over-temperature", "severity": "High", "symptoms": "Thermal cutout engaged on O2 unit", "cause": "Cooling line restricted or ambient temperature too high", "repair": "Allow unit to cool, verify thermal regulator running, restart generator", "part": "None", "action": "Reset", "trigger": "Stellar proximity", "sys": "OXY", "steps": ["Allow unit to cool", "verify thermal regulator running, restart generator"]}, {"code": "OXY-201", "system": "Oxygen Generator", "message": "Cabin O2 critically low", "severity": "Critical", "symptoms": "Hypoxia onset, tunnel vision active", "cause": "Downstream of OXY-101/103 or hull breach", "repair": "Resolve underlying generator fault or pressure breach; O2 will recover once source restored", "part": "None", "action": "Diagnose", "trigger": "Cascade", "sys": "OXY", "steps": ["Resolve underlying generator fault or pressure breach", "O2 will recover once source restored"]}, {"code": "OXY-202", "system": "Oxygen Generator", "message": "Cabin O2 elevated", "severity": "Medium", "symptoms": "Risk of oxygen toxicity, combustion risk raised", "cause": "Generator stuck in active cycle", "repair": "Toggle O2 generator off at switch, wait for levels to normalise, restart", "part": "None", "action": "Reset", "trigger": "Sensor fault", "sys": "OXY", "steps": ["Toggle O2 generator off at switch", "wait for levels to normalise, restart"]}, {"code": "PRS-101", "system": "Cabin Pressure", "message": "Power loss to pressure controller", "severity": "High", "symptoms": "Pressure regulation inactive", "cause": "Blown fuse on cabin pressure circuit", "repair": "Replace cabin pressure fuse", "part": "Fuse", "action": "Replace", "trigger": "Electrical storm", "sys": "PRS", "steps": ["Replace cabin pressure fuse"]}, {"code": "PRS-102", "system": "Cabin Pressure", "message": "Micro-breach detected: Wall 1", "severity": "Critical", "symptoms": "Hissing audible, pressure falling slowly", "cause": "Asteroid or debris impact on door wall", "repair": "Locate breach by sound, apply sealing canister to puncture", "part": "Sealing Canister", "action": "Apply", "trigger": "Asteroid field, debris", "sys": "PRS", "steps": ["Locate breach by sound", "apply sealing canister to puncture"]}, {"code": "PRS-103", "system": "Cabin Pressure", "message": "Micro-breach detected: Engineering", "severity": "Critical", "symptoms": "Hissing audible near engineering bay", "cause": "Asteroid or debris impact on wall 2", "repair": "Locate breach by sound, apply sealing canister to puncture", "part": "Sealing Canister", "action": "Apply", "trigger": "Asteroid field, debris", "sys": "PRS", "steps": ["Locate breach by sound", "apply sealing canister to puncture"]}, {"code": "PRS-104", "system": "Cabin Pressure", "message": "Micro-breach detected: Hub wall", "severity": "Critical", "symptoms": "Hissing audible near terminal", "cause": "Asteroid or debris impact on wall 3", "repair": "Locate breach by sound, apply sealing canister to puncture", "part": "Sealing Canister", "action": "Apply", "trigger": "Asteroid field, debris", "sys": "PRS", "steps": ["Locate breach by sound", "apply sealing canister to puncture"]}, {"code": "PRS-105", "system": "Cabin Pressure", "message": "Micro-breach detected: Sanitation", "severity": "Critical", "symptoms": "Hissing audible near toilet/printer", "cause": "Asteroid or debris impact on wall 4", "repair": "Locate breach by sound, apply sealing canister to puncture", "part": "Sealing Canister", "action": "Apply", "trigger": "Asteroid field, debris", "sys": "PRS", "steps": ["Locate breach by sound", "apply sealing canister to puncture"]}, {"code": "PRS-106", "system": "Cabin Pressure", "message": "Micro-breach detected: Bunks", "severity": "Critical", "symptoms": "Hissing audible near beds", "cause": "Asteroid or debris impact on wall 5", "repair": "Locate breach by sound, apply sealing canister to puncture", "part": "Sealing Canister", "action": "Apply", "trigger": "Asteroid field, debris", "sys": "PRS", "steps": ["Locate breach by sound", "apply sealing canister to puncture"]}, {"code": "PRS-107", "system": "Cabin Pressure", "message": "Micro-breach detected: Storage", "severity": "Critical", "symptoms": "Hissing audible near storage", "cause": "Asteroid or debris impact on wall 6", "repair": "Locate breach by sound, apply sealing canister to puncture", "part": "Sealing Canister", "action": "Apply", "trigger": "Asteroid field, debris", "sys": "PRS", "steps": ["Locate breach by sound", "apply sealing canister to puncture"]}, {"code": "PRS-108", "system": "Cabin Pressure", "message": "Seal degradation: door", "severity": "Medium", "symptoms": "Slow pressure leak through airlock seal", "cause": "Door gasket worn", "repair": "Apply sealing canister around door rim", "part": "Sealing Canister", "action": "Apply", "trigger": "Wear", "sys": "PRS", "steps": ["Apply sealing canister around door rim"]}, {"code": "PRS-201", "system": "Cabin Pressure", "message": "Cabin pressure critically low", "severity": "Critical", "symptoms": "Ear pop, decompression risk, slowed actions", "cause": "Unresolved hull breach", "repair": "Locate and seal all active breaches; pressure restores over time", "part": "None", "action": "Diagnose", "trigger": "Cascade", "sys": "PRS", "steps": ["Locate and seal all active breaches", "pressure restores over time"]}, {"code": "PRS-202", "system": "Cabin Pressure", "message": "Cabin pressure high", "severity": "Medium", "symptoms": "Structural stress warning", "cause": "Pressure regulator stuck open", "repair": "Cycle cabin pressure switch off then on", "part": "None", "action": "Reset", "trigger": "Sensor fault", "sys": "PRS", "steps": ["Cycle cabin pressure switch off, on"]}, {"code": "PRT-101", "system": "3D Printer", "message": "Printer reboot required", "severity": "Low", "symptoms": "Print queue stalled", "cause": "Firmware hang", "repair": "Hold reboot button on printer housing", "part": "None", "action": "Reset", "trigger": "Routine", "sys": "PRT", "steps": ["Hold reboot button on printer housing"]}, {"code": "PRT-102", "system": "3D Printer", "message": "Print head clogged", "severity": "Medium", "symptoms": "Print failing, nozzle blocked", "cause": "Feedstock buildup in nozzle", "repair": "Run unclog cycle from printer menu, manually clear if persistent", "part": "None", "action": "Unclog", "trigger": "Routine", "sys": "PRT", "steps": ["Run unclog cycle from printer menu", "manually clear if persistent"]}, {"code": "PRT-103", "system": "3D Printer", "message": "Feedstock empty", "severity": "High", "symptoms": "No food or parts can be printed", "cause": "Recycler has not produced feedstock", "repair": "Use toilet and recycler to generate feedstock, or restock from storage", "part": "Feedstock", "action": "Refill", "trigger": "Routine", "sys": "PRT", "steps": ["Use toilet and recycler to generate feedstock", "or restock from storage"]}, {"code": "PRT-104", "system": "3D Printer", "message": "Print bed calibration off", "severity": "Low", "symptoms": "Prints failing first layer", "cause": "Bed alignment drifted", "repair": "Run auto-calibrate from printer menu", "part": "None", "action": "Reset", "trigger": "Vibration", "sys": "PRT", "steps": ["Run auto-calibrate from printer menu"]}, {"code": "PWR-101", "system": "Solar Power", "message": "Solar array offline", "severity": "Critical", "symptoms": "No charge entering battery bank", "cause": "Blown fuse on solar circuit", "repair": "Replace solar fuse from spares", "part": "Fuse", "action": "Replace", "trigger": "Electrical storm", "sys": "PWR", "steps": ["Replace solar fuse from spares"]}, {"code": "PWR-102", "system": "Solar Power", "message": "Solar panel obstruction", "severity": "Medium", "symptoms": "Solar input reduced", "cause": "Debris coating panels", "repair": "Trigger panel shake cycle from main computer", "part": "None", "action": "Reset", "trigger": "Debris cloud", "sys": "PWR", "steps": ["Trigger panel shake cycle from main computer"]}, {"code": "PWR-103", "system": "Solar Power", "message": "Charge controller fault", "severity": "High", "symptoms": "Battery not accepting charge", "cause": "Controller board damaged", "repair": "Remove controller from housing, print replacement, install", "part": "Charge Controller", "action": "Print", "trigger": "Surge", "sys": "PWR", "steps": ["Remove controller from housing, print replacement, install"]}, {"code": "PWR-104", "system": "Solar Power", "message": "Inverter failure", "severity": "High", "symptoms": "DC/AC conversion offline", "cause": "Inverter component burnt", "repair": "Replace inverter unit from spares", "part": "Inverter", "action": "Replace", "trigger": "Surge", "sys": "PWR", "steps": ["Replace inverter unit from spares"]}, {"code": "PWR-105", "system": "Solar Power", "message": "Wiring harness short", "severity": "High", "symptoms": "Intermittent power, sparking", "cause": "Burnt wiring between panel and controller", "repair": "Cut damaged section, splice in fresh wire at workbench", "part": "Wiring", "action": "Repair", "trigger": "Electrical storm", "sys": "PWR", "steps": ["Cut damaged section", "splice in fresh wire at workbench"]}, {"code": "PWR-901", "system": "Solar Power", "message": "Total power loss", "severity": "Critical", "symptoms": "All systems dark, emergency lighting only", "cause": "Multiple cascaded failures", "repair": "Restore solar input or swap to backup battery feed; reset main fuse board", "part": "Multiple", "action": "Diagnose", "trigger": "Cascade", "sys": "PWR", "steps": ["Restore solar input or swap to backup battery feed", "reset main fuse board"]}, {"code": "RAD-101", "system": "Radiation Shield", "message": "Shield generator offline", "severity": "Critical", "symptoms": "Radiation ingress unblocked", "cause": "No power to shield (downstream of PWR fault)", "repair": "Restore solar power and verify shield generator fuse intact", "part": "Fuse", "action": "Replace", "trigger": "Electrical storm", "sys": "RAD", "steps": ["Restore solar power and verify shield generator fuse intact"]}, {"code": "RAD-102", "system": "Radiation Shield", "message": "Shield panel degraded", "severity": "High", "symptoms": "Shield effectiveness reduced", "cause": "Cumulative radiation damage to panel", "repair": "Remove damaged panel, print replacement at 3D printer, install", "part": "Radiation Panel", "action": "Print", "trigger": "Radiation belt", "sys": "RAD", "steps": ["Remove damaged panel", "print replacement at 3D printer, install"]}, {"code": "RAD-103", "system": "Radiation Shield", "message": "Shield modulator drift", "severity": "Medium", "symptoms": "Shield active but mistuned", "cause": "Calibration lost after surge", "repair": "Reset modulator from main computer diagnostic menu", "part": "None", "action": "Reset", "trigger": "Radiation belt", "sys": "RAD", "steps": ["Reset modulator from main computer diagnostic menu"]}, {"code": "RAD-201", "system": "Radiation Shield", "message": "Crew radiation dose elevated", "severity": "High", "symptoms": "Static overlay, nausea, cumulative damage building", "cause": "Downstream of RAD-101/102", "repair": "Resolve shield fault; exposure will continue until shield restored", "part": "None", "action": "Diagnose", "trigger": "Cascade", "sys": "RAD", "steps": ["Resolve shield fault", "exposure will continue until shield restored"]}, {"code": "RCY-101", "system": "Recycler", "message": "Power loss to recycler", "severity": "Medium", "symptoms": "Waste not being converted to feedstock", "cause": "Blown fuse on recycler circuit", "repair": "Replace recycler fuse from spares", "part": "Fuse", "action": "Replace", "trigger": "Electrical storm", "sys": "RCY", "steps": ["Replace recycler fuse from spares"]}, {"code": "RCY-102", "system": "Recycler", "message": "Recycler clogged", "severity": "Medium", "symptoms": "Waste backed up, no feedstock produced", "cause": "Solid waste blockage", "repair": "Run unclog cycle, manually clear inlet if needed", "part": "None", "action": "Unclog", "trigger": "Routine", "sys": "RCY", "steps": ["Run unclog cycle", "manually clear inlet if needed"]}, {"code": "RCY-103", "system": "Recycler", "message": "Enzymatic tank depleted", "severity": "Low", "symptoms": "Conversion rate reduced", "cause": "Bio-catalyst spent", "repair": "Replace enzyme cartridge from storage", "part": "Enzyme Cartridge", "action": "Replace", "trigger": "Routine", "sys": "RCY", "steps": ["Replace enzyme cartridge from storage"]}, {"code": "SYS-901", "system": "Multi-system", "message": "Main fuse board trip", "severity": "Critical", "symptoms": "Multiple sub-circuits offline simultaneously", "cause": "Main board trip from surge", "repair": "Reset main fuse board, then diagnose each downstream circuit", "part": "Multiple Fuses", "action": "Reset/Replace", "trigger": "Electrical storm", "sys": "SYS", "steps": ["Reset main fuse board", "diagnose each downstream circuit"]}, {"code": "SYS-902", "system": "Multi-system", "message": "Cascade failure warning", "severity": "Critical", "symptoms": "Three or more systems failing concurrently", "cause": "Compound power and resource failure", "repair": "Triage: secure O2 first, then pressure, then power source", "part": "Multiple", "action": "Diagnose", "trigger": "Cascade", "sys": "SYS", "steps": ["Triage: secure O2 first, pressure, power source"]}, {"code": "SYS-903", "system": "Multi-system", "message": "Sensor array desync", "severity": "Low", "symptoms": "Conflicting readings across systems", "cause": "Radiation event scrambled sensor calibration", "repair": "Run full sensor recalibrate from main computer", "part": "None", "action": "Reset", "trigger": "Radiation belt", "sys": "SYS", "steps": ["Run full sensor recalibrate from main computer"]}, {"code": "SYS-904", "system": "Multi-system", "message": "Fire alert: engineering bay", "severity": "Critical", "symptoms": "Combustion detected near electrical components", "cause": "Electrical fire after surge", "repair": "Cut power to affected zone at main board, use extinguisher, then diagnose", "part": "None", "action": "Suppress", "trigger": "Electrical storm", "sys": "SYS", "steps": ["Cut power to affected zone at main board, use extinguisher, diagnose"]}, {"code": "TAB-101", "system": "Tablet", "message": "Tablet battery low", "severity": "Low", "symptoms": "Manual at risk of becoming inaccessible", "cause": "Tablet not docked recently", "repair": "Return tablet to charging dock until charge restored", "part": "None", "action": "Recharge", "trigger": "Routine", "sys": "TAB", "steps": ["Return tablet to charging dock until charge restored"]}, {"code": "TAB-102", "system": "Tablet", "message": "Tablet unresponsive", "severity": "Low", "symptoms": "Manual frozen on current page", "cause": "Software hang", "repair": "Hold power button to reboot tablet", "part": "None", "action": "Reset", "trigger": "Radiation", "sys": "TAB", "steps": ["Hold power button to reboot tablet"]}, {"code": "THM-101", "system": "Thermal Regulation", "message": "Power loss to thermal regulator", "severity": "Critical", "symptoms": "No active heating or cooling", "cause": "Blown fuse on thermal circuit", "repair": "Replace thermal fuse from spares", "part": "Fuse", "action": "Replace", "trigger": "Electrical storm", "sys": "THM", "steps": ["Replace thermal fuse from spares"]}, {"code": "THM-102", "system": "Thermal Regulation", "message": "Coolant pressure low", "severity": "High", "symptoms": "Cooling cycle ineffective", "cause": "Coolant line crack or leak", "repair": "Locate cracked line at workbench, fabricate replacement section, install", "part": "Coolant Line", "action": "Repair/Print", "trigger": "Debris impact", "sys": "THM", "steps": ["Locate cracked line at workbench", "fabricate replacement section, install"]}, {"code": "THM-103", "system": "Thermal Regulation", "message": "Heating element failure", "severity": "High", "symptoms": "Cabin temperature dropping in cold conditions", "cause": "Heating coil burnt out", "repair": "Remove burnt coil, print replacement, install in housing", "part": "Heating Coil", "action": "Print", "trigger": "Wear, surge", "sys": "THM", "steps": ["Remove burnt coil, print replacement", "install in housing"]}, {"code": "THM-104", "system": "Thermal Regulation", "message": "Cooling pump stalled", "severity": "High", "symptoms": "Cabin temperature rising in hot conditions", "cause": "Pump motor jammed", "repair": "Remove pump assembly, clear obstruction, reinstall", "part": "None", "action": "Repair", "trigger": "Stellar proximity", "sys": "THM", "steps": ["Remove pump assembly, clear obstruction, reinstall"]}, {"code": "THM-105", "system": "Thermal Regulation", "message": "Thermostat sensor drift", "severity": "Low", "symptoms": "Regulator activating at wrong thresholds", "cause": "Sensor calibration lost", "repair": "Reset thermostat via main computer diagnostic menu", "part": "None", "action": "Reset", "trigger": "Radiation", "sys": "THM", "steps": ["Reset thermostat via main computer diagnostic menu"]}, {"code": "THM-201", "system": "Thermal Regulation", "message": "Cabin temperature critical: hot", "severity": "Critical", "symptoms": "Hyperthermia, screen shimmer, fast resource drain", "cause": "Downstream of THM-101/104 or stellar proximity", "repair": "Resolve cooling fault; if unresolvable, power down non-essentials to reduce heat load", "part": "None", "action": "Diagnose", "trigger": "Cascade", "sys": "THM", "steps": ["Resolve cooling fault, if unresolvable", "power down non-essentials to reduce heat load"]}, {"code": "THM-202", "system": "Thermal Regulation", "message": "Cabin temperature critical: cold", "severity": "Critical", "symptoms": "Hypothermia, visible breath, slowed actions", "cause": "Downstream of THM-101/103 or deep space cold", "repair": "Resolve heating fault; layer up if necessary by using bed", "part": "None", "action": "Diagnose", "trigger": "Cascade", "sys": "THM", "steps": ["Resolve heating fault", "layer up if necessary by using bed"]}, {"code": "TLT-101", "system": "Toilet", "message": "Toilet clogged", "severity": "Medium", "symptoms": "Toilet unusable, soiling risk rising", "cause": "Solid blockage in waste line", "repair": "Run unclog cycle from toilet panel", "part": "None", "action": "Unclog", "trigger": "Routine", "sys": "TLT", "steps": ["Run unclog cycle from toilet panel"]}, {"code": "TLT-102", "system": "Toilet", "message": "Waste line vacuum lost", "severity": "Low", "symptoms": "Flush failing, unpleasant odour", "cause": "Vacuum pump stalled", "repair": "Reset pump from toilet panel", "part": "None", "action": "Reset", "trigger": "Routine", "sys": "TLT", "steps": ["Reset pump from toilet panel"]}, {"code": "WRK-101", "system": "Workbench", "message": "Tool missing", "severity": "Low", "symptoms": "Repair impossible without tool", "cause": "Tool not returned to bench", "repair": "Search pod for missing tool, return to bench rack", "part": "Tool", "action": "Locate", "trigger": "Player action", "sys": "WRK", "steps": ["Search pod for missing tool", "return to bench rack"]}, {"code": "WRK-102", "system": "Workbench", "message": "Workbench power off", "severity": "Low", "symptoms": "Powered tools inoperative at bench", "cause": "Bench feeder fuse blown", "repair": "Replace bench fuse from spares", "part": "Fuse", "action": "Replace", "trigger": "Surge", "sys": "WRK", "steps": ["Replace bench fuse from spares"]}], "sysNames": {"OXY": "Oxygen Generator", "CO2": "CO2 Scrubber", "THM": "Thermal Regulation", "PRS": "Cabin Pressure / Hull", "PWR": "Solar Power", "RAD": "Radiation Shield", "HUB": "Main Computer", "COM": "Communications", "PRT": "3D Printer", "RCY": "Recycler", "TLT": "Toilet", "WRK": "Workbench", "BAT": "Battery Storage", "LGT": "Lighting", "DOR": "Airlock Door", "TAB": "Tablet / Manual", "SYS": "Multi-system / Cascade"}, "sevDesc": {"Critical": "Immediate threat to life. Resolve first.", "High": "Active degradation. Resolve within minutes.", "Medium": "Notable problem. Resolve before it cascades.", "Low": "Minor or quality-of-life. Fix when free."}, "actions": {"Replace": "Swap component with a spare from storage.", "Print": "Fabricate a replacement at the 3D printer.", "Repair": "Fix at the workbench, no full replacement needed.", "Reset": "Toggle, reboot, or recalibrate via a switch.", "Apply": "Use a consumable, e.g. a sealing canister.", "Unclog": "Run a cycle or manually clear the blockage.", "Recharge": "Return to dock or wait for charge to restore.", "Refill": "Top up a consumable from storage or generator.", "Locate": "Find a misplaced item in the pod.", "Wait": "No repair possible, resolves when the external event passes.", "Diagnose": "Symptom code only, resolve the upstream cause.", "Suppress": "Use safety equipment, e.g. a fire extinguisher."}, "sysPresent": ["BAT", "CO2", "COM", "DOR", "HUB", "LGT", "OXY", "PRS", "PRT", "PWR", "RAD", "RCY", "SYS", "TAB", "THM", "TLT", "WRK"], "sevOrder": {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}};
+const SEVS = ["Critical","High","Medium","Low"];
+let fSys = "ALL", fSev = new Set();
+
+const grid = document.getElementById('grid');
+const countEl = document.getElementById('count');
+
+const sysWrap = document.getElementById('sysFilters');
+DB.sysPresent.forEach(s=>{
+  const c=document.createElement('span');
+  c.className='chip'; c.dataset.sys=s; c.textContent=s; c.title=DB.sysNames[s]||s;
+  sysWrap.appendChild(c);
+});
+const sevWrap=document.getElementById('sevFilters');
+SEVS.forEach(s=>{
+  const c=document.createElement('span');
+  c.className='chip sev'; c.dataset.sev=s; c.textContent=s;
+  sevWrap.appendChild(c);
+});
+const al=document.getElementById('actionList');
+Object.entries(DB.actions).forEach(([k,v])=>{
+  const r=document.createElement('div'); r.className='refrow';
+  r.innerHTML='<span class="key" style="min-width:64px;color:var(--amber)">'+k+'</span><span class="def">'+v+'</span>';
+  al.appendChild(r);
+});
+
+sysWrap.addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(!c)return;
+  fSys=c.dataset.sys;
+  [...sysWrap.querySelectorAll('.chip')].forEach(x=>x.classList.toggle('on',x.dataset.sys===fSys));
+  render();
+});
+sevWrap.addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(!c)return;
+  const s=c.dataset.sev;
+  if(fSev.has(s)){fSev.delete(s);c.classList.remove('on');}
+  else{fSev.add(s);c.classList.add('on');}
+  render();
+});
+
+function esc(t){return (t||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
+
+function matches(c){
+  if(fSys!=="ALL" && c.sys!==fSys) return false;
+  if(fSev.size && !fSev.has(c.severity)) return false;
+  return true;
+}
+
+function card(c){
+  const pfx=c.code.split('-')[0], num=c.code.slice(pfx.length);
+  const steps=c.steps.map(s=>'<li>'+esc(s)+'</li>').join('');
+  return `<article class="card" data-sev="${c.severity}" id="${c.code}">
+    <div class="chead">
+      <div>
+        <div class="code"><span class="pfx">${pfx}</span>${esc(num)}</div>
+        <div class="sysname">${esc(c.system)}</div>
+      </div>
+      <span class="sevtag" data-sev="${c.severity}">${c.severity}</span>
+    </div>
+    <div class="msg">${esc(c.message)}</div>
+    <div class="cbody">
+      <div class="fld symptom"><span class="lab">What you see</span><span class="val">${esc(c.symptoms)}</span></div>
+      <div class="fld"><span class="lab">Cause</span><span class="val">${esc(c.cause)}</span></div>
+      <div class="fld"><span class="lab">Procedure</span><ol class="steps">${steps}</ol></div>
+    </div>
+    <div class="meta">
+      <div><span class="lab">Part</span><span class="v">${esc(c.part)||'None'}</span></div>
+      <div><span class="lab">Action</span><span class="v act">${esc(c.action)}</span></div>
+      <div><span class="lab">Triggered by</span><span class="v">${esc(c.trigger)||'Routine'}</span></div>
+    </div>
+  </article>`;
+}
+
+function render(){
+  const list=DB.codes.filter(matches)
+    .sort((a,b)=> DB.sevOrder[a.severity]-DB.sevOrder[b.severity] || a.code.localeCompare(b.code));
+  countEl.textContent=list.length;
+  grid.innerHTML = list.length ? list.map(card).join('')
+    : '<div class="empty">NO FAULTS MATCH THE CURRENT FILTERS.</div>';
+}
+render();
+
+// ---- close button ----
+document.getElementById('closeManual').addEventListener('click', function(){
+  // tell the game / parent frame to close this manual
+  try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:'manual', action:'close'}, '*'); }catch(e){}
+  // optional hook the game can define
+  if(typeof window.onManualClose==='function'){ try{ window.onManualClose(); }catch(e){} }
+  // visible fallback so the button does something on its own
+  document.documentElement.style.display='none';
+});
+</script>
+</body>
+</html>
