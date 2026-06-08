@@ -300,11 +300,7 @@ render();
 // ---- close button ----
 document.getElementById('closeManual').addEventListener('click', function(){
   // tell the game / parent frame to close this manual
-  try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:'manual', action:'close'}, '*'); }catch(e){}
-  // optional hook the game can define
-  if(typeof window.onManualClose==='function'){ try{ window.onManualClose(); }catch(e){} }
-  // visible fallback so the button does something on its own
-  document.documentElement.style.display='none';
+  PortalsSdk.closeIframe();
 });
 </script>
 </body>
