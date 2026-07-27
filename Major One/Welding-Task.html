@@ -10,7 +10,7 @@
       margin: 0; padding: 0; width: 100%; height: 100%;
       background: transparent; overflow: hidden;
     }
-    canvas { display: block; width: 100%; height: 100%; cursor: none; touch-action: none; }
+    canvas { width: 200px; height: 200px; display: block; width: 100%; height: 100%; cursor: none; touch-action: none; }
   </style>
 </head>
 <body>
@@ -26,7 +26,7 @@
     let W, H, cx, cy, scale;
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = 100; H = 100;
+      W = 200; H = 200;
       canvas.width = W * dpr; canvas.height = H * dpr;
       canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
