@@ -10,7 +10,7 @@
       margin: 0; padding: 0; width: 100%; height: 100%;
       background: transparent; overflow: hidden; display: flex; justify-content: center; align-items: center;
     }
-    canvas { position: relative; width: 400px; height: 400px; display: block; width: 100%; height: 100%; cursor: none; touch-action: none; }
+    canvas { position: relative; width: 1400px; height: 1000px; display: block; width: 100%; height: 100%; cursor: none; touch-action: none; }
   </style>
 </head>
 <body>
@@ -26,12 +26,12 @@
     let W, H, cx, cy, scale;
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = 400; H = 400;
+      W = 1400; H = 1000;
       canvas.width = W * dpr; canvas.height = H * dpr;
       canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       cx = W / 2; cy = H / 2;
-      scale = Math.min(W, H) / 1400;
+      scale = Math.min(W, H) / 800;
       buildGeometry();
     }
     window.addEventListener('resize', resize);
