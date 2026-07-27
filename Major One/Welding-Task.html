@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+  <title>Radial Progress Bar</title>
+  <style>
+    /* Reset & Transparent Setup */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Container for the progress bar */
+    .progress-container {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* SVG Ring Dimensions & Styling */
+    .progress-ring {
+      transform: rotate(-90deg); /* Start progress at the top (12 o'clock) */
+      transform-origin: 50% 50%;
+    }
+
+    .progress-ring__background {
+      stroke: rgba(255, 255, 255, 0.15); /* Semi-transparent track */
+    }
+
+    .progress-ring__circle {
+      stroke-dasharray: 440; /* Circumference = 2 * π * r (2 * π * 70 ≈ 440) */
+      stroke-dashoffset: 440;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 10ms linear;
+    }
+
+    /* Optional percentage text in center */
+    .progress-text {
+      position: absolute;
+      color: #ffffff;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress-container">
+    <svg class="progress-ring" width="160" height="160">
+      <!-- Background track ring -->
+      <circle
+        class="progress-ring__background"
+        stroke-width="10"
+        fill="transparent"
+        r="70"
+        cx="80"
+        cy="80"
+      />
+      <!-- Active fill progress ring -->
+      <circle
+        class="progress-ring__circle"
+        stroke="#4f46e5" /* Progress bar color (Indigo) */
+        stroke-width="10"
+        fill="transparent"
+        r="70"
+        cx="80"
+        cy="80"
+      />
+    </svg>
+    <div class="progress-text" id="progressText">0%</div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const circle = document.querySelector('.progress-ring__circle');
+      const text = document.getElementById('progressText');
+      
+      const radius = circle.r.baseVal.value;
+      const circumference = 2 * Math.PI * radius; // Approx 439.82
+      
+      const DURATION = 5000; // 5 seconds in milliseconds
+      const startTime = performance.now();
+
+      function updateProgress(currentTime) {
+        const elapsedTime = currentTime - startTime;
+        const progress = Math.min(elapsedTime / DURATION, 1); // Clamp between 0 and 1
+        
+        // Update SVG stroke offset
+        const offset = circumference - (progress * circumference);
+        circle.style.strokeDashoffset = offset;
+        
+        // Update percentage display text
+        text.textContent = `${Math.round(progress * 100)}%`;
+
+        if (progress < 1) {
+          requestAnimationFrame(updateProgress);
+        } else {
+          // Progress complete: trigger Portals SDK close
+          if (typeof PortalsSdk !== 'undefined' && typeof PortalsSdk.closeIframe === 'function') {
+            PortalsSdk.closeIframe();
+          } else {
+            console.warn("PortalsSdk.closeIframe() was called, but PortalsSdk is not defined in this environment.");
+          }
+        }
+      }
+
+      // Start the smooth requestAnimationFrame loop
+      requestAnimationFrame(updateProgress);
+    });
+  </script>
+</body>
+</html>
