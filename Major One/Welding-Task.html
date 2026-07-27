@@ -4,124 +4,282 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
-  <title>Radial Progress Bar</title>
+  <title>Hull Breach Weld</title>
   <style>
-    /* Reset & Transparent Setup */
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: transparent; overflow: hidden;
     }
-
-    /* Container for the progress bar */
-    .progress-container {
-      position: relative;
-      width: 160px;
-      height: 160px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* SVG Ring Dimensions & Styling */
-    .progress-ring {
-      transform: rotate(-90deg); /* Start progress at the top (12 o'clock) */
-      transform-origin: 50% 50%;
-    }
-
-    .progress-ring__background {
-      stroke: rgba(255, 255, 255, 0.15); /* Semi-transparent track */
-    }
-
-    .progress-ring__circle {
-      stroke-dasharray: 440; /* Circumference = 2 * π * r (2 * π * 70 ≈ 440) */
-      stroke-dashoffset: 440;
-      stroke-linecap: round;
-      transition: stroke-dashoffset 10ms linear;
-    }
-
-    /* Optional percentage text in center */
-    .progress-text {
-      position: absolute;
-      color: #ffffff;
-      font-size: 1.5rem;
-      font-weight: 600;
-      letter-spacing: -0.5px;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    }
+    canvas { display: block; width: 100%; height: 100%; cursor: none; touch-action: none; }
   </style>
 </head>
 <body>
-
-  <div class="progress-container">
-    <svg class="progress-ring" width="160" height="160">
-      <!-- Background track ring -->
-      <circle
-        class="progress-ring__background"
-        stroke-width="10"
-        fill="transparent"
-        r="70"
-        cx="80"
-        cy="80"
-      />
-      <!-- Active fill progress ring -->
-      <circle
-        class="progress-ring__circle"
-        stroke="#4f46e5" /* Progress bar color (Indigo) */
-        stroke-width="10"
-        fill="transparent"
-        r="70"
-        cx="80"
-        cy="80"
-      />
-    </svg>
-    <div class="progress-text" id="progressText">0%</div>
-  </div>
-
+  <canvas id="c"></canvas>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const circle = document.querySelector('.progress-ring__circle');
-      const text = document.getElementById('progressText');
-      
-      const radius = circle.r.baseVal.value;
-      const circumference = 2 * Math.PI * radius; // Approx 439.82
-      
-      const DURATION = 8000; // 8 seconds in milliseconds
-      const startTime = performance.now();
+  (() => {
+    // ---- CONFIG ----
+    const DURATION = 5000; // ms — weld always completes over this time, then closes
 
-      function updateProgress(currentTime) {
-        const elapsedTime = currentTime - startTime;
-        const progress = Math.min(elapsedTime / DURATION, 1); // Clamp between 0 and 1
-        
-        // Update SVG stroke offset
-        const offset = circumference - (progress * circumference);
-        circle.style.strokeDashoffset = offset;
-        
-        // Update percentage display text
-        text.textContent = `${Math.round(progress * 100)}%`;
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
 
-        if (progress < 1) {
-          requestAnimationFrame(updateProgress);
-        } else {
-          // Progress complete: trigger Portals SDK close
-          if (typeof PortalsSdk !== 'undefined' && typeof PortalsSdk.closeIframe === 'function') {
-            PortalsSdk.closeIframe();
-          } else {
-            console.warn("PortalsSdk.closeIframe() was called, but PortalsSdk is not defined in this environment.");
-          }
+    let W, H, cx, cy, scale;
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cx = W / 2; cy = H / 2;
+      scale = Math.min(W, H) / 620;
+      buildGeometry();
+    }
+    window.addEventListener('resize', resize);
+
+    const mouse = { x:-999, y:-999, down:false, active:false };
+    let seam = [], breachPoly = [], innerPoly = [];
+    let sparks = [], leakParticles = [];
+    let shakeMag = 0;
+    let startTime = 0, done = false, sealGlow = 0;
+
+    function buildGeometry() {
+      const R = 165 * scale;
+      breachPoly = []; innerPoly = [];
+      const N = 16; let seed = 1234;
+      const rnd = () => { seed = (seed*9301+49297)%233280; return seed/233280; };
+      for (let i=0;i<N;i++){
+        const a = (i/N)*Math.PI*2;
+        const j = 0.80 + rnd()*0.30;
+        breachPoly.push({ x: cx + Math.cos(a)*R*j*1.12, y: cy + Math.sin(a)*R*j*1.12 });
+        innerPoly.push({ x: cx + Math.cos(a)*R*j*0.86, y: cy + Math.sin(a)*R*j*0.86 });
+      }
+      const prev = seam.map(s=>s.w);
+      seam = [];
+      const start = { x: cx - R*0.62, y: cy - R*0.55 };
+      const end   = { x: cx + R*0.60, y: cy + R*0.62 };
+      const segs = 26; let sd = 77;
+      const r2 = () => { sd = (sd*9301+49297)%233280; return sd/233280; };
+      for (let i=0;i<=segs;i++){
+        const t = i/segs;
+        let x = start.x + (end.x-start.x)*t + Math.sin(t*Math.PI*3.0)*R*0.28;
+        let y = start.y + (end.y-start.y)*t + Math.cos(t*Math.PI*2.2)*R*0.20 + (r2()-0.5)*14*scale;
+        seam.push({ x, y, w: prev[i] || 0 });
+      }
+    }
+
+    // input (optional — outcome does not depend on it)
+    function pt(e){
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      mouse.x = t.clientX - r.left; mouse.y = t.clientY - r.top; mouse.active = true;
+    }
+    canvas.addEventListener('mousemove', pt);
+    canvas.addEventListener('mousedown', e=>{ mouse.down=true; pt(e); });
+    window.addEventListener('mouseup', ()=> mouse.down=false);
+    canvas.addEventListener('touchstart', e=>{ mouse.down=true; pt(e); e.preventDefault(); }, {passive:false});
+    canvas.addEventListener('touchmove',  e=>{ pt(e); e.preventDefault(); }, {passive:false});
+    window.addEventListener('touchend', ()=> mouse.down=false);
+
+    const dist = (ax,ay,bx,by)=> Math.hypot(ax-bx, ay-by);
+    function addSpark(x,y,n,speed){
+      for(let i=0;i<n;i++){
+        const a = Math.random()*Math.PI*2;
+        const s = (0.4+Math.random())*(speed||1);
+        sparks.push({ x, y, vx: Math.cos(a)*s*3, vy: Math.sin(a)*s*3 - 1, life:1, hue:30+Math.random()*25 });
+      }
+    }
+
+    function closePortal(){
+      if (typeof PortalsSdk !== 'undefined' && typeof PortalsSdk.closeIframe === 'function') {
+        PortalsSdk.closeIframe();
+      } else {
+        console.warn("PortalsSdk.closeIframe() unavailable in this environment.");
+      }
+    }
+
+    function update(dt, progress){
+      for (const s of sparks){ s.x+=s.vx; s.y+=s.vy; s.vy+=0.12; s.vx*=0.98; s.life-=dt*2.2; }
+      sparks = sparks.filter(s=>s.life>0);
+      for (const lp of leakParticles){ lp.x+=lp.vx; lp.y+=lp.vy; lp.vx*=0.99; lp.life-=dt*1.2; }
+      leakParticles = leakParticles.filter(l=>l.life>0);
+      shakeMag *= 0.9;
+
+      // TIME-DRIVEN weld: the seam always seals over DURATION, regardless of input.
+      const front = progress * seam.length;              // welding front position
+      for (let i=0;i<seam.length;i++){
+        const target = Math.max(0, Math.min(1, front - i)); // fills points in order
+        if (seam[i].w < target) seam[i].w = target;
+      }
+
+      // sparks emitted at the current weld front so it always looks like active welding
+      const fi = Math.min(seam.length-1, Math.floor(front));
+      const fp = seam[fi];
+      if (progress < 1 && fp){
+        if (Math.random()<0.85) addSpark(fp.x, fp.y, 2, 1);
+        shakeMag = Math.max(shakeMag, 1.2);
+      }
+      // player torch adds extra sparks for feel (cosmetic only)
+      if (mouse.down && progress < 1){
+        let near=false;
+        for (const sp of seam){ if (dist(mouse.x,mouse.y,sp.x,sp.y) < 34*scale){ near=true; break; } }
+        if (near && Math.random()<0.6) addSpark(mouse.x, mouse.y, 2, 1.2);
+      }
+
+      // venting air from still-open sections
+      if (progress < 1 && Math.random() < 0.5){
+        const gap = seam[Math.floor(Math.random()*seam.length)];
+        if (gap.w < 0.6){
+          leakParticles.push({ x:gap.x, y:gap.y, vx:(cx-gap.x)*0.002+(Math.random()-0.5), vy:(cy-gap.y)*0.002-1.2, life:1 });
         }
       }
 
-      // Start the smooth requestAnimationFrame loop
-      requestAnimationFrame(updateProgress);
-    });
+      if (progress >= 1 && !done){
+        done = true;
+        sealGlow = 1;
+        addSpark(cx, cy, 30, 2);
+        shakeMag = 7;
+        setTimeout(closePortal, 550); // brief seal flash, then close the iframe
+      }
+      if (sealGlow > 0) sealGlow -= dt*1.6;
+    }
+
+    function polyPath(poly){
+      ctx.beginPath();
+      ctx.moveTo(poly[0].x, poly[0].y);
+      for (let i=1;i<poly.length;i++) ctx.lineTo(poly[i].x, poly[i].y);
+      ctx.closePath();
+    }
+
+    function draw(){
+      const ox=(Math.random()-0.5)*shakeMag, oy=(Math.random()-0.5)*shakeMag;
+      ctx.clearRect(0,0,W,H);          // transparent base
+      ctx.save();
+      ctx.translate(ox,oy);
+
+      // space backdrop
+      const bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'#0b1120'); bg.addColorStop(1,'#050810');
+      ctx.fillStyle = bg; ctx.fillRect(-20,-20,W+40,H+40);
+      ctx.fillStyle='rgba(255,255,255,.5)';
+      for(let i=0;i<40;i++){ const sx=(i*97%W), sy=(i*181%H); ctx.globalAlpha=0.2+((i*13)%10)/20; ctx.fillRect(sx,sy,1.5,1.5);}
+      ctx.globalAlpha=1;
+
+      // orange nebula glow (left)
+      const neb = ctx.createRadialGradient(cx-260*scale, cy+40*scale, 10, cx-260*scale, cy+40*scale, 320*scale);
+      neb.addColorStop(0,'rgba(255,140,60,.35)'); neb.addColorStop(.5,'rgba(220,90,40,.14)'); neb.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=neb; ctx.fillRect(0,0,W,H);
+
+      // outer glowing rim
+      ctx.save();
+      polyPath(breachPoly);
+      ctx.shadowColor='rgba(180,160,230,.9)'; ctx.shadowBlur=40;
+      ctx.fillStyle='#b9aede'; ctx.fill();
+      ctx.restore();
+
+      // torn metal edge
+      ctx.save(); polyPath(breachPoly); polyPath(innerPoly);
+      ctx.fillStyle='#c9b6a0'; ctx.fill('evenodd'); ctx.restore();
+
+      // inner cavity
+      ctx.save(); polyPath(innerPoly); ctx.clip();
+      const cav = ctx.createRadialGradient(cx,cy,10, cx,cy,180*scale);
+      cav.addColorStop(0,'#0a0d15'); cav.addColorStop(1,'#02030a');
+      ctx.fillStyle=cav; ctx.fillRect(cx-220*scale,cy-220*scale,440*scale,440*scale);
+      ctx.strokeStyle='rgba(120,130,150,.35)'; ctx.lineWidth=6*scale;
+      ctx.beginPath();
+      ctx.moveTo(cx-90*scale,cy-10*scale); ctx.lineTo(cx+70*scale,cy-4*scale);
+      ctx.moveTo(cx-30*scale,cy-90*scale); ctx.lineTo(cx-10*scale,cy+60*scale); ctx.stroke();
+      ctx.strokeStyle='rgba(90,100,120,.3)'; ctx.lineWidth=3*scale;
+      for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(cx+30*scale+i*11*scale, cy+20*scale); ctx.lineTo(cx+34*scale+i*11*scale, cy+80*scale); ctx.stroke(); }
+      ctx.restore();
+
+      // dangling wires
+      ctx.strokeStyle='rgba(210,130,50,.8)'; ctx.lineWidth=2*scale;
+      ctx.beginPath();
+      ctx.moveTo(cx-70*scale, cy+30*scale); ctx.quadraticCurveTo(cx-95*scale,cy+120*scale, cx-80*scale,cy+190*scale);
+      ctx.moveTo(cx+10*scale, cy+40*scale); ctx.quadraticCurveTo(cx+30*scale,cy+130*scale, cx+15*scale,cy+200*scale);
+      ctx.stroke();
+
+      // crack seam + weld bead
+      ctx.lineCap='round';
+      for (let i=0;i<seam.length-1;i++){
+        const a=seam[i], b=seam[i+1]; const w=(a.w+b.w)/2;
+        if (w < 0.98){
+          ctx.strokeStyle=`rgba(255,${100+w*80},40,${0.5*(1-w)+0.15})`;
+          ctx.lineWidth=(10 - w*4)*scale; ctx.shadowColor='rgba(255,120,40,.8)'; ctx.shadowBlur=14;
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.shadowBlur=0;
+        }
+        ctx.strokeStyle=`rgba(10,8,10,${0.9*(1-w)})`; ctx.lineWidth=(5 - w*2)*scale;
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        if (w>0.02){
+          const g=ctx.createLinearGradient(a.x,a.y,b.x,b.y);
+          g.addColorStop(0,`rgba(210,225,245,${w})`); g.addColorStop(.5,`rgba(150,175,205,${w})`); g.addColorStop(1,`rgba(210,225,245,${w})`);
+          ctx.strokeStyle=g; ctx.lineWidth=(7*w)*scale; ctx.shadowColor='rgba(120,170,255,.5)'; ctx.shadowBlur=6*w;
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.shadowBlur=0;
+        }
+      }
+
+      // leak particles
+      for(const lp of leakParticles){
+        ctx.globalAlpha=lp.life*0.5; ctx.fillStyle='rgba(200,220,255,1)';
+        ctx.beginPath(); ctx.arc(lp.x,lp.y,3*scale*(1.5-lp.life),0,7); ctx.fill();
+      }
+      ctx.globalAlpha=1;
+
+      // sparks
+      for(const s of sparks){
+        ctx.globalAlpha=Math.max(0,s.life);
+        ctx.fillStyle=`hsl(${s.hue},100%,${55+s.life*20}%)`;
+        ctx.beginPath(); ctx.arc(s.x,s.y, 2.2*s.life+0.5, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha=1;
+
+      // seal flash on completion
+      if (sealGlow > 0){
+        ctx.globalAlpha = Math.max(0,sealGlow)*0.8;
+        const fg=ctx.createRadialGradient(cx,cy,10,cx,cy,200*scale);
+        fg.addColorStop(0,'rgba(120,220,255,.9)'); fg.addColorStop(1,'rgba(120,220,255,0)');
+        ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(cx,cy,200*scale,0,7); ctx.fill();
+        ctx.globalAlpha=1;
+      }
+
+      // torch cursor (only if a pointer is active)
+      if (mouse.active && !done){
+        const r=34*scale;
+        const tg=ctx.createRadialGradient(mouse.x,mouse.y,0,mouse.x,mouse.y,r);
+        if (mouse.down){ tg.addColorStop(0,'rgba(120,200,255,.7)'); tg.addColorStop(1,'rgba(120,200,255,0)'); }
+        else { tg.addColorStop(0,'rgba(160,180,210,.25)'); tg.addColorStop(1,'rgba(160,180,210,0)'); }
+        ctx.fillStyle=tg; ctx.beginPath(); ctx.arc(mouse.x,mouse.y,r,0,7); ctx.fill();
+        if (mouse.down){
+          const fl=ctx.createRadialGradient(mouse.x,mouse.y,0,mouse.x,mouse.y,14*scale);
+          fl.addColorStop(0,'#fff'); fl.addColorStop(.4,'#ffd27a'); fl.addColorStop(1,'rgba(255,120,40,0)');
+          ctx.fillStyle=fl; ctx.beginPath(); ctx.arc(mouse.x,mouse.y,14*scale,0,7); ctx.fill();
+        }
+        ctx.strokeStyle='#e8f2ff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(mouse.x,mouse.y,r,0,7); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(mouse.x-r-6,mouse.y); ctx.lineTo(mouse.x-r+8,mouse.y);
+        ctx.moveTo(mouse.x+r-8,mouse.y); ctx.lineTo(mouse.x+r+6,mouse.y);
+        ctx.moveTo(mouse.x,mouse.y-r-6); ctx.lineTo(mouse.x,mouse.y-r+8);
+        ctx.moveTo(mouse.x,mouse.y+r-8); ctx.lineTo(mouse.x,mouse.y+r+6); ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    let lastT = 0;
+    function loop(t){
+      if (!startTime) startTime = t;
+      const dt = Math.min(0.05, (t-lastT)/1000) || 0; lastT = t;
+      const progress = Math.min((t - startTime) / DURATION, 1);
+      update(dt, progress);
+      draw();
+      // keep animating a moment past completion so the seal flash + close read cleanly
+      if (!done || sealGlow > -0.5) requestAnimationFrame(loop);
+    }
+
+    resize();
+    requestAnimationFrame(loop);
+  })();
   </script>
 </body>
 </html>
